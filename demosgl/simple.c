@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 #define TOKEN_TABLE(F)   \
-    F(U_MVP,   "mvp")    \
-    F(V_COLOR, "color")
+    F(U_MVP,   "u_mvp")    \
+    F(A_POSITION, "a_position")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -12,7 +12,7 @@ void init(float winwidth, float winheight, float pixratio)
 {
     glClearColor(0, 0.25, 0.5, 1.0);
     printf("%s\n", par_token_to_string(U_MVP));
-    printf("%s\n", par_token_to_string(V_COLOR));
+    printf("%s\n", par_token_to_string(A_POSITION));
 }
 
 int draw()

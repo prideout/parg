@@ -21,7 +21,8 @@ I'm currently using:
 
 ## Notes to Self
 
-- shader.c and prototype
+- shader.c ; see simple.glsl (assume that shaders will always be in 1 file)
+    sds has "split" and "trim"
 - buffer.c
 - demosgl/simple should draw a triangle
 - emscripten (which should be enabled in travis) and gh-pages
