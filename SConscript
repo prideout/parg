@@ -10,8 +10,8 @@ env = Environment(
     LIBS=['m'],
     CPPPATH=['include', '.'],
     SHLIBPREFIX='',
-    LINKFLAGS='-fopenmp',
-    CFLAGS='-fopenmp -g -O3 -Wall -std=c99')
+    LINKFLAGS='-fopenmp ',
+    CFLAGS=' -fopenmp -g -O3 -Wall -std=c99 ')
 
 if env['PLATFORM'] == 'darwin':
     env['LINKFLAGS'] = ''
@@ -34,8 +34,12 @@ else:
 Alias('lib', par)
 
 env = env.Clone(LIBS=['m', par])
+env.ParseConfig('pkg-config --cflags --static --libs glfw3')
 
+demos = []
 for demo in DEMOS:
     name = 'par_' + demo
     path = 'demosgl/' + demo + '.c'
-    env.Program(name, source=[path])
+    demos.append(env.Program(name, source=[path]))
+
+Alias('demos', demos)

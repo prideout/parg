@@ -16,13 +16,14 @@ I'm currently using:
 - uncrustify 0.61
 - glfw3 3.0.4
 - clang-format 3.7.0
+- emscripten 1.33.0
 
 ## Notes to Self
 
-- simple.c should use glfw to create a fixed-size window
-- [.travis.yml](http://docs.travis-ci.com/user/osx-ci-environment/)
+- window.c and `par_window_*` api
 - tokens.c and khash.c
 - shader.c
+- simple should draw a triangle
 
 ```
 include
