@@ -1,4 +1,5 @@
 language: objective-c
 script:
-    - brew install scons uncrustify glfw3 clang-format
+    - brew update
+    - brew install scons uncrustify glfw3
     - scons demos
