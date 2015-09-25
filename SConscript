@@ -30,11 +30,11 @@ if GetOption('javascript'):
     par = env.Program('par.js', source=CORE_SRC + JS_SRC)
 else:
     par = env.SharedLibrary('_par.so', source=CORE_SRC)
+    env.ParseConfig('pkg-config --cflags --static --libs glfw3')
 
 Alias('lib', par)
 
 env = env.Clone(LIBS=['m', par])
-env.ParseConfig('pkg-config --cflags --static --libs glfw3')
 
 demos = []
 for demo in DEMOS:

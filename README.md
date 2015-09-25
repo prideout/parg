@@ -7,8 +7,9 @@ For now, the `par` library only supports OpenGL 2.1 with OS X, and OpenGL ES 2.0
 ## OS X Setup
 
 ```
+brew update
 brew install scons uncrustify glfw3 clang-format
-scons --help
+scons
 ```
 
 I'm currently using:
@@ -20,7 +21,6 @@ I'm currently using:
 
 ## Notes to Self
 
-- window.c and `par_window_*` api
 - tokens.c and khash.c
 - shader.c
 - simple should draw a triangle
