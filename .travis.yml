@@ -1,0 +1,5 @@
+language: c
+osx_image: xcode6.4
+script:
+    - brew install scons uncrustify glfw3 clang-format
+    - scons demos
