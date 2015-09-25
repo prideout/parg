@@ -13,31 +13,19 @@ static par_window_fn_tick _tick = 0;
 static par_window_fn_draw _draw = 0;
 static par_window_fn_exit _dispose = 0;
 
-void par_window_setargs(int argc, char *argv[])
+void par_window_setargs(int argc, char* argv[])
 {
     _argc = argc;
     _argv = argv;
 }
 
-void par_window_oninit(par_window_fn_init fn)
-{
-    _init = fn;
-}
+void par_window_oninit(par_window_fn_init fn) { _init = fn; }
 
-void par_window_ontick(par_window_fn_tick fn)
-{
-    _tick = fn;
-}
+void par_window_ontick(par_window_fn_tick fn) { _tick = fn; }
 
-void par_window_ondraw(par_window_fn_draw fn)
-{
-    _draw = fn;
-}
+void par_window_ondraw(par_window_fn_draw fn) { _draw = fn; }
 
-void par_window_onexit(par_window_fn_exit fn)
-{
-    _dispose = fn;
-}
+void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
 
 static void onerror(int error, const char* description)
 {
@@ -102,7 +90,8 @@ int par_window_exec(float winwidth, float winheight, int vsync)
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(vsync);
-    if (_init) _init(_winwidth, _winheight, _pixscale);
+    if (_init)
+        _init(_winwidth, _winheight, _pixscale);
     glfwMakeContextCurrent(0);
 
     glfwSetKeyCallback(window, onkey);
@@ -111,13 +100,13 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     glfwSetScrollCallback(window, onscroll);
 
     while (!glfwWindowShouldClose(window)) {
-
         // Check if the window has been resized.
         glfwGetFramebufferSize(window, &width, &height);
         glfwGetWindowSize(window, &_winwidth, &_winheight);
         _pixscale = (float) width / _winwidth;
 
-        if (_tick) _tick(_winwidth, _winheight, _pixscale, 0);
+        if (_tick)
+            _tick(_winwidth, _winheight, _pixscale, 0);
 
         glfwMakeContextCurrent(window);
         if (_draw && _draw()) {
@@ -134,7 +123,8 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     }
 
     glfwMakeContextCurrent(window);
-    if (_dispose) _dispose();
+    if (_dispose)
+        _dispose();
     glfwMakeContextCurrent(0);
     glfwDestroyWindow(window);
     glfwTerminate();

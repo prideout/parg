@@ -21,9 +21,14 @@ I'm currently using:
 
 ## Notes to Self
 
-- tokens.c and khash.c
-- shader.c
-- simple should draw a triangle
+- shader.c and prototype
+- buffer.c
+- demosgl/simple should draw a triangle
+- emscripten (which should be enabled in travis) and gh-pages
+- demosgl/gamma
+    - surface.c (sphere, klein)
+    - mesh.c
+    - https://www.shadertoy.com/view/llBGz1
 
 ```
 include

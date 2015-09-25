@@ -1,9 +1,18 @@
 #include <parwin.h>
 #include <pargl.h>
+#include <stdio.h>
+
+#define TOKEN_TABLE(F)   \
+    F(U_MVP,   "mvp")    \
+    F(V_COLOR, "color")
+
+TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 void init(float winwidth, float winheight, float pixratio)
 {
     glClearColor(0, 0.25, 0.5, 1.0);
+    printf("%s\n", par_token_to_string(U_MVP));
+    printf("%s\n", par_token_to_string(V_COLOR));
 }
 
 int draw()
@@ -22,6 +31,7 @@ void dispose()
 
 int main(int argc, char *argv[])
 {
+    TOKEN_TABLE(PAR_TOKEN_DEFINE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);
