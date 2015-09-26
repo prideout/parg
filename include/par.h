@@ -18,11 +18,7 @@ typedef enum {
     PAR_GPU_ELEMENTS
 } par_buffer_type;
 
-typedef enum {
-    PAR_READ,
-    PAR_WRITE,
-    PAR_MODIFY
-} par_buffer_mode;
+typedef enum { PAR_READ, PAR_WRITE, PAR_MODIFY } par_buffer_mode;
 
 par_buffer* par_buffer_alloc(int nbytes, par_buffer_type);
 par_buffer* par_buffer_dup(par_buffer*, par_buffer_type);
@@ -71,12 +67,11 @@ par_surface par_surface_klein();
 
 // MESH
 
-void par_mesh_from_surface(
-    par_surface, par_u16* indices, par_fp32* coords);
+void par_mesh_from_surface(par_surface, par_u16* indices, par_fp32* coords);
 
 // SHADER
 
-void par_shader_load_from_buffer(par_buffer* );
+void par_shader_load_from_buffer(par_buffer*);
 void par_shader_load_from_asset(const char* filename);
 GLuint par_shader_attrib(par_token);
 GLint par_shader_uniform(par_token);

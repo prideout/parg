@@ -3,10 +3,6 @@
 #include <pargl.h>
 #include <stdio.h>
 
-#include "../src/whereami.h"
-#include "../src/sds.h"
-#include <stdlib.h>
-
 #define TOKEN_TABLE(F)      \
     F(U_MVP, "u_mvp")       \
     F(P_SIMPLE, "p_simple") \

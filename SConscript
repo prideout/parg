@@ -3,12 +3,12 @@
 
 Import('*')
 
-CORE_SRC = Glob('src/*.c')
+CORE_SRC = Glob('src/*.c') + Glob('src/vendor/*.c')
 JS_SRC = []
 
 env = Environment(
     LIBS=['m'],
-    CPPPATH=['include', '.'],
+    CPPPATH=['include', 'src/vendor'],
     SHLIBPREFIX='',
     LINKFLAGS='-fopenmp ',
     CFLAGS=' -fopenmp -g -O3 -Wall -std=c99 ')

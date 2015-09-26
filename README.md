@@ -24,7 +24,7 @@ I'm currently using:
 ### Soon
 
 - scons should copy glsl files to build/
-- buffer.c should do the slurp
+- inclusion of par*, sds, vmath should use angle brackets
 - shader.c should do the parse (sds has split and trim)
 - simple should draw a triangle
 
