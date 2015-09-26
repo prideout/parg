@@ -36,10 +36,14 @@ Alias('lib', par)
 
 env = env.Clone(LIBS=['m', par])
 
-demos = []
+demos, shaders = [], []
 for demo in DEMOS:
     name = 'par_' + demo
-    path = 'demos/' + demo + '.c'
-    demos.append(env.Program(name, source=[path]))
+    cpath = 'demos/' + demo + '.c'
+    spath = 'demos/' + demo + '.glsl'
+    env.Program(name, source=[cpath])
+    shader = Command(demo + '.glsl', spath, Copy("$TARGET", "$SOURCE"))
+    shaders.append(shader)
+    demos.append(name)
 
-Alias('demos', demos)
+Alias('demos', demos + shaders)

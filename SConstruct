@@ -38,6 +38,8 @@ SConscript('SConscript', variant_dir=BUILD_DIR, src_dir='.', duplicate=0)
 for demo in DEMOS:
     filename = 'par_' + demo
     binpath = os.path.join(BUILD_DIR, filename)
+    spath = os.path.join(BUILD_DIR, demo + '.glsl')
+    Depends(demo, spath)
     Command(demo, binpath, binpath)
     AlwaysBuild(demo)
     if demo == DEMOS[0]:
