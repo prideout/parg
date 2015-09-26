@@ -25,6 +25,8 @@ void par_buffer_free(par_buffer* buf)
     free(buf);
 }
 
+int par_buffer_length(par_buffer* buf) { return buf->nbytes; }
+
 char* par_buffer_lock(par_buffer* buf, par_buffer_mode access)
 {
     return buf->data;
