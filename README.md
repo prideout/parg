@@ -23,9 +23,7 @@ I'm currently using:
 
 ### Soon
 
-- check GL error state
 - shader.c
-    - scan for attributes and explicitly bind them
     - gather uniforms
 - simple should draw a triangle
 - gamma

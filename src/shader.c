@@ -7,15 +7,19 @@
 #include "kvec.h"
 #include "khash.h"
 
-// Singleton mapping from tokens to sds strings.
+// Mapping from tokens to sds strings.
 KHASH_MAP_INIT_INT(smap, sds)
 
-// Singleton mapping from tokens to GLuint.
+// Mapping from tokens to OpenGL handles.
 KHASH_MAP_INIT_INT(glmap, GLuint)
+
+// Mapping from tokens to integer slots.
+KHASH_MAP_INIT_INT(imap, int)
 
 static khash_t(smap)* _vshader_registry = 0;
 static khash_t(smap)* _fshader_registry = 0;
 static khash_t(glmap)* _program_registry = 0;
+static khash_t(imap)* _attr_registry = 0;
 static GLuint _current_program = 0;
 static par_token _current_program_token = 0;
 
@@ -37,12 +41,14 @@ static int kv_find(sdsvec keys, sds key)
 
 void par_shader_load_from_buffer(par_buffer* buf)
 {
+    const sds ATTRIBUTE = sdsnew("attribute ");
     const sds PROGRAM = sdsnew("@program ");
     const sds PREFIX = sdsnew("_prefix");
 
     if (!_vshader_registry) {
         _vshader_registry = kh_init(smap);
         _fshader_registry = kh_init(smap);
+        _attr_registry = kh_init(imap);
     }
 
     sdsvec program_args;
@@ -67,7 +73,7 @@ void par_shader_load_from_buffer(par_buffer* buf)
         if (sdslen(line) > 2 && line[0] == '-' && line[1] == '-') {
             sds chunkname = sdsdup(line);
             sdsrange(chunkname, 2, -1);
-            sdstrim(chunkname, " \t");
+            chunkname = sdstrim(chunkname, " \t");
             kv_push(sds, chunk_names, chunkname);
             kv_push(sds, chunk_bodies, sdsempty());
             chunk_body = sdscatprintf(chunk_body, "#line %d\n", j + 1);
@@ -78,6 +84,25 @@ void par_shader_load_from_buffer(par_buffer* buf)
         char* program = strstr(line, PROGRAM);
         if (program) {
             kv_push(sds, program_args, sdsnew(program + sdslen(PROGRAM)));
+        }
+        char* attr = strstr(line, ATTRIBUTE);
+        if (attr == line) {
+            int nwords;
+            sds aline = sdsnew(attr + sdslen(ATTRIBUTE));
+            aline = sdstrim(aline, "; \t");
+            sds* words = sdssplitlen(aline, sdslen(aline), " \t", 1, &nwords);
+            sds attr = sdsdup(words[nwords - 1]);
+            sdsfreesplitres(words, nwords);
+            sdsfree(aline);
+            par_token tok = par_token_from_string(attr);
+            khiter_t iter = kh_get(imap, _attr_registry, tok);
+            if (iter == kh_end(_attr_registry)) {
+                int newslot = kh_size(_attr_registry);
+                int ret;
+                iter = kh_put(imap, _attr_registry, tok, &ret);
+                kh_value(_attr_registry, iter) = newslot;
+            }
+            sdsfree(attr);
         }
     }
     sdsfreesplitres(lines, nlines);
@@ -120,6 +145,10 @@ void par_shader_load_from_buffer(par_buffer* buf)
     kv_destroy(program_args);
     kv_destroy(chunk_bodies);
     kv_destroy(chunk_names);
+
+    sdsfree(ATTRIBUTE);
+    sdsfree(PROGRAM);
+    sdsfree(PREFIX);
 }
 
 void par_shader_load_from_asset(const char* filename)
@@ -170,9 +199,16 @@ static GLuint compile_program(par_token tok)
     glAttachShader(program_handle, vs_handle);
     glAttachShader(program_handle, fs_handle);
 
-    // for (attribs) {
-    //     glBindAttribLocation(program_handle, slot_uint, attr_cstr);
-    // }
+    for (iter = kh_begin(_attr_registry); iter != kh_end(_attr_registry);
+        ++iter) {
+        if (!kh_exist(_attr_registry, iter)) {
+            continue;
+        }
+        int slot = kh_value(_attr_registry, iter);
+        par_token tok = kh_key(_attr_registry, iter);
+        const char* name = par_token_to_string(tok);
+        glBindAttribLocation(program_handle, slot, name);
+    }
 
     GLint link_success;
     glLinkProgram(program_handle);
