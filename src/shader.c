@@ -224,7 +224,6 @@ static void gather_uniforms(par_token ptoken, GLuint phandle)
 {
     int nuniforms;
     glGetProgramiv(phandle, GL_ACTIVE_UNIFORMS, &nuniforms);
-    printf("%d uniforms\n", nuniforms);
     char uname[MAX_UNIFORM_LEN];
     while (nuniforms--) {
         GLint size;
@@ -237,7 +236,6 @@ static void gather_uniforms(par_token ptoken, GLuint phandle)
         par_token combined_token = ptoken ^ utoken;
         khiter_t iter = kh_put(imap, _unif_registry, combined_token, &ret);
         kh_value(_unif_registry, iter) = loc;
-        printf("UNIFORM %s\n", uname);
     }
 }
 

@@ -1,6 +1,7 @@
 #include <par.h>
 #include <parwin.h>
 #include <pargl.h>
+#include <vmath.h>
 #include <stdio.h>
 
 #define TOKEN_TABLE(F)          \
@@ -11,10 +12,17 @@
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
+Matrix4 projection;
+
 void init(float winwidth, float winheight, float pixratio)
 {
     glClearColor(0, 0.25, 0.5, 1.0);
     par_shader_load_from_asset("simple.glsl");
+    const float h = 5.0f;
+    const float w = h * winwidth / winheight;
+    projection = M4MakeFrustum(-w, w,  // left & right planes
+            -h, h,                     // bottom & top planes
+            65, 90);                   // near & far planes
 }
 
 int draw()
@@ -22,6 +30,8 @@ int draw()
     glClear(GL_COLOR_BUFFER_BIT);
     par_shader_bind(P_SIMPLE);
     glUniform4f(par_shader_uniform_get(U_COLOR), 1, 0, 0, 1);
+    glUniformMatrix4fv(
+        par_shader_uniform_get(U_MVP), 1, 0, (float*) &projection);
     return 1;
 }
 
