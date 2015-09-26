@@ -73,7 +73,7 @@ void par_mesh_from_surface(par_surface, par_u16* indices, par_fp32* coords);
 
 void par_shader_load_from_buffer(par_buffer*);
 void par_shader_load_from_asset(const char* filename);
-GLuint par_shader_attrib(par_token);
+GLuint par_shader_attrib_get(par_token);
 GLint par_shader_uniform_get(par_token);
 void par_shader_bind(par_token);
 void par_shader_free(par_token);

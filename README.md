@@ -23,9 +23,7 @@ I'm currently using:
 
 ### Soon
 
-- simple should set MVP to identity
-- simple should draw a triangle
-    - don't worry about wrapping VAO stuff yet
+- proper modelview (look at), spinning model matrix
 - gamma
     - https://www.shadertoy.com/view/llBGz1
     - surface.c (sphere, klein, disk)

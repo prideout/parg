@@ -1,4 +1,5 @@
 #include <par.h>
+#include <pargl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sds.h>
@@ -8,20 +9,41 @@ struct par_buffer_s {
     char* data;
     int nbytes;
     par_buffer_type memtype;
+    GLuint gpuhandle;
+    char* gpumapped;
 };
+
+int par_buffer_isgpu(par_buffer* buf)
+{
+    return buf->memtype == PAR_GPU_ARRAY || buf->memtype == PAR_GPU_ELEMENTS;
+}
+
+GLuint par_buffer_gpu_handle(par_buffer* buf)
+{
+    return buf->gpuhandle;
+}
 
 par_buffer* par_buffer_alloc(int nbytes, par_buffer_type memtype)
 {
     par_buffer* retval = malloc(sizeof(struct par_buffer_s));
-    retval->data = malloc(nbytes);
+    retval->data = (memtype == PAR_CPU) ? malloc(nbytes) : 0;
     retval->nbytes = nbytes;
     retval->memtype = memtype;
+    retval->gpuhandle = 0;
+    retval->gpumapped = 0;
+    if (par_buffer_isgpu(retval)) {
+        glGenBuffers(1, &retval->gpuhandle);
+    }
     return retval;
 }
 
 void par_buffer_free(par_buffer* buf)
 {
-    free(buf->data);
+    if (par_buffer_isgpu(buf)) {
+        glDeleteBuffers(1, &buf->gpuhandle);
+    } else {
+        free(buf->data);
+    }
     free(buf);
 }
 
@@ -29,10 +51,24 @@ int par_buffer_length(par_buffer* buf) { return buf->nbytes; }
 
 char* par_buffer_lock(par_buffer* buf, par_buffer_mode access)
 {
+    if (access == PAR_WRITE && par_buffer_isgpu(buf)) {
+        buf->gpumapped = malloc(buf->nbytes);
+        return buf->gpumapped;
+    }
     return buf->data;
 }
 
-void par_buffer_unlock(par_buffer* buf) {}
+void par_buffer_unlock(par_buffer* buf)
+{
+    if (buf->gpumapped) {
+        GLenum target = buf->memtype == PAR_GPU_ARRAY ? GL_ARRAY_BUFFER
+            : GL_ELEMENT_ARRAY_BUFFER;
+        glBindBuffer(target, buf->gpuhandle);
+        glBufferData(target, buf->nbytes, buf->gpumapped, GL_STATIC_DRAW);
+        free(buf->gpumapped);
+        buf->gpumapped = 0;
+    }
+}
 
 par_buffer* par_buffer_from_file(const char* filepath)
 {

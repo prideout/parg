@@ -239,6 +239,14 @@ static void gather_uniforms(par_token ptoken, GLuint phandle)
     }
 }
 
+GLuint par_shader_attrib_get(par_token tok)
+{
+    khiter_t iter = kh_get(imap, _attr_registry, tok);
+    par_verify(iter != kh_end(_attr_registry), "Unknown attribute",
+        par_token_to_string(tok));
+    return kh_value(_attr_registry, iter);
+}
+
 GLint par_shader_uniform_get(par_token utoken)
 {
     par_token ptoken = _current_program_token;
