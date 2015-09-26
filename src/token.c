@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include "khash.h"
 
+// Singleton mapping from C strings to tokens.
 KHASH_SET_INIT_STR(parstrset)
-#define par_string_set khash_t(parstrset)
 
-static par_string_set* _token_registry = 0;
+static khash_t(parstrset)* _token_registry = 0;
 
 void par_token_init() { _token_registry = kh_init(parstrset); }
 

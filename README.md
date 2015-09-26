@@ -23,11 +23,11 @@ I'm currently using:
 
 ### Soon
 
-- shader.c should do the parse (sds has split and trim)
 - simple should draw a triangle
 - gamma
     - surface.c (sphere, klein, disk)
     - mesh.c
+    - https://www.shadertoy.com/view/llBGz1
 
 ### Later
 
@@ -35,5 +35,8 @@ I'm currently using:
     - don't worry about "offloading" par_buffer yet
 - turntable
 - coordfield (picking)
+- gles3 branch: core profile + webgl2 (USE_WEBGL2 exists in emscripten)
 - fluid
-    - https://www.shadertoy.com/view/llBGz1
+    - http://codepen.io/tmrDevelops/pen/jbbeMo
+- lighting with sdf's
+    - https://t.co/sFfcR0hWDo
