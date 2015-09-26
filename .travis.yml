@@ -1,5 +1,5 @@
 language: objective-c
 script:
-    - brew update
+    - brew update &>/dev/null
     - brew install scons uncrustify glfw3
     - scons demos
