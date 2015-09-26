@@ -13,11 +13,15 @@
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 Matrix4 projection;
+Matrix4 model;
+Matrix4 view;
 par_buffer* tricoords;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    glClearColor(0, 0.25, 0.5, 1.0);
+    glClearColor(167 / 255.0, 190 / 255.0, 211 / 255.0, 1.0);
+    glEnable(GL_CULL_FACE);
+
     par_shader_load_from_asset("simple.glsl");
 
     const float h = 5.0f;
@@ -25,23 +29,32 @@ void init(float winwidth, float winheight, float pixratio)
     const float znear = 65;
     const float zfar = 90;
     projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
-    projection = M4MakeIdentity();
+
+    Point3 eye = {0, 0, 75};
+    Point3 target = {0, 0, 0};
+    Vector3 up = {0, 1, 0};
+    view = M4MakeLookAt(eye, target, up);
+    model = M4MakeIdentity();
 
     tricoords = par_buffer_alloc(sizeof(Point3) * 3, PAR_GPU_ARRAY);
     Point3* pdata = (Point3*) par_buffer_lock(tricoords, PAR_WRITE);
     *pdata++ = (Point3){1, 1, 0};
-    *pdata++ = (Point3){0, -1, 0};
     *pdata++ = (Point3){-1, 1, 0};
+    *pdata++ = (Point3){0, -1, 0};
     par_buffer_unlock(tricoords);
 }
 
 int draw()
 {
+    Matrix4 modelview = M4Mul(view, model);
+    Matrix4 mvp = M4Mul(projection, modelview);
+
     int position = par_shader_attrib_get(A_POSITION);
     glClear(GL_COLOR_BUFFER_BIT);
     par_shader_bind(P_SIMPLE);
-    glUniform4f(par_shader_uniform_get(U_COLOR), 1, 0, 0, 1);
-    glUniformMatrix4fv(par_shader_uniform_get(U_MVP), 1, 0, &projection.col0.x);
+    glUniform4f(par_shader_uniform_get(U_COLOR), 218 / 255.0, 184 / 255.0,
+        148 / 255.0, 1);
+    glUniformMatrix4fv(par_shader_uniform_get(U_MVP), 1, 0, &mvp.col0.x);
 
     // VAO START
     glBindBuffer(GL_ARRAY_BUFFER, par_buffer_gpu_handle(tricoords));

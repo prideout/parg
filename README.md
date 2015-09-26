@@ -23,7 +23,7 @@ I'm currently using:
 
 ### Soon
 
-- proper modelview (look at), spinning model matrix
+- spinning model matrix
 - gamma
     - https://www.shadertoy.com/view/llBGz1
     - surface.c (sphere, klein, disk)

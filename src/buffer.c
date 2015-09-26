@@ -18,10 +18,7 @@ int par_buffer_isgpu(par_buffer* buf)
     return buf->memtype == PAR_GPU_ARRAY || buf->memtype == PAR_GPU_ELEMENTS;
 }
 
-GLuint par_buffer_gpu_handle(par_buffer* buf)
-{
-    return buf->gpuhandle;
-}
+GLuint par_buffer_gpu_handle(par_buffer* buf) { return buf->gpuhandle; }
 
 par_buffer* par_buffer_alloc(int nbytes, par_buffer_type memtype)
 {
