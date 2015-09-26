@@ -16,15 +16,11 @@ int draw()
     return 1;
 }
 
-void tick(float seconds, float winwidth, float winheight, float pixratio)
-{
-}
+void tick(float seconds, float winwidth, float winheight, float pixratio) {}
 
-void dispose()
-{
-}
+void dispose() {}
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     par_window_setargs(argc, argv);
     par_window_oninit(init);

@@ -3,8 +3,13 @@
 #include <pargl.h>
 #include <stdio.h>
 
-#define TOKEN_TABLE(F)   \
-    F(U_MVP,   "u_mvp")    \
+#include "../src/whereami.h"
+#include "../src/sds.h"
+#include <stdlib.h>
+
+#define TOKEN_TABLE(F)      \
+    F(U_MVP, "u_mvp")       \
+    F(P_SIMPLE, "p_simple") \
     F(A_POSITION, "a_position")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
@@ -12,8 +17,7 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
 void init(float winwidth, float winheight, float pixratio)
 {
     glClearColor(0, 0.25, 0.5, 1.0);
-    printf("%s\n", par_token_to_string(U_MVP));
-    printf("%s\n", par_token_to_string(A_POSITION));
+    par_shader_load_from_asset("simple.glsl");
 }
 
 int draw()
@@ -22,15 +26,11 @@ int draw()
     return 1;
 }
 
-void tick(float seconds, float winwidth, float winheight, float pixratio)
-{
-}
+void tick(float seconds, float winwidth, float winheight, float pixratio) {}
 
-void dispose()
-{
-}
+void dispose() {}
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
     par_window_setargs(argc, argv);

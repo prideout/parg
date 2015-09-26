@@ -19,38 +19,22 @@ I'm currently using:
 - clang-format 3.7.0
 - emscripten 1.33.0
 
-## Notes to Self
+## TODO
 
-- shader.c ; see simple.glsl (assume that shaders will always be in 1 file)
-    sds has "split" and "trim"
-- buffer.c
-- demosgl/simple should draw a triangle
+### Soon
+
+- scons should copy glsl files to build/
+- buffer.c should do the slurp
+- shader.c should do the parse (sds has split and trim)
+- simple should draw a triangle
+
+### Later
+
 - emscripten (which should be enabled in travis) and gh-pages
-- demosgl/gamma
+- gamma
     - surface.c (sphere, klein)
     - mesh.c
+- turntable
+- coordfield (picking)
+- fluid
     - https://www.shadertoy.com/view/llBGz1
-
-```
-include
-    par.h
-    pargl.h
-src
-    pargl.c
-    token.c
-    surface.c
-    mesh.c
-    buffer.c
-    shader.c
-    sds.h, sds.c -- only include these if you NEED them for _shaders_, and klib doesn't suffice
-    vmath.h (from recipes)
-    khash.h (for tokens)
-    stb_image.h
-demosgl
-    gamma.c
-    gamma.glsl
-    turntable.c
-    turntable.glsl
-    coordfield.c
-    coordfield.glsl
-```
