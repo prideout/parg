@@ -39,7 +39,7 @@ env = env.Clone(LIBS=['m', par])
 demos = []
 for demo in DEMOS:
     name = 'par_' + demo
-    path = 'demosgl/' + demo + '.c'
+    path = 'demos/' + demo + '.c'
     demos.append(env.Program(name, source=[path]))
 
 Alias('demos', demos)

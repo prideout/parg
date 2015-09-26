@@ -1,3 +1,4 @@
+#include <par.h>
 #include <parwin.h>
 #include <pargl.h>
 #include <stdio.h>

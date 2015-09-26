@@ -2,6 +2,11 @@
 
 #include <stdint.h>
 
+#ifndef GLAPI
+typedef unsigned int GLuint;
+typedef int GLint;
+#endif
+
 // BUFFER
 
 #define par_buffer_t(TYPE)  \
@@ -18,6 +23,8 @@ par_buffer_f32* par_buffer_f32_create(int nfloats);
 void par_buffer_f32_destroy(par_buffer_f32*);
 
 par_buffer_u8 par_buffer_from_file(const char* filpath);
+
+GLint pargl_create_buffer_u8(par_buffer_u8* );
 
 // TOKEN
 
@@ -36,3 +43,8 @@ par_surface par_surface_klein();
 
 void par_mesh_from_surface(
     par_surface, par_buffer_u16* indices, par_buffer_f32* coords);
+
+// SHADER
+
+GLint pal_shader_uniform(par_token);
+void par_shader_bind(par_token);

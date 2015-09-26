@@ -1,7 +1,5 @@
 #pragma once
 
-#include "par.h"
-
 #if defined(__APPLE_CC__)
   #if defined(GLFW_INCLUDE_GLCOREARB)
     #include <OpenGL/gl3.h>
@@ -22,7 +20,3 @@
     #include <GL/gl.h>
   #endif
 #endif
-
-GLint pargl_create_buffer_u8(par_buffer_u8* );
-GLint pargl_get_uniform(par_token);
-void pargl_bind_shader(par_token);
