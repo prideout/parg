@@ -3,10 +3,11 @@
 #include <pargl.h>
 #include <stdio.h>
 
-#define TOKEN_TABLE(F)      \
-    F(U_MVP, "u_mvp")       \
-    F(P_SIMPLE, "p_simple") \
-    F(A_POSITION, "a_position")
+#define TOKEN_TABLE(F)          \
+    F(P_SIMPLE, "p_simple")     \
+    F(A_POSITION, "a_position") \
+    F(U_MVP, "u_mvp")           \
+    F(U_COLOR, "u_color")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -19,12 +20,16 @@ void init(float winwidth, float winheight, float pixratio)
 int draw()
 {
     glClear(GL_COLOR_BUFFER_BIT);
+    par_shader_bind(P_SIMPLE);  // EYEBALL implement this.
     return 1;
 }
 
 void tick(float seconds, float winwidth, float winheight, float pixratio) {}
 
-void dispose() {}
+void dispose()
+{
+    // par_shader_free(P_SIMPLE); // TODO provide this
+}
 
 int main(int argc, char* argv[])
 {

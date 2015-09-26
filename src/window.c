@@ -71,6 +71,9 @@ int par_window_exec(float winwidth, float winheight, int vsync)
         exit(EXIT_FAILURE);
     }
 
+    // We use Desktop OpenGL 2.1 context only because it's the closest API to
+    // OpenGL ES 2.0 that's available on Apple machines.
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -87,45 +90,49 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     glfwGetFramebufferSize(window, &width, &height);
     glfwGetWindowSize(window, &_winwidth, &_winheight);
     _pixscale = (float) width / _winwidth;
-
     glfwMakeContextCurrent(window);
     glfwSwapInterval(vsync);
-    if (_init)
+    if (_init) {
         _init(_winwidth, _winheight, _pixscale);
+    }
     glfwMakeContextCurrent(0);
-
     glfwSetKeyCallback(window, onkey);
     glfwSetCursorPosCallback(window, onmove);
     glfwSetMouseButtonCallback(window, onclick);
     glfwSetScrollCallback(window, onscroll);
 
     while (!glfwWindowShouldClose(window)) {
+        int width, height;
+
         // Check if the window has been resized.
         glfwGetFramebufferSize(window, &width, &height);
         glfwGetWindowSize(window, &_winwidth, &_winheight);
         _pixscale = (float) width / _winwidth;
-
-        if (_tick)
+        if (_tick) {
             _tick(_winwidth, _winheight, _pixscale, 0);
+        }
 
+        // Perform all OpenGL work.
         glfwMakeContextCurrent(window);
         if (_draw && _draw()) {
+            GLenum err = glGetError();
+            if (err != GL_NO_ERROR) {
+                puts("OpenGL Error");
+            }
             glfwSwapBuffers(window);
         }
         glfwMakeContextCurrent(0);
-
-        // Sleep to prevent burning battery.
-        if (vsync) {
-            // TODO
-        }
-
         glfwPollEvents();
     }
 
+    // First perform OpenGL-related cleanup.
     glfwMakeContextCurrent(window);
-    if (_dispose)
+    if (_dispose) {
         _dispose();
+    }
     glfwMakeContextCurrent(0);
+
+    // Perform all other cleanup.
     glfwDestroyWindow(window);
     glfwTerminate();
 

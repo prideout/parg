@@ -23,11 +23,17 @@ I'm currently using:
 
 ### Soon
 
+- check GL error state
+- shader.c
+    - scan for attributes and explicitly bind them
+    - gather uniforms
 - simple should draw a triangle
 - gamma
     - surface.c (sphere, klein, disk)
     - mesh.c
     - https://www.shadertoy.com/view/llBGz1
+- pargl should be internal
+    - wrap draw calls, clear, uniforms, VAO-like stuff
 
 ### Later
 

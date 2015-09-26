@@ -1,12 +1,13 @@
 
 // @program p_simple, vertex, fragment
 
-attribute vec4 a_position;
 uniform mat4 u_mvp;
 uniform vec4 u_color;
 varying vec4 v_color;
 
 -- vertex
+
+attribute vec4 a_position;
 
 void main()
 {
