@@ -20,10 +20,12 @@ static khash_t(smap)* _vshader_registry = 0;
 static khash_t(smap)* _fshader_registry = 0;
 static khash_t(glmap)* _program_registry = 0;
 static khash_t(imap)* _attr_registry = 0;
+static khash_t(imap)* _unif_registry = 0;
 static GLuint _current_program = 0;
 static par_token _current_program_token = 0;
 
 #define MAX_SHADER_SPEW 1024
+#define MAX_UNIFORM_LEN 128
 #define kv_last(vec) kv_A(vec, kv_size(vec) - 1)
 #define chunk_body kv_last(chunk_bodies)
 
@@ -49,6 +51,7 @@ void par_shader_load_from_buffer(par_buffer* buf)
         _vshader_registry = kh_init(smap);
         _fshader_registry = kh_init(smap);
         _attr_registry = kh_init(imap);
+        _unif_registry = kh_init(imap);
     }
 
     sdsvec program_args;
@@ -160,8 +163,6 @@ void par_shader_load_from_asset(const char* filename)
 
 GLuint par_shader_attrib(par_token tok) { return 0; }
 
-GLint par_shader_uniform(par_token tok) { return 0; }
-
 static GLuint compile_program(par_token tok)
 {
     khiter_t iter;
@@ -219,6 +220,37 @@ static GLuint compile_program(par_token tok)
     return program_handle;
 }
 
+static void gather_uniforms(par_token ptoken, GLuint phandle)
+{
+    int nuniforms;
+    glGetProgramiv(phandle, GL_ACTIVE_UNIFORMS, &nuniforms);
+    printf("%d uniforms\n", nuniforms);
+    char uname[MAX_UNIFORM_LEN];
+    while (nuniforms--) {
+        GLint size;
+        GLenum type;
+        int ret;
+        glGetActiveUniform(
+            phandle, nuniforms, MAX_UNIFORM_LEN, 0, &size, &type, uname);
+        GLint loc = glGetUniformLocation(phandle, uname);
+        par_token utoken = par_token_from_string(uname);
+        par_token combined_token = ptoken ^ utoken;
+        khiter_t iter = kh_put(imap, _unif_registry, combined_token, &ret);
+        kh_value(_unif_registry, iter) = loc;
+        printf("UNIFORM %s\n", uname);
+    }
+}
+
+GLint par_shader_uniform_get(par_token utoken)
+{
+    par_token ptoken = _current_program_token;
+    par_token combined_token = ptoken ^ utoken;
+    khiter_t iter = kh_get(imap, _unif_registry, combined_token);
+    par_verify(iter != kh_end(_unif_registry), "Inactive uniform",
+        par_token_to_string(utoken));
+    return kh_value(_unif_registry, iter);
+}
+
 void par_shader_bind(par_token tok)
 {
     if (!_program_registry) {
@@ -231,6 +263,7 @@ void par_shader_bind(par_token tok)
         program = compile_program(tok);
         iter = kh_put(glmap, _program_registry, tok, &ret);
         kh_value(_program_registry, iter) = program;
+        gather_uniforms(tok, program);
     } else {
         program = kh_value(_program_registry, iter);
     }
@@ -238,4 +271,14 @@ void par_shader_bind(par_token tok)
     glUseProgram(program);
     _current_program = program;
     _current_program_token = tok;
+}
+
+void par_shader_free(par_token tok)
+{
+    khiter_t iter = kh_get(glmap, _program_registry, tok);
+    par_verify(iter != kh_end(_program_registry), "Unknown program",
+        par_token_to_string(tok));
+    GLuint program = kh_value(_program_registry, iter);
+    glDeleteProgram(program);
+    kh_del(glmap, _program_registry, iter);
 }

@@ -23,15 +23,17 @@ I'm currently using:
 
 ### Soon
 
-- shader.c
-    - gather uniforms
+- simple should set MVP to identity
 - simple should draw a triangle
+    - don't worry about wrapping VAO stuff yet
 - gamma
+    - https://www.shadertoy.com/view/llBGz1
     - surface.c (sphere, klein, disk)
     - mesh.c
-    - https://www.shadertoy.com/view/llBGz1
 - pargl should be internal
-    - wrap draw calls, clear, uniforms, VAO-like stuff
+    - wrap draw calls, clear and VAO-like stuff
+    - wrap glUniform stuff (uniform.c)
+        - par_uniform4f(token, value)
 
 ### Later
 

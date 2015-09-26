@@ -20,16 +20,14 @@ void init(float winwidth, float winheight, float pixratio)
 int draw()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    par_shader_bind(P_SIMPLE);  // EYEBALL implement this.
+    par_shader_bind(P_SIMPLE);
+    glUniform4f(par_shader_uniform_get(U_COLOR), 1, 0, 0, 1);
     return 1;
 }
 
 void tick(float seconds, float winwidth, float winheight, float pixratio) {}
 
-void dispose()
-{
-    // par_shader_free(P_SIMPLE); // TODO provide this
-}
+void dispose() { par_shader_free(P_SIMPLE); }
 
 int main(int argc, char* argv[])
 {

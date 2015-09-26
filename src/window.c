@@ -130,6 +130,10 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     if (_dispose) {
         _dispose();
     }
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        puts("OpenGL Error");
+    }
     glfwMakeContextCurrent(0);
 
     // Perform all other cleanup.
