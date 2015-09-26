@@ -5,17 +5,34 @@
 #include "verify.h"
 #include "kvec.h"
 
+#define kv_last(vec) kv_A(vec, kv_size(vec) - 1)
+
+#define chunk_body kv_last(chunk_bodies)
+
+typedef kvec_t (sds) sdsvec;
+
+static int kv_find(sdsvec keys, sds key)
+{
+    for (int p = 0; p < kv_size(keys); p++) {
+        if (0 == strcmp(kv_A(keys, p), key)) {
+            return p;
+        }
+    }
+    return -1;
+}
+
 void par_shader_load_from_buffer(par_buffer* buf)
 {
     const sds PROGRAM = sdsnew("@program ");
+    const sds PREFIX = sdsnew("_prefix");
 
-    kvec_t(sds) program_args;
+    sdsvec program_args;
     kv_init(program_args);
 
-    kvec_t(sds) chunk_bodies;
+    sdsvec chunk_bodies;
     kv_init(chunk_bodies);
 
-    kvec_t(sds) chunk_names;
+    sdsvec chunk_names;
     kv_init(chunk_names);
 
     int len = par_buffer_length(buf);
@@ -23,27 +40,31 @@ void par_shader_load_from_buffer(par_buffer* buf)
     char* contents = par_buffer_lock(buf, PAR_READ);
     sds* lines = sdssplitlen(contents, len, "\n", 1, &nlines);
     par_buffer_unlock(buf);
-    sds chunk = 0;
+
+    kv_push(sds, chunk_names, sdsdup(PREFIX));
+    kv_push(sds, chunk_bodies, sdsempty());
 
     for (int j = 0; j < nlines; j++) {
         sds line = lines[j];
         if (sdslen(line) > 2 && line[0] == '-' && line[1] == '-') {
-            sdsrange(line, 2, -1);
-            sdstrim(line, " \t");
-            sdsfree(chunk);
-            chunk = sdsdup(line);
-            printf("chunk>> %s\n", line);
+            sds chunkname = sdsdup(line);
+            sdsrange(chunkname, 2, -1);
+            sdstrim(chunkname, " \t");
+            kv_push(sds, chunk_names, chunkname);
+            kv_push(sds, chunk_bodies, sdsempty());
+            chunk_body = sdscatprintf(chunk_body, "#line %d\n", j + 1);
             continue;
         }
-        printf("line-- %s\n", line);
-        char* found = strstr(line, PROGRAM);
-        if (found) {
-            kv_push(sds, program_args, sdsnew(found + sdslen(PROGRAM)));
+        chunk_body = sdscatsds(chunk_body, line);
+        chunk_body = sdscat(chunk_body, "\n");
+        char* program = strstr(line, PROGRAM);
+        if (program) {
+            kv_push(sds, program_args, sdsnew(program + sdslen(PROGRAM)));
         }
     }
 
     sdsfreesplitres(lines, nlines);
-    sdsfree(chunk);
+    sds prefix_body = kv_A(chunk_bodies, 0);
 
     for (int p = 0; p < kv_size(program_args); p++) {
         sds argstring = kv_A(program_args, p);
@@ -53,6 +74,18 @@ void par_shader_load_from_buffer(par_buffer* buf)
             sdstrim(args[a], " \t");
         }
         par_verify(nargs == 3, "@program should have 3 args", 0);
+
+        int vshader_index = kv_find(chunk_names, args[1]);
+        int fshader_index = kv_find(chunk_names, args[2]);
+
+        sds vshader_body = kv_A(chunk_bodies, vshader_index);
+        sds fshader_body = kv_A(chunk_bodies, fshader_index);
+
+        vshader_body = sdscat(sdsdup(prefix_body), vshader_body);
+        fshader_body = sdscat(sdsdup(prefix_body), fshader_body);
+
+        printf("%s::\n%s\n%s\n\n", args[0], vshader_body, fshader_body);
+
         sdsfreesplitres(args, nargs);
         sdsfree(argstring);
     }

@@ -25,13 +25,14 @@ I'm currently using:
 
 - shader.c should do the parse (sds has split and trim)
 - simple should draw a triangle
+- gamma
+    - surface.c (sphere, klein, disk)
+    - mesh.c
 
 ### Later
 
 - emscripten (which should be enabled in travis) and gh-pages
-- gamma
-    - surface.c (sphere, klein)
-    - mesh.c
+    - don't worry about "offloading" par_buffer yet
 - turntable
 - coordfield (picking)
 - fluid
