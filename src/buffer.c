@@ -1,7 +1,7 @@
 #include <par.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "sds.h"
+#include <sds.h>
 #include "verify.h"
 
 struct par_buffer_s {

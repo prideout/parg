@@ -23,7 +23,6 @@ I'm currently using:
 
 ### Soon
 
-- inclusion of par*, sds, vmath should use angle brackets
 - shader.c should do the parse (sds has split and trim)
 - simple should draw a triangle
 

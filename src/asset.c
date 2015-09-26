@@ -1,6 +1,6 @@
 #include <par.h>
+#include <sds.h>
 #include "whereami.h"
-#include "sds.h"
 
 static sds _exedir = 0;
 
