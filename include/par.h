@@ -89,7 +89,3 @@ void par_varray_enable(par_buffer*, par_token attr, int ncomps,
 void par_draw_clear();
 void par_draw_triangles(int start, int count);
 void par_draw_triangles_u16(int start, int count);
-
-// ASSET
-
-const char* par_asset_whereami();

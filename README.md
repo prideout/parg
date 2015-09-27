@@ -29,6 +29,8 @@ I'm currently using:
 
 ### Later
 
+- par_data_type should be a normal enum (0 1 2 3...)
+    - the mapping to GL types should be internal
 - demos/picking.c
     - add rong & tan to picking.c
 - demos/gamma.c

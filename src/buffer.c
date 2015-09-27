@@ -1,8 +1,9 @@
 #include <par.h>
-#include "pargl.h"
 #include <stdlib.h>
 #include <sds.h>
+#include "pargl.h"
 #include "verify.h"
+#include "asset.h"
 
 struct par_buffer_s {
     char* data;
