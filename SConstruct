@@ -3,7 +3,7 @@
 
 import os.path
 
-DEMOS = Split('simple gamma clipping')
+DEMOS = Split('simple gamma clipping picking')
 
 DEMO_HELP = '\n'.join(
     '- "scons {0}" to build and run the {0} demo.'.format(x) for x in DEMOS)

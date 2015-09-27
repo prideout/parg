@@ -25,8 +25,6 @@ I'm currently using:
 
 - demos/picking.c
     - factor with clipping.c into mesh.c
-    - http://github.prideout.net/distance-picking/
-    - add trefoil to mesh.c
     - don't implement rong & tan; cut and run
 
 ### Later
