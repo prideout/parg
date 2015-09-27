@@ -23,13 +23,8 @@ I'm currently using:
 
 ### Soon
 
-- demos/clipping.c
-    - lighting
-    - clipping / twosided
-    - do not bother with rotation or grid patern
-    - http://github.prideout.net/clip-planes/
-    - move the tess code into mesh.c
 - demos/picking.c
+    - factor with clipping.c into mesh.c
     - http://github.prideout.net/distance-picking/
     - add trefoil to mesh.c
     - don't implement rong & tan; cut and run

@@ -1,6 +1,11 @@
 #include <par.h>
 #include "pargl.h"
 
+void par_uniform1f(par_token tok, float val)
+{
+    glUniform1f(par_shader_uniform_get(tok), val);
+}
+
 void par_uniform4f(par_token tok, const Vector4* val)
 {
     glUniform4fv(par_shader_uniform_get(tok), 1, &val->x);

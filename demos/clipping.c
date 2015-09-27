@@ -7,7 +7,7 @@
     F(A_NORMAL, "a_normal")     \
     F(U_MVP, "u_mvp")           \
     F(U_IMV, "u_imv")           \
-    F(U_COLOR, "u_color")
+    F(U_CLIPZ, "u_clipz")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -24,6 +24,7 @@ Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
 Surface torus_surface;
+float clipz = 0;
 
 #define TWOPI 6.28318530718
 
@@ -64,11 +65,19 @@ void create_torus(float major, float minor, Surface* surf)
             float phi = stack * dphi;
             float beta = major + minor * cos(phi);
             Point3 p = torus_fn(major, minor, phi, theta, beta);
-            Point3 p1 = torus_fn(major, minor, phi + dphi * 0.5, theta, beta);
-            Point3 p2 = torus_fn(major, minor, phi, theta + dtheta * 0.5, beta);
-            Vector3 du = P3Sub(p1, p);
-            Vector3 dv = P3Sub(p2, p);
-            *normal++ = V3Normalize(V3Cross(du, dv));
+
+            phi = stack * dphi;
+            beta = major + minor * cos(phi);
+            Point3 p1 = torus_fn(major, minor, phi, theta + 0.01, beta);
+
+            phi = stack * dphi + 0.01;
+            beta = major + minor * cos(phi);
+            Point3 p2 = torus_fn(major, minor, phi, theta, beta);
+
+            Vector3 du = P3Sub(p2, p);
+            Vector3 dv = P3Sub(p1, p);
+            *normal = V3Normalize(V3Cross(du, dv));
+            ++normal;
         }
     }
     par_buffer_unlock(surf->normals);
@@ -104,11 +113,11 @@ void create_torus(float major, float minor, Surface* surf)
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
+    const Vector4 bgcolor = {0.5, 0.6, 0.7, 1.0};
 
     par_state_clearcolor(bgcolor);
     par_state_depthtest(1);
-    par_state_cullfaces(1);
+    par_state_cullfaces(0);
     par_shader_load_from_asset("clipping.glsl");
 
     const float h = 5.0f;
@@ -123,8 +132,8 @@ void init(float winwidth, float winheight, float pixratio)
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
 
-    torus_surface.slices = 40;
-    torus_surface.stacks = 10;
+    torus_surface.slices = 400;
+    torus_surface.stacks = 100;
     float major = 8;
     float minor = 2;
     create_torus(major, minor, &torus_surface);
@@ -132,15 +141,14 @@ void init(float winwidth, float winheight, float pixratio)
 
 int draw()
 {
-    const Vector4 fgcolor = V4ScalarDiv((Vector4){198, 226, 233, 255}, 255);
     Matrix4 modelview = M4Mul(view, model);
-    Matrix3 normals = M4GetUpper3x3(modelview);
+    Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
-    par_uniform4f(U_COLOR, &fgcolor);
+    par_uniform1f(U_CLIPZ, clipz);
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_uniform_matrix3f(U_IMV, &normals);
+    par_uniform_matrix3f(U_IMV, &invmodelview);
     par_varray_enable(torus_surface.coords, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_varray_enable(torus_surface.normals, A_NORMAL, 3, PAR_FLOAT, 0, 0);
     par_varray_bind(torus_surface.indices);
@@ -150,9 +158,7 @@ int draw()
 
 void tick(float winwidth, float winheight, float pixratio, float seconds)
 {
-    const float RADIANS_PER_SECOND = 3.14;
-    float theta = seconds * RADIANS_PER_SECOND;
-    model = M4MakeRotationZ(theta);
+    clipz = 0.4 + 0.05 * sin(seconds * 3);
 }
 
 void dispose()
