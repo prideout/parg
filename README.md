@@ -24,7 +24,6 @@ I'm currently using:
 ### Soon
 
 - demos/clipping.c
-    - depth testing (add global state for par_draw_clear)
     - lighting
     - clipping / twosided
     - do not bother with rotation or grid patern

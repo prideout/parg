@@ -107,6 +107,7 @@ void init(float winwidth, float winheight, float pixratio)
     const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
 
     par_state_clearcolor(bgcolor);
+    par_state_depthtest(1);
     par_state_cullfaces(1);
     par_shader_load_from_asset("clipping.glsl");
 

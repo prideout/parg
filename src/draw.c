@@ -3,8 +3,11 @@
 
 void par_draw_clear()
 {
-    // TODO: detect if current render target has depth.
-    glClear(GL_COLOR_BUFFER_BIT);
+    int planes = GL_COLOR_BUFFER_BIT;
+    if (_par_depthtest) {
+        planes |= GL_DEPTH_BUFFER_BIT;
+    }
+    glClear(planes);
 }
 
 void par_draw_triangles(int start, int count)
