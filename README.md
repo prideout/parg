@@ -21,18 +21,12 @@ I'm currently using:
 
 ## TODO
 
-### Soon
-
 - demos/picking.c
     - factor with clipping.c into mesh.c
-    - don't implement rong & tan; cut and run
-
-### Later
-
+    - add rong & tan
+- emscripten (which should be enabled in travis) and gh-pages
 - par_data_type should be a normal enum (0 1 2 3...)
     - the mapping to GL types should be internal
-- demos/picking.c
-    - add rong & tan to picking.c
 - demos/gamma.c
     - see the notes at the top
 - demos/turntable
@@ -42,8 +36,7 @@ I'm currently using:
 - window.c
     - add auto-quit and screenshot flags
     - does travis have a GPU?
-- emscripten (which should be enabled in travis) and gh-pages
-    - don't worry about "offloading" par_buffer yet
+- offload the buffer in emscripten builds
 - gles3 branch: core profile + webgl2 (USE_WEBGL2 exists in emscripten)
 - fluid
     - http://codepen.io/tmrDevelops/pen/jbbeMo

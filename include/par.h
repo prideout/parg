@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <vmath.h>
 
-// ENUMS
+// ENUMS & CONSTANTS
 
+#define PAR_TWOPI 6.28318530718
 #define PAR_BYTE 0x1400
 #define PAR_UNSIGNED_BYTE 0x1401
 #define PAR_SHORT 0x1402
@@ -49,13 +50,14 @@ par_token par_token_from_string(const char*);
 
 // MESH
 
-typedef void (*par_surface)(float* domain, float* range);
-par_surface par_mesh_surface_klein();
-par_surface par_mesh_surface_sphere();
-par_surface par_mesh_surface_torus();
-par_surface par_mesh_surface_disk();
-void par_mesh_from_surface(
-    par_surface, par_buffer* indices, par_buffer* coords);
+typedef struct par_mesh_s par_mesh;
+par_mesh* par_mesh_create_knot(int cols, int rows, float major, float minor);
+par_mesh* par_mesh_create_torus(int cols, int rows, float major, float minor);
+void par_mesh_free(par_mesh* m);
+par_buffer* par_mesh_coord(par_mesh* m);
+par_buffer* par_mesh_norml(par_mesh* m);
+par_buffer* par_mesh_index(par_mesh* m);
+int par_mesh_ntriangles(par_mesh* m);
 
 // SHADER
 

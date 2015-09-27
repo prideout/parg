@@ -10,103 +10,10 @@
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
-typedef struct {
-    par_buffer* coords;
-    par_buffer* normals;
-    par_buffer* indices;
-    int slices;
-    int stacks;
-    int ntriangles;
-} Surface;
-
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
-Surface knot_surface;
-
-#define TWOPI 6.28318530718
-
-Point3 knot_fn(float s, float t)
-{
-    const float a = 0.5f; const float b = 0.3f;
-    const float c = 0.5f; const float d = 0.1f;
-    const float u = (1 - s) * 2 * TWOPI;
-    const float v = t * TWOPI;
-    const float r = a + b * cos(1.5f * u);
-    const float x = r * cos(u);
-    const float y = r * sin(u);
-    const float z = c * sin(1.5f * u);
-
-    Vector3 dv;
-    dv.x = -1.5f * b * sin(1.5f * u) * cos(u) - (a + b * cos(1.5f * u)) * sin(u);
-    dv.y = -1.5f * b * sin(1.5f * u) * sin(u) + (a + b * cos(1.5f * u)) * cos(u);
-    dv.z = 1.5f * c * cos(1.5f * u);
-
-    Vector3 q = V3Normalize(dv);
-    Vector3 qvn = V3Normalize((Vector3){q.y, -q.x, 0});
-    Vector3 ww = V3Cross(q, qvn);
-
-    Point3 range;
-    range.x = x + d * (qvn.x * cos(v) + ww.x * sin(v));
-    range.y = y + d * (qvn.y * cos(v) + ww.y * sin(v));
-    range.z = z + d * ww.z * sin(v);
-    return range;
-}
-
-void create_torus(float major, float minor, Surface* surf)
-{
-    int slices = surf->slices;
-    int stacks = surf->stacks;
-    float ds = 1.0f / slices;
-    float dt = 1.0f / stacks;
-    int vertexCount = slices * stacks * 3;
-    int vertexStride = sizeof(float) * 3;
-    surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
-    surf->normals = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
-    Point3* position = (Point3*) par_buffer_lock(surf->coords, PAR_WRITE);
-    Vector3* normal = (Vector3*) par_buffer_lock(surf->normals, PAR_WRITE);
-    for (float s = 0; s < 1 - ds / 2; s += ds) {
-        for (float t = 0; t < 1 - dt / 2; t += dt) {
-            const float E = 0.01f;
-            Point3 p = knot_fn(s, t);
-            Vector3 u = P3Sub(knot_fn(s + E, t), p);
-            Vector3 v = P3Sub(knot_fn(s, t + E), p);
-            Vector3 n = V3Normalize(V3Cross(u, v));
-            *position++ = p;
-            *normal++ = n;
-        }
-    }
-    par_buffer_unlock(surf->coords);
-    par_buffer_unlock(surf->normals);
-
-    surf->ntriangles = slices * stacks * 2;
-    int indexCount = surf->ntriangles * 3;
-    surf->indices = par_buffer_alloc(indexCount * 2, PAR_GPU_ELEMENTS);
-    uint16_t* index = (uint16_t*) par_buffer_lock(surf->indices, PAR_WRITE);
-    int v = 0;
-    for (int i = 0; i < slices - 1; i++) {
-        for (int j = 0; j < stacks; j++) {
-            int next = (j + 1) % stacks;
-            *index++ = v + next + stacks;
-            *index++ = v + next;
-            *index++ = v + j;
-            *index++ = v + j;
-            *index++ = v + j + stacks;
-            *index++ = v + next + stacks;
-        }
-        v += stacks;
-    }
-    for (int j = 0; j < stacks; j++) {
-        int next = (j + 1) % stacks;
-        *index++ = next;
-        *index++ = v + next;
-        *index++ = v + j;
-        *index++ = v + j;
-        *index++ = j;
-        *index++ = next;
-    }
-    par_buffer_unlock(surf->indices);
-}
+par_mesh* knot;
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -117,11 +24,11 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_cullfaces(0);
     par_shader_load_from_asset("picking.glsl");
 
-    const float fovy = 16 * TWOPI / 180;
+    const float fovy = 16 * PAR_TWOPI / 180;
     const float aspect = (float) winwidth / winheight;
     const float znear = 0.1;
     const float zfar = 300;
-    projection =  M4MakePerspective(fovy, aspect, znear, zfar);
+    projection = M4MakePerspective(fovy, aspect, znear, zfar);
 
     Point3 eye = {0, 0, 4};
     Point3 target = {0, 0, 0};
@@ -129,11 +36,7 @@ void init(float winwidth, float winheight, float pixratio)
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
 
-    knot_surface.slices = 400;
-    knot_surface.stacks = 100;
-    float major = 8;
-    float minor = 2;
-    create_torus(major, minor, &knot_surface);
+    knot = par_mesh_create_knot(400, 100, 8, 2);
 }
 
 int draw()
@@ -145,10 +48,10 @@ int draw()
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_matrix3f(U_IMV, &invmodelview);
-    par_varray_enable(knot_surface.coords, A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_varray_enable(knot_surface.normals, A_NORMAL, 3, PAR_FLOAT, 0, 0);
-    par_varray_bind(knot_surface.indices);
-    par_draw_triangles_u16(0, knot_surface.ntriangles);
+    par_varray_enable(par_mesh_coord(knot), A_POSITION, 3, PAR_FLOAT, 0, 0);
+    par_varray_enable(par_mesh_norml(knot), A_NORMAL, 3, PAR_FLOAT, 0, 0);
+    par_varray_bind(par_mesh_index(knot));
+    par_draw_triangles_u16(0, par_mesh_ntriangles(knot));
     return 1;
 }
 
@@ -162,9 +65,7 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 void dispose()
 {
     par_shader_free(P_SIMPLE);
-    par_buffer_free(knot_surface.coords);
-    par_buffer_free(knot_surface.indices);
-    par_buffer_free(knot_surface.normals);
+    par_mesh_free(knot);
 }
 
 int main(int argc, char* argv[])
