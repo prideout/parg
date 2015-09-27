@@ -3,14 +3,18 @@
 #include <stdint.h>
 #include <vmath.h>
 
-#ifndef GLAPI
-typedef unsigned int GLuint;
-typedef int GLint;
-#endif
+// ENUMS
 
-// BUFFER
+#define PAR_BYTE 0x1400
+#define PAR_UNSIGNED_BYTE 0x1401
+#define PAR_SHORT 0x1402
+#define PAR_UNSIGNED_SHORT 0x1403
+#define PAR_INT 0x1404
+#define PAR_UNSIGNED_INT 0x1405
+#define PAR_FLOAT 0x1406
+#define PAR_DOUBLE 0x140A
 
-typedef struct par_buffer_s par_buffer;
+typedef unsigned int par_data_type;
 
 typedef enum {
     PAR_CPU,
@@ -19,15 +23,21 @@ typedef enum {
     PAR_GPU_ELEMENTS
 } par_buffer_type;
 
+// BUFFER
+
+typedef struct par_buffer_s par_buffer;
+
 typedef enum { PAR_READ, PAR_WRITE, PAR_MODIFY } par_buffer_mode;
 
 par_buffer* par_buffer_alloc(int nbytes, par_buffer_type);
 par_buffer* par_buffer_dup(par_buffer*, par_buffer_type);
 void par_buffer_free(par_buffer*);
 int par_buffer_length(par_buffer*);
-GLuint par_buffer_gpu_handle(par_buffer*);
 char* par_buffer_lock(par_buffer*, par_buffer_mode);
 void par_buffer_unlock(par_buffer*);
+
+void par_buffer_gpu_bind(par_buffer*);
+int par_buffer_gpu_check(par_buffer*);
 
 par_buffer* par_buffer_from_file(const char* filepath);
 par_buffer* par_buffer_from_asset(const char* filename);
@@ -49,7 +59,6 @@ par_buffer* par_fp32_get(par_fp32*);
 par_fp32* par_fp32_alloc(int nfloats);
 void par_fp32_free(par_fp32*);
 int par_fp32_length(par_fp32*);
-GLuint par_fp32_gpu_handle(par_fp32*);
 float* par_fp32_lock(par_fp32*, par_buffer_mode);
 void par_fp32_unlock(par_fp32*);
 
@@ -74,8 +83,6 @@ void par_mesh_from_surface(par_surface, par_u16* indices, par_fp32* coords);
 
 void par_shader_load_from_buffer(par_buffer*);
 void par_shader_load_from_asset(const char* filename);
-GLuint par_shader_attrib_get(par_token);
-GLint par_shader_uniform_get(par_token);
 void par_shader_bind(par_token);
 void par_shader_free(par_token);
 
@@ -88,6 +95,13 @@ void par_uniform_matrix4f(par_token, const Matrix4* val);
 
 void par_state_clearcolor(Vector4 color);
 void par_state_cullfaces(int enabled);
+
+// VARRAY
+
+void par_varray_enable(par_buffer*, par_token attr, int ncomps,
+    par_data_type type, int stride, int offset);
+
+void par_varray_disable(par_token attr);
 
 // DRAW
 

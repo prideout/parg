@@ -1,7 +1,6 @@
 #include <par.h>
-#include <pargl.h>
+#include "pargl.h"
 #include <sds.h>
-#include <stdio.h>
 #include <string.h>
 #include "verify.h"
 #include "kvec.h"

@@ -1,7 +1,5 @@
 #include <par.h>
 #include <parwin.h>
-#include <pargl.h>
-#include <stdio.h>
 
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
@@ -48,21 +46,12 @@ int draw()
 {
     const Vector4 fgcolor = V4ScalarDiv((Vector4){198, 226, 233, 255}, 255);
     Matrix4 mvp = M4Mul(projection, M4Mul(view, model));
-
-    int position = par_shader_attrib_get(A_POSITION);
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
     par_uniform4f(U_COLOR, &fgcolor);
     par_uniform_matrix4f(U_MVP, &mvp);
-
-    // VAO START
-    glBindBuffer(GL_ARRAY_BUFFER, par_buffer_gpu_handle(tricoords));
-    glEnableVertexAttribArray(position);
-    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    // VAO END
-
+    par_varray_enable(tricoords, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_triangles(0, 1);
-
     return 1;
 }
 

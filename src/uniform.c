@@ -1,5 +1,5 @@
 #include <par.h>
-#include <pargl.h>
+#include "pargl.h"
 
 void par_uniform4f(par_token tok, const Vector4* val)
 {

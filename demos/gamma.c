@@ -1,5 +1,5 @@
+#include <par.h>
 #include <parwin.h>
-#include <pargl.h>
 
 static const int VSYNC = 1;
 static const float ASPECT = 1.85;
@@ -7,12 +7,13 @@ static const int HEIGHT = 500;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    glClearColor(0, 0.25, 0.5, 1.0);
+    const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
+    par_state_clearcolor(bgcolor);
 }
 
 int draw()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    par_draw_clear();
     return 1;
 }
 

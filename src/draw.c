@@ -1,5 +1,5 @@
 #include <par.h>
-#include <pargl.h>
+#include "pargl.h"
 
 void par_draw_clear()
 {

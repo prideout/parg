@@ -1,6 +1,5 @@
 #include <par.h>
-#include <pargl.h>
-#include <stdio.h>
+#include "pargl.h"
 #include <stdlib.h>
 #include <sds.h>
 #include "verify.h"
@@ -13,7 +12,7 @@ struct par_buffer_s {
     char* gpumapped;
 };
 
-int par_buffer_isgpu(par_buffer* buf)
+int par_buffer_gpu_check(par_buffer* buf)
 {
     return buf->memtype == PAR_GPU_ARRAY || buf->memtype == PAR_GPU_ELEMENTS;
 }
@@ -28,7 +27,7 @@ par_buffer* par_buffer_alloc(int nbytes, par_buffer_type memtype)
     retval->memtype = memtype;
     retval->gpuhandle = 0;
     retval->gpumapped = 0;
-    if (par_buffer_isgpu(retval)) {
+    if (par_buffer_gpu_check(retval)) {
         glGenBuffers(1, &retval->gpuhandle);
     }
     return retval;
@@ -36,7 +35,7 @@ par_buffer* par_buffer_alloc(int nbytes, par_buffer_type memtype)
 
 void par_buffer_free(par_buffer* buf)
 {
-    if (par_buffer_isgpu(buf)) {
+    if (par_buffer_gpu_check(buf)) {
         glDeleteBuffers(1, &buf->gpuhandle);
     } else {
         free(buf->data);
@@ -48,7 +47,7 @@ int par_buffer_length(par_buffer* buf) { return buf->nbytes; }
 
 char* par_buffer_lock(par_buffer* buf, par_buffer_mode access)
 {
-    if (access == PAR_WRITE && par_buffer_isgpu(buf)) {
+    if (access == PAR_WRITE && par_buffer_gpu_check(buf)) {
         buf->gpumapped = malloc(buf->nbytes);
         return buf->gpumapped;
     }
@@ -90,4 +89,12 @@ par_buffer* par_buffer_from_asset(const char* filename)
     par_buffer* retval = par_buffer_from_file(assetpath);
     sdsfree(assetpath);
     return retval;
+}
+
+void par_buffer_gpu_bind(par_buffer* buf)
+{
+    par_verify(par_buffer_gpu_check(buf), "GPU buffer required.", 0)
+    GLenum target = buf->memtype == PAR_GPU_ARRAY ? GL_ARRAY_BUFFER
+        : GL_ELEMENT_ARRAY_BUFFER;
+    glBindBuffer(target, par_buffer_gpu_handle(buf));
 }

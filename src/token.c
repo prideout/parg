@@ -1,5 +1,4 @@
 #include <par.h>
-#include <stdio.h>
 #include "sds.h"
 #include "khash.h"
 #include "verify.h"

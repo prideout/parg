@@ -23,7 +23,6 @@ I'm currently using:
 
 ### Soon
 
-- varray.c
 - demos/gamma
     - https://www.shadertoy.com/view/llBGz1
     - surface.c (sphere, klein, disk)
