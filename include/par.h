@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <vmath.h>
 
 #ifndef GLAPI
 typedef unsigned int GLuint;
@@ -77,6 +78,22 @@ GLuint par_shader_attrib_get(par_token);
 GLint par_shader_uniform_get(par_token);
 void par_shader_bind(par_token);
 void par_shader_free(par_token);
+
+// UNIFORM
+
+void par_uniform4f(par_token, const Vector4* val);
+void par_uniform_matrix4f(par_token, const Matrix4* val);
+
+// STATE
+
+void par_state_clearcolor(Vector4 color);
+void par_state_cullfaces(int enabled);
+
+// DRAW
+
+void par_draw_clear();
+void par_draw_triangles(int start, int count);
+void par_draw_triangles_u16(int start, int count);
 
 // ASSET
 

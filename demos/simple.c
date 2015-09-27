@@ -1,7 +1,6 @@
 #include <par.h>
 #include <parwin.h>
 #include <pargl.h>
-#include <vmath.h>
 #include <stdio.h>
 
 #define TOKEN_TABLE(F)          \
@@ -19,9 +18,10 @@ par_buffer* tricoords;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    glClearColor(167 / 255.0, 190 / 255.0, 211 / 255.0, 1.0);
-    glEnable(GL_CULL_FACE);
+    const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
 
+    par_state_clearcolor(bgcolor);
+    par_state_cullfaces(1);
     par_shader_load_from_asset("simple.glsl");
 
     const float h = 5.0f;
@@ -46,15 +46,14 @@ void init(float winwidth, float winheight, float pixratio)
 
 int draw()
 {
-    Matrix4 modelview = M4Mul(view, model);
-    Matrix4 mvp = M4Mul(projection, modelview);
+    const Vector4 fgcolor = V4ScalarDiv((Vector4){198, 226, 233, 255}, 255);
+    Matrix4 mvp = M4Mul(projection, M4Mul(view, model));
 
     int position = par_shader_attrib_get(A_POSITION);
-    glClear(GL_COLOR_BUFFER_BIT);
+    par_draw_clear();
     par_shader_bind(P_SIMPLE);
-    glUniform4f(par_shader_uniform_get(U_COLOR), 218 / 255.0, 184 / 255.0,
-        148 / 255.0, 1);
-    glUniformMatrix4fv(par_shader_uniform_get(U_MVP), 1, 0, &mvp.col0.x);
+    par_uniform4f(U_COLOR, &fgcolor);
+    par_uniform_matrix4f(U_MVP, &mvp);
 
     // VAO START
     glBindBuffer(GL_ARRAY_BUFFER, par_buffer_gpu_handle(tricoords));
@@ -62,11 +61,17 @@ int draw()
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 0, 0);
     // VAO END
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    par_draw_triangles(0, 1);
+
     return 1;
 }
 
-void tick(float seconds, float winwidth, float winheight, float pixratio) {}
+void tick(float winwidth, float winheight, float pixratio, float seconds)
+{
+    const float RADIANS_PER_SECOND = 3.14;
+    float theta = seconds * RADIANS_PER_SECOND;
+    model = M4MakeRotationZ(theta);
+}
 
 void dispose()
 {

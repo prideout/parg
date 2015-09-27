@@ -23,15 +23,11 @@ I'm currently using:
 
 ### Soon
 
-- spinning model matrix
-- gamma
+- varray.c
+- demos/gamma
     - https://www.shadertoy.com/view/llBGz1
     - surface.c (sphere, klein, disk)
     - mesh.c
-- pargl should be internal
-    - wrap draw calls, clear and VAO-like stuff
-    - wrap glUniform stuff (uniform.c)
-        - par_uniform4f(token, value)
 
 ### Later
 

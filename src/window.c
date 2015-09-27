@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 static float _pixscale = 1.0f;
 static int _winwidth = 0;
@@ -76,6 +77,8 @@ int par_window_exec(float winwidth, float winheight, int vsync)
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     // 1.85 is the "Letterbox" aspect ratio, popular in the film industry.
     // Also, the window is small enough to fit just fine on my 13" Pro.
@@ -101,15 +104,24 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     glfwSetMouseButtonCallback(window, onclick);
     glfwSetScrollCallback(window, onscroll);
 
+    struct timeval tm1;
+    gettimeofday(&tm1, NULL);
+
     while (!glfwWindowShouldClose(window)) {
         int width, height;
+
+        // Get microseconds.
+        struct timeval tm2;
+        gettimeofday(&tm2, 0);
+        unsigned long long milliseconds = 1000 * (tm2.tv_sec - tm1.tv_sec) +
+            (tm2.tv_usec - tm1.tv_usec) / 1000;
 
         // Check if the window has been resized.
         glfwGetFramebufferSize(window, &width, &height);
         glfwGetWindowSize(window, &_winwidth, &_winheight);
         _pixscale = (float) width / _winwidth;
         if (_tick) {
-            _tick(_winwidth, _winheight, _pixscale, 0);
+            _tick(_winwidth, _winheight, _pixscale, milliseconds / 1000.0);
         }
 
         // Perform all OpenGL work.
