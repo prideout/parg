@@ -68,6 +68,7 @@ void par_shader_free(par_token);
 
 void par_uniform4f(par_token, const Vector4* val);
 void par_uniform_matrix4f(par_token, const Matrix4* val);
+void par_uniform_matrix3f(par_token, const Matrix3* val);
 
 // STATE
 

@@ -24,21 +24,32 @@ I'm currently using:
 ### Soon
 
 - demos/clipping.c
-    - shading, rotation, clipping
+    - depth testing (add global state for par_draw_clear)
+    - lighting
+    - clipping / twosided
+    - do not bother with rotation or grid patern
     - http://github.prideout.net/clip-planes/
     - move the tess code into mesh.c
-- demos/gamma.c
-    - see the notes at the top
-- cut and run
+- demos/picking.c
+    - http://github.prideout.net/distance-picking/
+    - add trefoil to mesh.c
+    - don't implement rong & tan; cut and run
 
 ### Later
 
-- emscripten (which should be enabled in travis) and gh-pages
-    - don't worry about "offloading" par_buffer yet
-- coordfield (picking)
+- demos/picking.c
+    - add rong & tan to picking.c
+- demos/gamma.c
+    - see the notes at the top
 - demos/turntable
+    - add klein to mesh.c
     - see img/wallpaper.png
     - pnglite
+- window.c
+    - add auto-quit and screenshot flags
+    - does travis have a GPU?
+- emscripten (which should be enabled in travis) and gh-pages
+    - don't worry about "offloading" par_buffer yet
 - gles3 branch: core profile + webgl2 (USE_WEBGL2 exists in emscripten)
 - fluid
     - http://codepen.io/tmrDevelops/pen/jbbeMo

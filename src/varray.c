@@ -13,10 +13,7 @@ void par_varray_enable(par_buffer* buf, par_token attr, int ncomps,
     glVertexAttribPointer(slot, ncomps, type, GL_FALSE, stride, ptr);
 }
 
-void par_varray_bind(par_buffer* buf)
-{
-    par_buffer_gpu_bind(buf);
-}
+void par_varray_bind(par_buffer* buf) { par_buffer_gpu_bind(buf); }
 
 void par_varray_disable(par_token attr)
 {
