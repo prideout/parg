@@ -8,7 +8,8 @@ For now, the `par` library only supports OpenGL 2.1 with OS X, and OpenGL ES 2.0
 
 ```
 brew update
-brew install scons uncrustify glfw3 clang-format
+brew tap homebrew/versions
+brew install scons uncrustify glfw3 clang-format pkg-config
 scons
 ```
 
