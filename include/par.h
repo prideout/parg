@@ -56,6 +56,7 @@ par_mesh* par_mesh_create_torus(int cols, int rows, float major, float minor);
 par_mesh* par_mesh_create_rectangle(float width, float height);
 void par_mesh_free(par_mesh* m);
 par_buffer* par_mesh_coord(par_mesh* m);
+par_buffer* par_mesh_uv(par_mesh* m);
 par_buffer* par_mesh_norml(par_mesh* m);
 par_buffer* par_mesh_index(par_mesh* m);
 int par_mesh_ntriangles(par_mesh* m);

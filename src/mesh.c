@@ -4,6 +4,7 @@
 
 struct par_mesh_s {
     par_buffer* coords;
+    par_buffer* uvs;
     par_buffer* normals;
     par_buffer* indices;
     int ntriangles;
@@ -59,6 +60,7 @@ par_mesh* par_mesh_create_knot(int slices, int stacks, float major, float minor)
     int vertexStride = sizeof(float) * 3;
     surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
     surf->normals = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
+    surf->uvs = 0;
     Point3* position = (Point3*) par_buffer_lock(surf->coords, PAR_WRITE);
     Vector3* normal = (Vector3*) par_buffer_lock(surf->normals, PAR_WRITE);
     for (float s = 0; s < 1 - ds / 2; s += ds) {
@@ -114,6 +116,7 @@ par_mesh* par_mesh_create_torus(
     int vertexCount = slices * stacks * 3;
     int vertexStride = sizeof(float) * 3;
     surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
+    surf->uvs = 0;
     Point3* position = (Point3*) par_buffer_lock(surf->coords, PAR_WRITE);
     for (int slice = 0; slice < slices; slice++) {
         float theta = slice * dtheta;
@@ -191,6 +194,17 @@ par_mesh* par_mesh_create_rectangle(float width, float height)
     *position++ = +w;
     *position = +h;
     par_buffer_unlock(surf->coords);
+    surf->uvs = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
+    float* texcoord = (float*) par_buffer_lock(surf->uvs, PAR_WRITE);
+    *texcoord++ = 0;
+    *texcoord++ = 1;
+    *texcoord++ = 1;
+    *texcoord++ = 1;
+    *texcoord++ = 0;
+    *texcoord++ = 0;
+    *texcoord++ = 1;
+    *texcoord = 0;
+    par_buffer_unlock(surf->uvs);
     return surf;
 }
 
@@ -199,10 +213,13 @@ void par_mesh_free(par_mesh* m)
     par_buffer_free(m->coords);
     par_buffer_free(m->indices);
     par_buffer_free(m->normals);
+    par_buffer_free(m->uvs);
     free(m);
 }
 
 par_buffer* par_mesh_coord(par_mesh* m) { return m->coords; }
+
+par_buffer* par_mesh_uv(par_mesh* m) { return m->uvs; }
 
 par_buffer* par_mesh_norml(par_mesh* m) { return m->normals; }
 

@@ -23,7 +23,6 @@ I'm currently using:
 ## TODO
 
 - demos/picking.c
-    - factor with clipping.c into mesh.c
     - add rong & tan
 - emscripten (which should be enabled in travis) and gh-pages
 - par_data_type should be a normal enum (0 1 2 3...)
@@ -34,9 +33,6 @@ I'm currently using:
     - add klein to mesh.c
     - see img/wallpaper.png
     - pnglite
-- window.c
-    - add auto-quit and screenshot flags
-    - does travis have a GPU?
 - offload the buffer in emscripten builds
 - gles3 branch: core profile + webgl2 (USE_WEBGL2 exists in emscripten)
 - fluid

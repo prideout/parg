@@ -5,9 +5,8 @@
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
-    F(A_NORMAL, "a_normal")     \
-    F(U_MVP, "u_mvp")           \
-    F(U_IMV, "u_imv")
+    F(A_TEXCOORD, "a_texcoord") \
+    F(U_MVP, "u_mvp")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -51,6 +50,7 @@ int draw()
     par_texture_bind(palmstexture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_varray_enable(par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
     par_draw_one_quad();
     return 1;
 }

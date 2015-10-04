@@ -21,6 +21,8 @@
 #endif
 #endif
 
+void glGenerateMipmap(GLenum target);
+
 GLuint par_buffer_gpu_handle(par_buffer*);
 GLuint par_shader_attrib_get(par_token);
 GLint par_shader_uniform_get(par_token);
