@@ -15,6 +15,7 @@ Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
 par_mesh* rectmesh;
+par_texture* palmstexture;
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -29,19 +30,16 @@ void init(float winwidth, float winheight, float pixratio)
     const float znear = 0.1;
     const float zfar = 300;
     projection = M4MakePerspective(fovy, aspect, znear, zfar);
-
     Point3 eye = {0, 0, 4};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
 
-    float imgsize[2] = {4096, 3123};
-    rectmesh = par_mesh_create_rectangle(2, 2.0 * imgsize[1] / imgsize[0]);
-
-    par_buffer* pngdata = par_buffer_from_asset("arecaceae.png");
-    assert(pngdata);
-    par_buffer_free(pngdata);
+    palmstexture = par_texture_from_asset("arecaceae.png");
+    int w, h;
+    par_texture_info(palmstexture, &w, &h);
+    rectmesh = par_mesh_create_rectangle(2, 2.0 * h / w);
 }
 
 int draw()
@@ -50,6 +48,7 @@ int draw()
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
+    par_texture_bind(palmstexture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_one_quad();
@@ -67,6 +66,7 @@ void dispose()
 {
     par_shader_free(P_SIMPLE);
     par_mesh_free(rectmesh);
+    par_texture_free(palmstexture);
 }
 
 int main(int argc, char* argv[])

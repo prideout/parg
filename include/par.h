@@ -33,7 +33,7 @@ par_buffer* par_buffer_alloc(int nbytes, par_buffer_type);
 par_buffer* par_buffer_dup(par_buffer*, par_buffer_type);
 void par_buffer_free(par_buffer*);
 int par_buffer_length(par_buffer*);
-char* par_buffer_lock(par_buffer*, par_buffer_mode);
+void* par_buffer_lock(par_buffer*, par_buffer_mode);
 void par_buffer_unlock(par_buffer*);
 void par_buffer_gpu_bind(par_buffer*);
 int par_buffer_gpu_check(par_buffer*);
@@ -66,6 +66,14 @@ void par_shader_load_from_buffer(par_buffer*);
 void par_shader_load_from_asset(const char* filename);
 void par_shader_bind(par_token);
 void par_shader_free(par_token);
+
+// TEXTURE
+
+typedef struct par_texture_s par_texture;
+par_texture* par_texture_from_asset(const char* filename);
+void par_texture_bind(par_texture*, int stage);
+void par_texture_info(par_texture*, int* width, int* height);
+void par_texture_free(par_texture*);
 
 // UNIFORM
 

@@ -49,7 +49,7 @@ void par_buffer_free(par_buffer* buf)
 
 int par_buffer_length(par_buffer* buf) { return buf->nbytes; }
 
-char* par_buffer_lock(par_buffer* buf, par_buffer_mode access)
+void* par_buffer_lock(par_buffer* buf, par_buffer_mode access)
 {
     if (access == PAR_WRITE && par_buffer_gpu_check(buf)) {
         buf->gpumapped = malloc(buf->nbytes);

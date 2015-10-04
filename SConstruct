@@ -5,6 +5,7 @@ import os.path
 import re
 
 DEMOS = [re.split('\W+', str(s))[-2] for s in Glob('demos/*.c')]
+DEFAULT_DEMO = 'zooming'
 
 DEMO_HELP = '\n'.join(
     '- "scons {0}" to build and run the {0} demo.'.format(x) for x in DEMOS)
@@ -20,7 +21,7 @@ Hello, friend!  You can type...
 - "scons -c" to clean.
 - "rm -rf build" to clobber.
 {1}
-'''.format(DEMOS[0], DEMO_HELP))
+'''.format(DEFAULT_DEMO, DEMO_HELP))
 
 BUILD_DIR = 'build'
 
@@ -43,7 +44,7 @@ for demo in DEMOS:
     Depends(demo, spath)
     Command(demo, binpath, binpath)
     AlwaysBuild(demo)
-    if demo == DEMOS[0]:
+    if demo == DEFAULT_DEMO:
         Default(demo)
 
 # Targets that format code.
