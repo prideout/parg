@@ -75,6 +75,7 @@ par_texture* par_texture_from_asset(const char* filename);
 void par_texture_bind(par_texture*, int stage);
 void par_texture_info(par_texture*, int* width, int* height);
 void par_texture_free(par_texture*);
+void par_texture_fliprows(void* data, int rowsize, int nrows);
 
 // UNIFORM
 

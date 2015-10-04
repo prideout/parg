@@ -1,8 +1,11 @@
+#include <par.h>
 #include <parwin.h>
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
+#include "lodepng.h"
 
 static float _pixscale = 1.0f;
 static int _winwidth = 0;
@@ -107,6 +110,13 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     struct timeval tm1;
     gettimeofday(&tm1, NULL);
 
+    char* capture = 0;
+    for (int i = 1; i < _argc - 1; i++) {
+        if (0 == strcmp(_argv[i], "-capture")) {
+            capture = _argv[i + 1];
+        }
+    }
+
     while (!glfwWindowShouldClose(window)) {
         int width, height;
 
@@ -132,6 +142,15 @@ int par_window_exec(float winwidth, float winheight, int vsync)
                 puts("OpenGL Error");
             }
             glfwSwapBuffers(window);
+            if (capture) {
+                unsigned char* buffer = malloc(width * height * 4);
+                glReadPixels(
+                    0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+                par_texture_fliprows(buffer, width * 4, height);
+                lodepng_encode32_file(capture, buffer, width, height);
+                free(buffer);
+                break;
+            }
         }
         glfwMakeContextCurrent(0);
         glfwPollEvents();

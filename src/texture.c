@@ -25,6 +25,7 @@ par_texture* par_texture_from_asset(const char* filename)
     par_buffer_free(pngbuf);
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
+    par_texture_fliprows(grayvals, tex->width, tex->height);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex->width, tex->height, 0,
         GL_LUMINANCE, GL_UNSIGNED_BYTE, grayvals);
     free(grayvals);
@@ -51,4 +52,19 @@ void par_texture_free(par_texture* tex)
 {
     glDeleteTextures(1, &tex->handle);
     free(tex);
+}
+
+void par_texture_fliprows(void* data, int rowsize, int nrows)
+{
+    char* tmp = malloc(rowsize);
+    char* top = data;
+    char* bottom = top + rowsize * nrows;
+    for (int i = 0; i < nrows / 2; i++) {
+        bottom -= rowsize;
+        memcpy(tmp, top, rowsize);
+        memcpy(top, bottom, rowsize);
+        memcpy(bottom, tmp, rowsize);
+        top += rowsize;
+    }
+    free(tmp);
 }

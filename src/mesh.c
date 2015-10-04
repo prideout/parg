@@ -197,13 +197,13 @@ par_mesh* par_mesh_create_rectangle(float width, float height)
     surf->uvs = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
     float* texcoord = (float*) par_buffer_lock(surf->uvs, PAR_WRITE);
     *texcoord++ = 0;
-    *texcoord++ = 1;
-    *texcoord++ = 1;
+    *texcoord++ = 0;
     *texcoord++ = 1;
     *texcoord++ = 0;
     *texcoord++ = 0;
     *texcoord++ = 1;
-    *texcoord = 0;
+    *texcoord++ = 1;
+    *texcoord = 1;
     par_buffer_unlock(surf->uvs);
     return surf;
 }
