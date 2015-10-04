@@ -3,3 +3,4 @@ script:
     - brew update &>/dev/null
     - brew install scons uncrustify glfw3
     - scons demos
+    - build/par_zooming -capture zooming.png
