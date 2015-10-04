@@ -88,10 +88,13 @@ par_buffer* par_buffer_from_file(const char* filepath)
 
 par_buffer* par_buffer_from_asset(const char* filename)
 {
-    sds path = (sds) par_asset_whereami();
-    sds assetpath = sdscat(sdsdup(path), filename);
-    par_buffer* retval = par_buffer_from_file(assetpath);
-    sdsfree(assetpath);
+    sds exepath = par_asset_whereami();
+    sds fullpath = sdscat(sdsdup(exepath), filename);
+    if (!par_asset_fileexists(fullpath)) {
+        par_asset_download(filename, fullpath);
+    }
+    par_buffer* retval = par_buffer_from_file(fullpath);
+    sdsfree(fullpath);
     return retval;
 }
 

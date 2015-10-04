@@ -1,5 +1,6 @@
 #include <par.h>
 #include <parwin.h>
+#include <assert.h>
 
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
@@ -38,7 +39,9 @@ void init(float winwidth, float winheight, float pixratio)
     float imgsize[2] = {4096, 3123};
     rectmesh = par_mesh_create_rectangle(2, 2.0 * imgsize[1] / imgsize[0]);
 
-    // par_buffer_load_from_asset("http://github.prideout.net/assets/arecaceae.png");
+    par_buffer* pngdata = par_buffer_from_asset("arecaceae.png");
+    assert(pngdata);
+    par_buffer_free(pngdata);
 }
 
 int draw()
