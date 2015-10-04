@@ -53,6 +53,7 @@ par_token par_token_from_string(const char*);
 typedef struct par_mesh_s par_mesh;
 par_mesh* par_mesh_create_knot(int cols, int rows, float major, float minor);
 par_mesh* par_mesh_create_torus(int cols, int rows, float major, float minor);
+par_mesh* par_mesh_create_rectangle(float width, float height);
 void par_mesh_free(par_mesh* m);
 par_buffer* par_mesh_coord(par_mesh* m);
 par_buffer* par_mesh_norml(par_mesh* m);
@@ -89,5 +90,6 @@ void par_varray_enable(par_buffer*, par_token attr, int ncomps,
 // DRAW
 
 void par_draw_clear();
+void par_draw_one_quad();
 void par_draw_triangles(int start, int count);
 void par_draw_triangles_u16(int start, int count);

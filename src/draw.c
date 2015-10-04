@@ -10,6 +10,8 @@ void par_draw_clear()
     glClear(planes);
 }
 
+void par_draw_one_quad() { glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); }
+
 void par_draw_triangles(int start, int count)
 {
     glDrawArrays(GL_TRIANGLES, start * 3, count * 3);

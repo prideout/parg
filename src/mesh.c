@@ -171,6 +171,29 @@ par_mesh* par_mesh_create_torus(
     return surf;
 }
 
+par_mesh* par_mesh_create_rectangle(float width, float height)
+{
+    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    surf->normals = 0;
+    surf->indices = 0;
+    surf->ntriangles = 2;
+    int vertexCount = 4;
+    int vertexStride = sizeof(float) * 2;
+    surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
+    float* position = (float*) par_buffer_lock(surf->coords, PAR_WRITE);
+    float w = width * 0.5, h = height * 0.5;
+    *position++ = -w;
+    *position++ = -h;
+    *position++ = +w;
+    *position++ = -h;
+    *position++ = -w;
+    *position++ = +h;
+    *position++ = +w;
+    *position = +h;
+    par_buffer_unlock(surf->coords);
+    return surf;
+}
+
 void par_mesh_free(par_mesh* m)
 {
     par_buffer_free(m->coords);

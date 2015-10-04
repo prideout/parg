@@ -36,6 +36,9 @@ par_buffer* par_buffer_alloc(int nbytes, par_buffer_type memtype)
 
 void par_buffer_free(par_buffer* buf)
 {
+    if (!buf) {
+        return;
+    }
     if (par_buffer_gpu_check(buf)) {
         glDeleteBuffers(1, &buf->gpuhandle);
     } else {

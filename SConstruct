@@ -2,8 +2,9 @@
 # This is the SConstruct, which calls into the SConscript.
 
 import os.path
+import re
 
-DEMOS = Split('simple gamma clipping picking')
+DEMOS = [re.split('\W+', str(s))[-2] for s in Glob('demos/*.c')]
 
 DEMO_HELP = '\n'.join(
     '- "scons {0}" to build and run the {0} demo.'.format(x) for x in DEMOS)

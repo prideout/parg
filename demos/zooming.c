@@ -13,16 +13,15 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
-par_mesh* knot;
+par_mesh* rectmesh;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
-
-    par_state_clearcolor(bgcolor);
-    par_state_depthtest(1);
-    par_state_cullfaces(1);
-    par_shader_load_from_asset("picking.glsl");
+    float gray = 0.8;
+    par_state_clearcolor((Vector4){gray, gray, gray, 1});
+    par_state_depthtest(0);
+    par_state_cullfaces(0);
+    par_shader_load_from_asset("zooming.glsl");
 
     const float fovy = 16 * PAR_TWOPI / 180;
     const float aspect = (float) winwidth / winheight;
@@ -36,22 +35,21 @@ void init(float winwidth, float winheight, float pixratio)
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
 
-    knot = par_mesh_create_knot(400, 100, 8, 2);
+    float imgsize[2] = {4096, 3123};
+    rectmesh = par_mesh_create_rectangle(2, 2.0 * imgsize[1] / imgsize[0]);
+
+    // par_buffer_load_from_asset("http://github.prideout.net/assets/arecaceae.png");
 }
 
 int draw()
 {
     Matrix4 modelview = M4Mul(view, model);
-    Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_uniform_matrix3f(U_IMV, &invmodelview);
-    par_varray_enable(par_mesh_coord(knot), A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_varray_enable(par_mesh_norml(knot), A_NORMAL, 3, PAR_FLOAT, 0, 0);
-    par_varray_bind(par_mesh_index(knot));
-    par_draw_triangles_u16(0, par_mesh_ntriangles(knot));
+    par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_draw_one_quad();
     return 1;
 }
 
@@ -65,7 +63,7 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 void dispose()
 {
     par_shader_free(P_SIMPLE);
-    par_mesh_free(knot);
+    par_mesh_free(rectmesh);
 }
 
 int main(int argc, char* argv[])
