@@ -11,38 +11,39 @@
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 Matrix4 projection;
-Matrix4 model;
-Matrix4 view;
+Point3 camerapos;
 par_mesh* rectmesh;
 par_texture* palmstexture;
 
+const float gray = 0.8;
+const float fovy = 16 * PAR_TWOPI / 180;
+const float worldwidth = 6000;
+
 void init(float winwidth, float winheight, float pixratio)
 {
-    float gray = 0.8;
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
     par_state_depthtest(0);
     par_state_cullfaces(0);
     par_shader_load_from_asset("zooming.glsl");
-
-    const float fovy = 16 * PAR_TWOPI / 180;
-    const float aspect = (float) winwidth / winheight;
-    const float znear = 0.1;
-    const float zfar = 300;
-    projection = M4MakePerspective(fovy, aspect, znear, zfar);
-    Point3 eye = {0, 0, 4};
-    Point3 target = {0, 0, 0};
-    Vector3 up = {0, 1, 0};
-    view = M4MakeLookAt(eye, target, up);
-    model = M4MakeIdentity();
-
     palmstexture = par_texture_from_asset("arecaceae.png");
-    int w, h;
-    par_texture_info(palmstexture, &w, &h);
-    rectmesh = par_mesh_create_rectangle(2, 2.0 * h / w);
+    int imgwidth, imgheight;
+    par_texture_info(palmstexture, &imgwidth, &imgheight);
+    float worldheight = worldwidth * imgheight / imgwidth;
+    rectmesh = par_mesh_create_rectangle(worldwidth, worldheight);
+    const float aspect = (float) winwidth / winheight;
+    float cameraheight = 0.5 * worldheight / tan(fovy * 0.5);
+    camerapos = (Point3){0, 0, cameraheight};
+    const float znear = 1.0;
+    const float zfar = cameraheight * 1.1;
+    projection = M4MakePerspective(fovy, aspect, znear, zfar);
 }
 
 int draw()
 {
+    Point3 target = {camerapos.x, camerapos.y, 0};
+    Vector3 up = {0, 1, 0};
+    Matrix4 view = M4MakeLookAt(camerapos, target, up);
+    Matrix4 model = M4MakeIdentity();
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
@@ -55,12 +56,7 @@ int draw()
     return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
-{
-    const float RADIANS_PER_SECOND = 1.57;
-    float theta = seconds * RADIANS_PER_SECOND;
-    model = M4MakeRotationY(theta);
-}
+void tick(float winwidth, float winheight, float pixratio, float seconds) {}
 
 void dispose()
 {
