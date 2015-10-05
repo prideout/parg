@@ -19,7 +19,12 @@ void main()
 
 uniform sampler2D img;
 
+const float brightness = 0.9;
+
 void main()
 {
-    gl_FragColor = texture2D(img, v_texcoord);
+    float luma = texture2D(img, v_texcoord).x;
+    float fwid = fwidth(luma);
+    luma = brightness * smoothstep(0.5 - fwid, 0.5 + fwid, luma);
+    gl_FragColor = vec4(vec3(luma), 1);
 }
