@@ -1,0 +1,655 @@
+
+<!--
+
+Saved from:
+	http://hvidtfeldts.net/WebGL-DP/webgl.html
+
+Also of interest:
+  https://www.thasler.com/blog/blog/glsl-part2-emu
+
+-->
+
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Mandelbrot WebGL Example (Syntopia 2012)</title>
+
+
+<link type="text/css" href="./jquery-ui-1.8.21.custom.css" rel="stylesheet">
+<script type="text/javascript" src="./jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="./jquery-ui-1.8.21.custom.min.js"></script>
+		
+<style>
+	.ui-slider-handle {
+		outline: none;
+	}
+	#slider .ui-slider-range { background: #729fcf; }
+	#slider .ui-slider-handle { border-color: #729fcf; }
+</style>
+	
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision highp float;
+	
+	varying vec2 coord;
+	uniform vec2 pixelSize;
+	uniform float time;
+
+	// Mandelbrot coords
+	uniform vec2 center;
+	uniform float zoom;
+
+	// Julia coords
+	uniform vec2 center2;
+	uniform float zoom2;
+
+	// Color parameters
+	float R = 0.0;
+	float G = 0.43;
+	float B = 1.;
+	float Divider = 23.;
+	float Power = 1.2;
+	float Radius = 0.7037;
+	
+	// Double emulation based on GLSL Mandelbrot Shader by Henry Thasler (www.thasler.org/blog)
+	//
+	// Emulation based on Fortran-90 double-single package. See http://crd.lbl.gov/~dhbailey/mpdist/
+	// Substract: res = ds_add(a, b) => res = a + b
+	vec2 add (vec2 dsa, vec2 dsb)
+	{
+	vec2 dsc;
+	float t1, t2, e;
+
+	 t1 = dsa.x + dsb.x;
+	 e = t1 - dsa.x;
+	 t2 = ((dsb.x - e) + (dsa.x - (t1 - e))) + dsa.y + dsb.y;
+
+	 dsc.x = t1 + t2;
+	 dsc.y = t2 - (dsc.x - t1);
+	 return dsc;
+	}
+
+	// Substract: res = ds_sub(a, b) => res = a - b
+	vec2 sub (vec2 dsa, vec2 dsb)
+	{
+	vec2 dsc;
+	float e, t1, t2;
+
+	 t1 = dsa.x - dsb.x;
+	 e = t1 - dsa.x;
+	 t2 = ((-dsb.x - e) + (dsa.x - (t1 - e))) + dsa.y - dsb.y;
+
+	 dsc.x = t1 + t2;
+	 dsc.y = t2 - (dsc.x - t1);
+	 return dsc;
+	}
+
+	// Compare: res = -1 if a < b
+	//              = 0 if a == b
+	//              = 1 if a > b
+	float cmp(vec2 dsa, vec2 dsb)
+	{
+	 if (dsa.x < dsb.x) return -1.;
+	 else if (dsa.x == dsb.x) 
+		{
+		if (dsa.y < dsb.y) return -1.;
+		else if (dsa.y == dsb.y) return 0.;
+		else return 1.;
+		}
+	 else return 1.;
+	}
+
+	// Multiply: res = ds_mul(a, b) => res = a * b
+	vec2 mul (vec2 dsa, vec2 dsb)
+	{
+	vec2 dsc;
+	float c11, c21, c2, e, t1, t2;
+	float a1, a2, b1, b2, cona, conb, split = 8193.;
+
+	 cona = dsa.x * split;
+	 conb = dsb.x * split;
+	 a1 = cona - (cona - dsa.x);
+	 b1 = conb - (conb - dsb.x);
+	 a2 = dsa.x - a1;
+	 b2 = dsb.x - b1;
+
+	 c11 = dsa.x * dsb.x;
+	 c21 = a2 * b2 + (a2 * b1 + (a1 * b2 + (a1 * b1 - c11)));
+
+	 c2 = dsa.x * dsb.y + dsa.y * dsb.x;
+
+	 t1 = c11 + c2;
+	 e = t1 - c11;
+	 t2 = dsa.y * dsb.y + ((c2 - e) + (c11 - (t1 - e))) + c21;
+	 
+	 dsc.x = t1 + t2;
+	 dsc.y = t2 - (dsc.x - t1);
+	 
+	 return dsc;
+	}
+
+	// create double-single number from float
+	vec2 set(float a)
+	{
+	 vec2 z;
+	 z.x = a;
+	 z.y = 0.0;
+	 return z;
+	}
+	
+	float rand(vec2 co){
+		// implementation found at: lumina.sourceforge.net/Tutorials/Noise.html
+		return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+	}
+
+	vec2 complexMul(vec2 a, vec2 b) {
+		return vec2( a.x*b.x -  a.y*b.y,a.x*b.y + a.y * b.x);
+	}
+	
+	// double complex multiplication
+	vec4 dcMul(vec4 a, vec4 b) {
+		return vec4( sub(mul(a.xy,b.xy),mul(a.zw,b.zw))
+			    ,add(mul(a.xy,b.zw),mul(a.zw,b.xy)));
+	}
+	
+	vec4 dcAdd(vec4 a, vec4 b) {
+		return vec4(add(a.xy,b.xy),add(a.zw,b.zw));
+	}
+	
+	// Length of double complex
+	vec2 dcLength(vec4 a) {
+		return add(mul(a.xy,a.xy),mul(a.zw,a.zw));
+	}
+	
+	vec4 dcSet(vec2 a) {
+		return vec4(a.x,0.,a.y,0.);
+	}
+	
+	// Multiply double-complex with double
+	vec4 dcMul(vec4 a, vec2 b) {
+		return vec4(mul(a.xy,b),mul(a.wz,b));
+	}
+	
+	
+	vec3 colorSinglePrecision(vec2 p, float falloff) {
+				
+		vec2 c = p*zoom+center;
+		
+		vec2 z = vec2(0.0,0.0);
+		
+		int j = #Iterations#;
+		for (int i = 0; i <= #Iterations#; i++) {
+			if (length(z)>1000.0) { break; } 
+			z = complexMul(z,z)+c;
+			j = i; 
+		}
+		float dotZZ = dot(z,z);
+		
+		if (j < #Iterations#) {
+			// The color scheme here is based on one
+			// from the Mandelbrot in Inigo Quilez's Shader Toy:
+			float co = float( j) + 1.0 - log2(.5*log2(dotZZ));
+			co = sqrt(max(0.,co)/256.0);
+			co += rand(coord*fract(time))*0.02;
+			return falloff*vec3( .5+.5*cos(6.2831*co+R),.5+.5*cos(6.2831*co + G),.5+.5*cos(6.2831*co +B) );
+		}  else {
+			// Inside 
+			return vec3(0.05,0.01,0.02);
+		}
+	}
+	
+	vec3 colorDoublePrecision(vec2 p, float falloff) {
+				
+		vec4 c = dcAdd(dcMul(dcSet(p),vec2(zoom,0.)),dcSet(center));
+		
+		vec4 dZ = dcSet(vec2(0.0,0.0));
+		vec4 add = c;
+		
+		int j = #Iterations#;
+		for (int i = 0; i <= #Iterations#; i++) {
+			if (cmp(dcLength(dZ), set(1000.0))>0.) { break; } 
+			dZ = dcAdd(dcMul(dZ,dZ),add);
+			j = i; 
+		}
+		float dotZZ = dZ.x*dZ.x+dZ.z*dZ.z; // extract high part
+		
+		if (j < #Iterations#) {
+			// The color scheme here is based on one
+			// from the Mandelbrot in Inigo Quilez's Shader Toy:
+			float co = float( j) + 1.0 - log2(.5*log2(dotZZ));
+			co = sqrt(max(0.,co)/256.0);
+			co += rand(coord*fract(time))*0.02;
+			return falloff*vec3( .5+.5*cos(6.2831*co+R),.5+.5*cos(6.2831*co + G),.5+.5*cos(6.2831*co +B) );
+		}  else {
+			// Inside 
+			return vec3(0.05,0.01,0.02);
+		}
+	}
+	
+	
+	// Splits in single and double precision halves
+    vec3 colorSplit(vec2 cor) {
+		// round corners
+		vec2 c = 1.0-(10.0-10.0*abs(vec2(cor.x < 0. ? cor.x*2.0+1.0 : cor.x*2.0-1.0,cor.y)));
+		if (abs(cor.x)>0.5 && c.y>0. && c.x>0. && dot(c,c)>1.0) {
+			return vec3(1.0);
+		}
+		
+		float split = (smoothstep(0.0,1.0,(cor.y*0.5)+0.5)-0.5)*0.1;
+		if (cor.x-split<0.) {
+			vec2 c = vec2(cor.x*2.0+1.0,cor.y);
+			vec2 p = c*zoom + center;
+			float falloff = exp(-dot(c,c)/(1.0+0.2*rand(cor)));
+			return colorSinglePrecision(c,falloff);
+		} else {
+			vec2 c = vec2(cor.x*2.0-1.0,cor.y);
+			float falloff = exp(-dot(c,c)/1.0+0.2*rand(cor));
+			vec2 p = c*zoom2 + center2;
+			return (colorDoublePrecision(c,falloff)).bgr;
+		}
+    }
+	
+	const int AntiAlias = #AntiAlias#;
+	void main() {
+		vec3 v = vec3(0.0,0.0,0.0);
+		float d = 1.0/float(AntiAlias);
+		vec2 ard = vec2(pixelSize.x,pixelSize.y)*d;
+		for (int x=0; x <AntiAlias;x++) {
+			for (int y=0; y <AntiAlias;y++) {
+				v += colorSplit(coord+vec2(x,y)*ard);
+			}
+		}
+		gl_FragColor = vec4(pow(v/float(AntiAlias*AntiAlias),vec3(1./2.2)),1.0);
+	}
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 position;
+	varying vec2 coord;
+	
+	void main(void) {
+		coord = position.xy;
+        gl_Position =  vec4(position, 1.0);
+    }
+</script>
+
+
+<script type="text/javascript">
+    var gl;
+    
+	// Some functions used from: https://developer.mozilla.org/en/WebGL/Adding_2D_content_to_a_WebGL_context
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+
+		var source = "";
+			
+		// 'shaderScript' is a HTMLScriptElement. 	
+		// We must extract the text node.
+		var currentChild = shaderScript.firstChild;
+        while(currentChild) {  
+			if (currentChild.nodeType == currentChild.TEXT_NODE) {  
+				source += currentChild.textContent;  
+			}  
+			currentChild = currentChild.nextSibling;  
+		}  
+
+        var shader;
+        if (shaderScript.type == "x-shader/x-fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        } else if (shaderScript.type == "x-shader/x-vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+		// Constants that are passed by 'preprocessing'
+		source = source.replace(/#AntiAlias#/g, ""+AA);
+        source = source.replace(/#Iterations#/g, ""+Iterations);
+		
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    }
+
+	// Strategy outlined in https://cvs.khronos.org/svn/repos/registry/trunk/public/webgl/sdk/demos/common/webgl-utils.js
+	window.requestAnimFrame = (function() {
+	  return window.requestAnimationFrame ||
+			 window.webkitRequestAnimationFrame ||
+			 window.mozRequestAnimationFrame ||
+			 function(callback, element) {
+			   return window.setTimeout(callback, 1000/60); // If no browser support, call at 60 fps
+			 };
+	})();
+
+	var dirty = true; // indicates that we need to refresh the canvas
+	
+	// The main loop. We will only draw when requested to do so.
+	// 'requestAnimationFrame' will only be called when the browser finds it appropriate.
+	function animate() {
+		checkKeys();
+		if (dirty) draw();
+		dirty = false;
+		requestAnimFrame(animate);
+	}
+
+    var shaderProgram;
+
+	// Load and compile.
+    function initShaders() {
+        var fragmentShader = getShader(gl, "shader-fs");
+        var vertexShader = getShader(gl, "shader-vs");
+
+        shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert("Could not initialise shaders");
+        }
+
+        gl.useProgram(shaderProgram);
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "position");
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+		
+		// To debug HLSL code. Requires recent chromium build and --enable-privileged-webgl-extensions
+		if (gl.getExtension("WEBGL_debug_shaders")) {
+			$( "#src" ).html(gl.getExtension("WEBGL_debug_shaders").getTranslatedShaderSource(fragmentShader));
+		}
+   }
+
+    var squareVertexPositionBuffer;
+
+	// This is a simple quad
+    function initBuffers() {
+        squareVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
+        vertices = [
+             1.0,  1.0,  0.0,
+            -1.0,  1.0,  0.0,
+             1.0, -1.0,  0.0,
+            -1.0, -1.0,  0.0
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        squareVertexPositionBuffer.itemSize = 3;
+        squareVertexPositionBuffer.numItems = 4;
+    }
+
+	var startTime = Date.now();
+	
+    function draw() {
+    
+		$(function() { $( "#Zoom" ).html( "10^" +  Math.log(zoom))});
+		$(function() { $( "#Center" ).html( "" + centerX + ","  + centerY) });
+	
+		// Set 'time' uniform in seconds
+		var time = Date.now() - startTime;
+		gl.uniform1f( gl.getUniformLocation( shaderProgram, 'time' ), time / 1000 );
+		var w = gl.viewportWidth*0.5;
+		var h = gl.viewportHeight*0.5;
+		gl.uniform2f( gl.getUniformLocation( shaderProgram, 'pixelSize' ), 1.0/w, 1.0/h );
+		
+		if (dragging && leftHalf) {
+			gl.uniform2f( gl.getUniformLocation( shaderProgram, 'center' ), (centerX-(mouseX-mouseDownX)*2*zoom)/w, (centerY+(mouseY-mouseDownY)*zoom)/h );
+		} else {
+			gl.uniform2f( gl.getUniformLocation( shaderProgram, 'center' ), centerX/w, centerY/h );
+		}
+		gl.uniform1f( gl.getUniformLocation( shaderProgram, 'zoom' ), zoom);
+		gl.uniform1f( gl.getUniformLocation( shaderProgram, 'zoom2' ), zoom2);
+		gl.uniform1i( gl.getUniformLocation( shaderProgram, 'Iterations' ), Iterations);
+		
+		if (dragging && !leftHalf) {
+			gl.uniform2f( gl.getUniformLocation( shaderProgram, 'center2' ), (center2X-(mouseX-mouseDownX)*2*zoom2)/w, (center2Y+(mouseY-mouseDownY)*zoom2)/h );
+		} else {
+			gl.uniform2f( gl.getUniformLocation( shaderProgram, 'center2' ), center2X/w, center2Y/h );
+		}
+		
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
+    };
+
+	var dragging = false;
+	var mouseDownX;
+	var mouseDownY;
+	var mouseX;
+	var mouseY;
+	var centerX = 154.0383170729562;
+	var centerY = -6.667824181809174;
+	var center2X = 0;
+	var center2Y = 0;
+	var zoom =  2.59;
+	var zoom2 = 1;
+	var lastLeftHalf = true;
+	var leftHalf = true;
+	var Iterations = 200;
+	var AA = 1;
+	
+	// Mouse handling
+
+	function mouseDown(e) {
+		mouseDownX = e.clientX;
+		mouseDownY = e.clientY;
+		dragging = true;
+		dirty = true;
+	}
+	
+	function stopDragging() {
+		if (dragging) {
+			if (lastLeftHalf) {
+				centerX -= (mouseX-mouseDownX)*2*zoom;
+				centerY += (mouseY-mouseDownY)*zoom;
+			} else {
+				center2X -= (mouseX-mouseDownX)*2*zoom2;
+				center2Y += (mouseY-mouseDownY)*zoom2;
+			}			
+		}
+		dragging = false;
+		dirty = true;
+	}
+	
+	function mouseUp(e) {
+		stopDragging();
+	}
+	
+	function mouseWheel(ev){
+        // event.detail?
+		if (ev.detail<0.0) doZoom(zoomFactor);
+		if (ev.detail>0.0) doZoom(1/zoomFactor);
+		
+		
+		if (ev.wheelDelta<0.0) doZoom(zoomFactor);
+		if (ev.wheelDelta>0.0) doZoom(1/zoomFactor);
+		
+        if (ev.preventDefault) ev.preventDefault();
+		ev.returnValue = false;
+		dirty = true;
+	}
+	
+	function mouseMove(e) {
+		mouseX = e.clientX;
+		mouseY = e.clientY;
+		leftHalf = mouseX < gl.viewportWidth/2;
+		dirty = dirty || dragging; 
+		if (lastLeftHalf != leftHalf) stopDragging(); // Don't drag between halves
+		lastLeftHalf = leftHalf;
+	}
+	
+	// Keyboard handling
+	
+	var keyUp = false; 
+	var keyDown = false;
+	var keyLeft = false;
+	var keyRight = false;
+	var keyW = false;
+	var keyS = false;
+	
+	function toggleStatus(keyCode, value) {
+		switch( keyCode ) {
+			case 38: keyUp = value; break;
+			case 40: keyDown = value; break;
+			case 37: keyLeft = value; break;
+			case 39: keyRight = value; break;						
+			case 87: keyW = value; break;
+			case 83: keyS = value; break;
+		}
+	}
+	
+	var zoomFactor = 1.3;
+	
+	function doZoom(factor) {
+		if (leftHalf) {
+			zoom *= factor;
+		} else {
+			zoom2*= factor;
+		}		
+	}
+	
+	function checkKeys() {
+		if (keyDown || keyUp || keyLeft || keyRight || keyW || keyS) dirty = true;
+		if (keyW) doZoom(zoomFactor);
+		if (keyS) doZoom(1/zoomFactor);
+		if (keyDown) centerY += 10;
+		if (keyUp) centerY -= 10;
+		if (keyLeft) centerX += 10;
+		if (keyRight) centerX -= 10;
+	}
+	
+    function webGLStart() {
+        var canvas = document.getElementById("c");
+        
+		try {
+            gl = canvas.getContext("experimental-webgl", { antialias: false, depth: false, alpha: false } );
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+        } catch (e) {
+        }
+        if (!gl) {
+            alert("Could not initialise WebGL.");
+        }
+		
+		initShaders();
+        initBuffers();
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        animate();
+		canvas.addEventListener('mousedown', mouseDown, false);
+		canvas.addEventListener('mouseup', mouseUp, false);
+		canvas.addEventListener('mouseout', mouseUp, false); // check if dragging outside window.
+		canvas.addEventListener('mousemove', mouseMove, false); 
+		canvas.addEventListener('mousewheel', mouseWheel, false);
+		canvas.addEventListener('DOMMouseScroll', mouseWheel, false);
+		
+		document.addEventListener( 'keydown', function ( event ) { toggleStatus(event.keyCode, true);}, false );
+
+		document.addEventListener( 'keyup', function ( event ) { toggleStatus(event.keyCode, false);}, false );
+
+		var debug = "";
+	var a = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.LOW_FLOAT);
+	debug += "<br />FRAGMENT_LOW_FLOAT>> rangeMin:" + a.rangeMin + " rangeMax: " + a.rangeMax + " precision: " + a.precision;
+	a = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.MEDIUM_FLOAT);
+	debug += "<br />FRAGMENT_MEDIUM_FLOAT>> rangeMin:" + a.rangeMin + " rangeMax: " + a.rangeMax + " precision: " + a.precision;
+	a = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);			
+	debug += "<br />FRAGMENT_HIGH_FLOAT>> rangeMin:" + a.rangeMin + " rangeMax: " + a.rangeMax + " precision: " + a.precision;
+	
+	$(function() { $( "#Debug" ).html(  debug ); });
+
+
+    }
+	
+	// UI stuff
+	
+	$(function() {
+		$( "#slider" ).slider({
+			value: Iterations,
+			min: 1,
+			range: "min",
+			max: 1500,
+			slide: function( event, ui ) {
+			console.log(ui.toString());
+				$( "#IterationsLabel" ).html(  ui.value );
+				Iterations = ui.value;
+				//dirty = true;
+			}
+		});
+	});
+	$(function() { $( "#IterationsLabel" ).html( "" +$( "#slider" ).slider("value"))});
+				
+	
+	$(function() {
+		$( "#aaslider" ).slider({
+			value:1,
+			min: 1,
+			range: "min",
+			max: 4,
+			slide: function( event, ui ) {
+				$( "#AntiAliasLabel" ).html(  ui.value + "x" +ui.value );
+				AA = ui.value;
+				//dirty = true;
+			}
+		});
+	});
+	$(function() { $( "#AntiAliasLabel" ).html(  "1x1" ); });
+			
+	
+	
+	$(function() {
+		$("button").button();
+		$("button").click(function() { initShaders(); dirty=true; });
+	});
+	
+</script>
+</head>
+
+
+<body onload="webGLStart();">
+<div>
+	<div style="clear: both;">
+		<canvas id="c" style="border: none;" width="1000" height="500"></canvas>
+	</div>
+	<div style="float: left;">
+		<div style="margin: 3px; padding: 3px; width: 550px; ">
+			<div style="float: left;">
+				Iterations:
+				<span id="IterationsLabel" style="border:0; color:#f6931f; font-weight:bold;">200</span>
+			</div>
+			<div id="slider" style="margin: 3px; margin-left: 20px; float:left; width: 400px; " class="ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all"><div class="ui-slider-range ui-widget-header ui-slider-range-min" style="width: 13.2755%;"></div><a class="ui-slider-handle ui-state-default ui-corner-all" href="http://hvidtfeldts.net/WebGL-DP/webgl.html#" style="left: 13.2755%;"></a></div>
+			<div style="margin: 3px; clear: both; "></div>
+		</div>
+	
+	
+		<div style="float:left; margin: 3px; padding: 3px; width: 550px; ">
+			<div style="float: left;">
+				Samples:
+				<span id="AntiAliasLabel" style="border:0; color:#f6931f; font-weight:bold;">1x1</span>
+			</div>
+			<div id="aaslider" style="margin: 3px; margin-left: 20px; float:left; width: 400px; " class="ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all"><div class="ui-slider-range ui-widget-header ui-slider-range-min" style="width: 0%;"></div><a class="ui-slider-handle ui-state-default ui-corner-all" href="http://hvidtfeldts.net/WebGL-DP/webgl.html#" style="left: 0%;"></a></div>
+			<div style="margin: 3px; clear: both; "></div>
+		</div>
+		<div style="margin: 3px; clear: both; "></div>
+	</div>
+	
+	<div style="float: left;">
+	<button style="margin: 7px; height: 55px;" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false"><span class="ui-button-text">Rebuild shader</span></button>
+	</div>
+	<div style="margin: 3px; clear: both; "></div>
+	
+	
+	<p style="margin: 6px;">Use arrow keys or mouse drag to pan. Use W/S or mouse wheel to zoom.</p>
+	<p>Zoom:<span id="Zoom" style="border:0; color:#f6931f; font-weight:bold;">10^0.9516578757114463</span></p>
+	<p>Center:<span id="Center" style="border:0; color:#f6931f; font-weight:bold;">154.0383170729562,-6.667824181809174</span></p>
+	<pre id="Debug"><br>FRAGMENT_LOW_FLOAT&gt;&gt; rangeMin:127 rangeMax: 127 precision: 23<br>FRAGMENT_MEDIUM_FLOAT&gt;&gt; rangeMin:127 rangeMax: 127 precision: 23<br>FRAGMENT_HIGH_FLOAT&gt;&gt; rangeMin:127 rangeMax: 127 precision: 23</pre>
+	<pre id="src"></pre>
+	
+	</div>
+
+
+
+</body></html>
