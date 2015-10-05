@@ -52,14 +52,19 @@ void par_zcam_grab_begin(float winx, float winy)
 
 void par_zcam_grab_update(float winx, float winy, float scrolldelta)
 {
-    float vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
-    float vpwidth = vpheight * _winaspect;
     if (_grabbing) {
+        float vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
+        float vpwidth = vpheight * _winaspect;
         _camerapos.y = -vpheight * (winy - 0.5) + _grabpt.y;
         _camerapos.x = -vpwidth * (winx - 0.5) + _grabpt.x;
     } else if (scrolldelta) {
+        Point3 focalpt = window_to_world(winx, winy);
         _camerapos.z -= scrolldelta * _camerapos.z * 0.01;
         _camerapos.z = CLAMP(_camerapos.z, _mincamz, _maxcamz);
+        float vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
+        float vpwidth = vpheight * _winaspect;
+        _camerapos.y = -vpheight * (winy - 0.5) + focalpt.y;
+        _camerapos.x = -vpwidth * (winx - 0.5) + focalpt.x;
     }
 }
 
