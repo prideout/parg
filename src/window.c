@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include "lodepng.h"
 
+static float _touchpt[2] = {0};
 static float _pixscale = 1.0f;
 static int _winwidth = 0;
 static int _winheight = 0;
@@ -16,6 +17,7 @@ static par_window_fn_init _init = 0;
 static par_window_fn_tick _tick = 0;
 static par_window_fn_draw _draw = 0;
 static par_window_fn_exit _dispose = 0;
+static par_window_fn_input _input = 0;
 
 void par_window_setargs(int argc, char* argv[])
 {
@@ -31,9 +33,12 @@ void par_window_ondraw(par_window_fn_draw fn) { _draw = fn; }
 
 void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
 
+void par_window_oninput(par_window_fn_input fn) { _input = fn; }
+
 static void onerror(int error, const char* description)
 {
     fputs(description, stderr);
+    fputs("\n", stderr);
 }
 
 static void onkey(GLFWwindow* window, int key, int scancode, int action, int m)
@@ -41,30 +46,39 @@ static void onkey(GLFWwindow* window, int key, int scancode, int action, int m)
     if ((key == 'Q' || key == GLFW_KEY_ESCAPE) && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
-    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-        // keypress(key);
+    if (_input && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+        // ...
     }
 }
 
 // GLFW has the origin at top-left
 static void onmove(GLFWwindow* window, double x, double y)
 {
-    // move
+    if (_input) {
+        _touchpt[0] = x / _winwidth;
+        _touchpt[1] = (_winheight - 1 - y) / _winheight;
+        _input(PAR_EVENT_MOVE, _touchpt[0], _touchpt[1], 0);
+    }
 }
 
 static void onclick(GLFWwindow* window, int button, int action, int mods)
 {
+    if (!_input) {
+        return;
+    }
     if (action == GLFW_PRESS) {
-        // touchdown
+        _input(PAR_EVENT_DOWN, _touchpt[0], _touchpt[1], 0);
     }
     if (action == GLFW_RELEASE) {
-        // touchup
+        _input(PAR_EVENT_UP, _touchpt[0], _touchpt[1], 0);
     }
 }
 
 static void onscroll(GLFWwindow* window, double dx, double dy)
 {
-    // scroll
+    if (_input) {
+        _input(PAR_EVENT_MOVE, _touchpt[0], _touchpt[1], dy);
+    }
 }
 
 int par_window_exec(float winwidth, float winheight, int vsync)

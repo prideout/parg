@@ -10,8 +10,6 @@
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
-Matrix4 projection;
-Point3 camerapos;
 par_mesh* rectmesh;
 par_texture* palmstexture;
 
@@ -29,20 +27,15 @@ void init(float winwidth, float winheight, float pixratio)
     int imgwidth, imgheight;
     par_texture_info(palmstexture, &imgwidth, &imgheight);
     float worldheight = worldwidth * imgheight / imgwidth;
+    par_zcam_init(worldwidth, worldheight, fovy);
     rectmesh = par_mesh_create_rectangle(worldwidth, worldheight);
-    const float aspect = (float) winwidth / winheight;
-    float cameraheight = 0.5 * worldheight / tan(fovy * 0.5);
-    camerapos = (Point3){0, 0, cameraheight};
-    const float znear = 1.0;
-    const float zfar = cameraheight * 1.1;
-    projection = M4MakePerspective(fovy, aspect, znear, zfar);
 }
 
 int draw()
 {
-    Point3 target = {camerapos.x, camerapos.y, 0};
-    Vector3 up = {0, 1, 0};
-    Matrix4 view = M4MakeLookAt(camerapos, target, up);
+    Matrix4 view;
+    Matrix4 projection;
+    par_zcam_matrices(&projection, &view);
     Matrix4 model = M4MakeIdentity();
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
@@ -56,13 +49,21 @@ int draw()
     return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds) {}
+void tick(float winwidth, float winheight, float pixratio, float seconds)
+{
+    par_zcam_tick(winwidth / winheight, seconds);
+}
 
 void dispose()
 {
     par_shader_free(P_SIMPLE);
     par_mesh_free(rectmesh);
     par_texture_free(palmstexture);
+}
+
+void input(par_event evt, float x, float y, float z)
+{
+    //
 }
 
 int main(int argc, char* argv[])
@@ -73,5 +74,6 @@ int main(int argc, char* argv[])
     par_window_ontick(tick);
     par_window_ondraw(draw);
     par_window_onexit(dispose);
+    par_window_oninput(input);
     return par_window_exec(185 * 5, 100 * 5, 1);
 }
