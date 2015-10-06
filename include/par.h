@@ -54,6 +54,7 @@ typedef struct par_mesh_s par_mesh;
 par_mesh* par_mesh_create_knot(int cols, int rows, float major, float minor);
 par_mesh* par_mesh_create_torus(int cols, int rows, float major, float minor);
 par_mesh* par_mesh_create_rectangle(float width, float height);
+par_mesh* par_mesh_create_sierpinski(float width, int depth);
 void par_mesh_free(par_mesh* m);
 par_buffer* par_mesh_coord(par_mesh* m);
 par_buffer* par_mesh_uv(par_mesh* m);
