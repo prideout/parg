@@ -5,6 +5,7 @@
 
 // ENUMS & CONSTANTS
 
+#define PAR_PI 3.14159265359
 #define PAR_TWOPI 6.28318530718
 #define PAR_BYTE 0x1400
 #define PAR_UNSIGNED_BYTE 0x1401
@@ -104,6 +105,7 @@ void par_draw_clear();
 void par_draw_one_quad();
 void par_draw_triangles(int start, int count);
 void par_draw_triangles_u16(int start, int count);
+void par_draw_lines(int nsegments);
 
 // ZCAM
 

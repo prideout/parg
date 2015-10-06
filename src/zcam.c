@@ -30,7 +30,7 @@ void par_zcam_init(float worldwidth, float worldheight, float fovy)
 {
     _maxcamz = 0.5 * worldheight / tan(fovy * 0.5);
     _camerapos = (Point3){0, 0, _maxcamz};
-    _mincamz = 0.01;
+    _mincamz = 0.0000001;
     _zplanes[0] = _mincamz * 0.9;
     _zplanes[1] = _maxcamz * 1.1;
     _fovy = fovy;

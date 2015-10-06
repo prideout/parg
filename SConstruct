@@ -5,7 +5,7 @@ import os.path
 import re
 
 DEMOS = [re.split('\W+', str(s))[-2] for s in Glob('demos/*.c')]
-DEFAULT_DEMO = 'sierpinski'
+DEFAULT_DEMO = 'marina'
 
 DEMO_HELP = '\n'.join(
     '- "scons {0}" to build and run the {0} demo.'.format(x) for x in DEMOS)

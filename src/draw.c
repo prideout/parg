@@ -23,3 +23,9 @@ void par_draw_triangles_u16(int start, int count)
     const GLvoid* ptr = (const GLvoid*) offset;
     glDrawElements(GL_TRIANGLES, count * 3, GL_UNSIGNED_SHORT, ptr);
 }
+
+void par_draw_lines(int nsegments)
+{
+    glLineWidth(2);
+    glDrawArrays(GL_LINES, 0, nsegments * 2);
+}
