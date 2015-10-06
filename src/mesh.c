@@ -1,5 +1,6 @@
 #include <par.h>
 #include <stdlib.h>
+#include <memory.h>
 #include "verify.h"
 
 struct par_mesh_s {
@@ -205,6 +206,78 @@ par_mesh* par_mesh_create_rectangle(float width, float height)
     *texcoord++ = 1;
     *texcoord = 1;
     par_buffer_unlock(surf->uvs);
+    return surf;
+}
+
+par_mesh* par_mesh_create_sierpinski(float width, int depth)
+{
+    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    surf->normals = 0;
+    surf->indices = 0;
+    surf->uvs = 0;
+    surf->ntriangles = pow(3, depth);
+    int vstride = sizeof(float) * 2;
+    int ntriangles = 1;
+    int nverts = ntriangles * 3;
+    float height = width * sqrt(0.75);
+
+    par_buffer* src = par_buffer_alloc(nverts * vstride, PAR_CPU);
+    float* psrc = (float*) par_buffer_lock(src, PAR_WRITE);
+    *psrc++ = 0;
+    *psrc++ = height * 0.5;
+    *psrc++ = width * 0.5;
+    *psrc++ = -height * 0.5;
+    *psrc++ = -width * 0.5;
+    *psrc++ = -height * 0.5;
+    par_buffer_unlock(src);
+
+#define WRITE_TRIANGLE(a, b, c) \
+    *pdst++ = x[a];             \
+    *pdst++ = y[a];             \
+    *pdst++ = x[b];             \
+    *pdst++ = y[b];             \
+    *pdst++ = x[c];             \
+    *pdst++ = y[c]
+
+    float x[6];
+    float y[6];
+    while (depth--) {
+        ntriangles *= 3;
+        nverts = ntriangles * 3;
+        par_buffer* dst = par_buffer_alloc(nverts * vstride, PAR_CPU);
+        float* pdst = par_buffer_lock(dst, PAR_WRITE);
+        const float* psrc = par_buffer_lock(src, PAR_READ);
+        for (int i = 0; i < ntriangles / 3; i++) {
+            x[0] = *psrc++;
+            y[0] = *psrc++;
+            x[1] = *psrc++;
+            y[1] = *psrc++;
+            x[2] = *psrc++;
+            y[2] = *psrc++;
+            x[3] = 0.5 * (x[0] + x[1]);
+            y[3] = 0.5 * (y[0] + y[1]);
+            x[4] = 0.5 * (x[1] + x[2]);
+            y[4] = 0.5 * (y[1] + y[2]);
+            x[5] = 0.5 * (x[0] + x[2]);
+            y[5] = 0.5 * (y[0] + y[2]);
+            WRITE_TRIANGLE(0, 3, 5);
+            WRITE_TRIANGLE(3, 1, 4);
+            WRITE_TRIANGLE(5, 4, 2);
+        }
+        par_buffer_unlock(src);
+        par_buffer_unlock(dst);
+        par_buffer_free(src);
+        src = dst;
+    }
+
+    assert(surf->ntriangles == ntriangles);
+    surf->coords = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
+    float* pdst = par_buffer_lock(surf->coords, PAR_WRITE);
+    psrc = par_buffer_lock(src, PAR_READ);
+    memcpy(pdst, psrc, nverts * vstride);
+    par_buffer_unlock(src);
+    par_buffer_unlock(surf->coords);
+    par_buffer_free(src);
     return surf;
 }
 
