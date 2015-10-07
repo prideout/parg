@@ -1,5 +1,7 @@
 language: objective-c
 script:
     - brew update &>/dev/null
-    - brew install scons uncrustify glfw3
+    - brew install scons uncrustify glfw3 emscripten
     - scons demos
+    - python emsetup.py
+    - scons demos --javascript

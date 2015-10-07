@@ -170,13 +170,13 @@ static GLuint compile_program(par_token tok)
     par_verify(iter != kh_end(_vshader_registry), "No vshader",
         par_token_to_string(tok));
     sds vshader_body = kh_value(_vshader_registry, iter);
-    const GLchar* const* vshader_ptr = (const GLchar* const*) &vshader_body;
+    PARGL_STRING vshader_ptr = (PARGL_STRING) &vshader_body;
 
     iter = kh_get(smap, _fshader_registry, tok);
     par_verify(iter != kh_end(_fshader_registry), "No fshader",
         par_token_to_string(tok));
     sds fshader_body = kh_value(_fshader_registry, iter);
-    const GLchar* const* fshader_ptr = (const GLchar* const*) &fshader_body;
+    PARGL_STRING fshader_ptr = (PARGL_STRING) &fshader_body;
 
     GLchar spew[MAX_SHADER_SPEW];
     GLint compile_success = 0;

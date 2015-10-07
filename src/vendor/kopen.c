@@ -7,6 +7,20 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
+
+#if EMSCRIPTEN
+#include <sys/select.h>
+#include <sys/wait.h>
+#include <unistd.h>
+char *strdup(const char *s) {
+    char *p = malloc(strlen(s) + 1);
+    if(p) { strcpy(p, s); }
+    return p;
+}
+pid_t vfork(void) { return 0; }
+int kill(pid_t pid, int sig) { return 0; }
+#endif
+
 #ifndef _WIN32
 #include <netdb.h>
 #include <arpa/inet.h>

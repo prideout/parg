@@ -18,13 +18,21 @@ I'm currently using:
 - uncrustify 0.61
 - glfw3 3.0.4
 - clang-format 3.7.0
-- emscripten 1.33.0
+- emscripten 1.34.6
+
+## Emscripten Setup
+
+```
+brew install emscripten
+python emsetup.py
+scons demos --javascript
+```
 
 ## TODO
 
+- emscripten and gh-pages
 - demos/picking.c
     - add rong & tan
-- emscripten (which should be enabled in travis) and gh-pages
 - par_data_type should be a normal enum (0 1 2 3...)
     - the mapping to GL types should be internal
 - demos/gamma.c

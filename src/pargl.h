@@ -1,5 +1,13 @@
 #pragma once
 
+#if EMSCRIPTEN
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <emscripten.h>
+#define PAR_HALF_FLOAT GL_HALF_FLOAT_OES
+#define PARGL_STRING const GLchar**
+#else
+#define PARGL_STRING const GLchar* const*
 #if defined(__APPLE_CC__)
 #if defined(GLFW_INCLUDE_GLCOREARB)
 #include <OpenGL/gl3.h>
@@ -18,6 +26,7 @@
 #include <GLES3/gl3.h>
 #elif !defined(GLFW_INCLUDE_NONE)
 #include <GL/gl.h>
+#endif
 #endif
 #endif
 

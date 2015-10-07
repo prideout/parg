@@ -1,16 +1,11 @@
 #include <par.h>
 #include <parwin.h>
-#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 #include "lodepng.h"
 
-static float _touchpt[2] = {0};
-static float _pixscale = 1.0f;
-static int _winwidth = 0;
-static int _winheight = 0;
 static int _argc = 0;
 static char** _argv = 0;
 static par_window_fn_init _init = 0;
@@ -34,6 +29,22 @@ void par_window_ondraw(par_window_fn_draw fn) { _draw = fn; }
 void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
 
 void par_window_oninput(par_window_fn_input fn) { _input = fn; }
+
+#if EMSCRIPTEN
+
+int par_window_exec(float winwidth, float winheight, int vsync)
+{
+    return 0;
+}
+
+#else
+
+#include <GLFW/glfw3.h>
+
+static float _touchpt[2] = {0};
+static float _pixscale = 1.0f;
+static int _winwidth = 0;
+static int _winheight = 0;
 
 static void onerror(int error, const char* description)
 {
@@ -187,3 +198,5 @@ int par_window_exec(float winwidth, float winheight, int vsync)
 
     return 0;
 }
+
+#endif

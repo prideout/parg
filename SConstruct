@@ -16,7 +16,7 @@ Hello, friend!  You can type...
 - "scons" to build and run the {0} demo.
 - "scons demos" to build every demo.
 - "scons lib" to build only the core library.
-- "scons lib --javascript" to build the core library using emcc.
+- "scons demos --javascript" to build the JS demos.
 - "scons format" to autoformat the source code.
 - "scons -c" to clean.
 - "rm -rf build" to clobber.

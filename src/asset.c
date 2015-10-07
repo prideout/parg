@@ -1,14 +1,34 @@
 #include "asset.h"
+#include <assert.h>
+
+static sds _exedir = 0;
+
+#if EMSCRIPTEN
+
+sds par_asset_whereami()
+{
+    if (!_exedir) {
+        _exedir = sdsnew("web/");
+    }
+    return _exedir;
+}
+
+int par_asset_fileexists(sds fullpath) { return 1; }
+
+int par_asset_download(const char* filename, sds targetpath)
+{
+    return 0;
+}
+
+#else
+
 #include "whereami.h"
 #include <stdio.h>
-#include <assert.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 void* kopen(const char* fn, int* _fd);
 int kclose(void* a);
-
-static sds _exedir = 0;
 
 sds par_asset_whereami()
 {
@@ -62,3 +82,5 @@ int par_asset_download(const char* filename, sds targetpath)
     kclose(kdfile);
     return 0;
 }
+
+#endif
