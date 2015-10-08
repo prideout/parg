@@ -15,10 +15,7 @@ sds par_asset_whereami()
 
 int par_asset_fileexists(sds fullpath) { return 1; }
 
-int par_asset_download(const char* filename, sds targetpath)
-{
-    return 0;
-}
+int par_asset_download(const char* filename, sds targetpath) { return 0; }
 
 #else
 

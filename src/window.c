@@ -1,9 +1,18 @@
 #include <par.h>
 #include <parwin.h>
 #include <stdio.h>
+#include <GLFW/glfw3.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include "lodepng.h"
 
 static int _argc = 0;
 static char** _argv = 0;
+static float _touchpt[2] = {0};
+static float _pixscale = 1.0f;
+static int _winwidth = 0;
+static int _winheight = 0;
 static par_window_fn_init _init = 0;
 static par_window_fn_tick _tick = 0;
 static par_window_fn_draw _draw = 0;
@@ -25,33 +34,6 @@ void par_window_ondraw(par_window_fn_draw fn) { _draw = fn; }
 void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
 
 void par_window_oninput(par_window_fn_input fn) { _input = fn; }
-
-#if EMSCRIPTEN
-
-#include <emscripten.h>
-
-int par_window_exec(float winwidth, float winheight, int vsync)
-{
-    EM_ASM_ARGS({
-        Module.par_window_dims = [];
-        Module.par_window_dims[0] = $0;
-        Module.par_window_dims[1] = $1;
-    }, winwidth, winheight);
-    return 0;
-}
-
-#else
-
-#include <GLFW/glfw3.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include "lodepng.h"
-
-static float _touchpt[2] = {0};
-static float _pixscale = 1.0f;
-static int _winwidth = 0;
-static int _winheight = 0;
 
 static void onerror(int error, const char* description)
 {
@@ -171,7 +153,7 @@ int par_window_exec(float winwidth, float winheight, int vsync)
         if (_draw && _draw()) {
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
-                puts("OpenGL Error");
+                puts("OpenGL Error\n");
             }
             glfwSwapBuffers(window);
             if (capture) {
@@ -205,5 +187,3 @@ int par_window_exec(float winwidth, float winheight, int vsync)
 
     return 0;
 }
-
-#endif

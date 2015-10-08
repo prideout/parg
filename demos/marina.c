@@ -2,6 +2,7 @@
 #include <parwin.h>
 #include <assert.h>
 #include <sds.h>
+#include <stdio.h>
 
 #define TOKEN_TABLE(F)          \
     F(P_TEXTURED, "p_textured") \
@@ -31,6 +32,7 @@ float tscale;
 
 void init(float winwidth, float winheight, float pixratio)
 {
+    printf("We made it to the marina.c init function!\n");
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
     par_shader_load_from_asset("marina.glsl");
     origin_texture = par_texture_from_asset("origin_z02.png");

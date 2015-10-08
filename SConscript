@@ -4,8 +4,12 @@
 Import('*')
 
 CORE_SRC = Glob('src/*.c') + Glob('src/vendor/*.c')
-JS_EXCLUSIONS = Glob('src/vendor/whereami.c') + Glob('src/vendor/kopen.c')
-JS_SRC = list(set(CORE_SRC) - set(JS_EXCLUSIONS))
+
+JS_EXCLUSIONS = (Glob('src/vendor/whereami.c') +
+    Glob('src/vendor/kopen.c') +
+    Glob('src/window.c'))
+
+JS_SRC = list(set(CORE_SRC) - set(JS_EXCLUSIONS)) + Glob('src/windowjs.cpp')
 
 env = Environment(
     LIBS=['m'],

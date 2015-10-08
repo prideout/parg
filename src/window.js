@@ -13,10 +13,19 @@ Module.par_startup = function(dims) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     $('#canvas3d').show();
 
-    // TODO set up mouse handler here...
-    // TODO create game loop
+    Module.Window.init();
 
-    Module.par_init();
+    // TODO set up mouse handlers here...
+    // call Module.Window.input as needed
+
+    function raf() {
+        var milliseconds = window.performance.now();
+        Module.Window.tick(milliseconds / 1000.0);
+        Module.Window.draw();
+        window.requestAnimationFrame(raf);
+    };
+
+    window.requestAnimationFrame(raf);
 };
 
 Module.par_startup(Module.par_window_dims);
