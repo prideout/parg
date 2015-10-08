@@ -1,0 +1,48 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>parg</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="css/normalize.min.css">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.8.3.min.js"></script>
+    </head>
+    <body>
+
+        <div class="app">
+            <main>
+                <nav>
+                    <div class="menu">
+                        <button id="colors" class="selected radio">Colors</button>
+                        <button id="elevation" class="radio">Elevation</button>
+                        <button id="normals" class="radio">Normals</button>
+                        <button id="ao" class="radio">Ambient Occlusion</button>
+                        <button id="final" class="radio">Colors &amp; Lighting</button>
+                        <!--br>
+                        <a href="https://github.com/prideout/parg/tree/master/src">parg source</a>
+                        <br>
+                        <a href="http://parg.readthedocs.org/en/latest/">parg docs</a>
+                        <br>
+                        <br>
+                        <a href="http://emscripten.org">
+                            <img src="img/emscripten.png" style="width:100px">
+                        </a-->
+                    </div>
+                </nav>
+                <article>
+                    <div class="canvas-container">
+                        <canvas style="display:none" id="canvas3d">
+                        </canvas>
+                    </div>
+                </article>
+            </main>
+        </div>
+
+        <script src="js/vendor/jquery-1.11.2.min.js"></script>
+        <script src="../marina.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

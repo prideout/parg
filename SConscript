@@ -11,11 +11,7 @@ env = Environment(
     LIBS=['m'],
     CPPPATH=['include', 'src/vendor'],
     SHLIBPREFIX='',
-    LINKFLAGS='-fopenmp ',
     CFLAGS=' -fopenmp -g -O3 -Wall -std=c99 ')
-
-if env['PLATFORM'] == 'darwin':
-    env['LINKFLAGS'] = ''
 
 if GetOption('javascript'):
     env = env.Clone(
@@ -24,10 +20,10 @@ if GetOption('javascript'):
         CFLAGS = '-O3 -Wall -std=c99 ',
         CXXFLAGS = '-O3 -Wall --bind -std=c++11 ',
         LINKFLAGS = (
+            "--post-js src/window.js "
             "-O3 --memory-init-file 0 --bind " +
             "-s 'MODULARIZE=1' " +
             "-s 'EXPORT_NAME=\"CreatePar\"' " +
-            "-s 'ALLOW_MEMORY_GROWTH=1' " +
             "-s 'NO_FILESYSTEM=1' "))
 else:
     par = env.SharedLibrary('_par.so', source=CORE_SRC)
@@ -35,7 +31,8 @@ else:
     env = env.Clone(LIBS=['m', par])
     Alias('lib', par)
 
-demos, shaders = [], []
+demos, shaders, pages = [], [], []
+
 for demo in DEMOS:
     cpath = 'demos/' + demo + '.c'
     spath = 'demos/' + demo + '.glsl'
@@ -49,4 +46,7 @@ for demo in DEMOS:
     shaders.append(shader)
     demos.append(name)
 
-Alias('demos', demos + shaders)
+if GetOption('javascript'):
+    pages.append(Command('html/', '../web/', Copy("$TARGET", "$SOURCE")))
+
+Alias('demos', demos + shaders + pages)
