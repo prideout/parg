@@ -2,6 +2,7 @@ extern "C" {
     #include <par.h>
     #include <parwin.h>
     #include "pargl.h"
+    void par_asset_set_baseurl(const char* url);
 }
 
 #include <stdio.h>
@@ -9,16 +10,21 @@ extern "C" {
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
+static void null_tick(float, float, float, float) {}
+static int null_draw() { return 0; }
+static void null_dispose() { }
+static void null_init(float, float, float) {}
+static void null_input(par_event, float, float, float) {}
 static int _argc = 0;
 static char** _argv = 0;
 static float _pixscale = 1.0f;
 static int _winwidth = 0;
 static int _winheight = 0;
-static par_window_fn_init _init = 0;
-static par_window_fn_tick _tick = 0;
-static par_window_fn_draw _draw = 0;
-static par_window_fn_exit _dispose = 0;
-static par_window_fn_input _input = 0;
+static par_window_fn_init _init = null_init;
+static par_window_fn_tick _tick = null_tick;
+static par_window_fn_draw _draw = null_draw;
+static par_window_fn_exit _dispose = null_dispose;
+static par_window_fn_input _input = null_input;
 
 void par_window_setargs(int argc, char* argv[])
 {
@@ -50,14 +56,12 @@ int par_window_exec(float winwidth, float winheight, int vsync)
 
 static void init()
 {
-    if (_init) {
-        _init(_winwidth, _winheight, _pixscale);
-    }
+    _init(_winwidth, _winheight, _pixscale);
 }
 
 static void draw()
 {
-    if (_draw && _draw()) {
+    if (_draw()) {
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
             puts("OpenGL Error\n");
@@ -67,16 +71,12 @@ static void draw()
 
 static void tick(float seconds)
 {
-    if (_tick) {
-        _tick(_winwidth, _winheight, _pixscale, seconds);
-    }
+    _tick(_winwidth, _winheight, _pixscale, seconds);
 }
 
 static void input(int evt, float x, float y, float z)
 {
-    if (_input) {
-        _input((par_event) evt, x, y, z);
-    }
+    _input((par_event) evt, x, y, z);
 }
 
 EMSCRIPTEN_BINDINGS(par)
@@ -88,4 +88,12 @@ EMSCRIPTEN_BINDINGS(par)
         .class_function("draw", &draw)
         .class_function("tick", &tick)
         .class_function("input", &input);
+
+    // document.location.href + '../'
+    // auto v = val::get_global("document");
+    // auto location = v["location"];
+    // auto href = v["href"];
+
+    std::string baseurl = "http://document.location.href/../";
+    par_asset_set_baseurl(baseurl.c_str());
 }

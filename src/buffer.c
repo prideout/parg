@@ -47,7 +47,11 @@ void par_buffer_free(par_buffer* buf)
     free(buf);
 }
 
-int par_buffer_length(par_buffer* buf) { return buf->nbytes; }
+int par_buffer_length(par_buffer* buf)
+{
+    par_verify(buf, "Null buffer", 0);
+    return buf->nbytes;
+}
 
 void* par_buffer_lock(par_buffer* buf, par_buffer_mode access)
 {
@@ -88,13 +92,21 @@ par_buffer* par_buffer_from_file(const char* filepath)
 
 par_buffer* par_buffer_from_asset(const char* filename)
 {
-    sds exepath = par_asset_whereami();
-    sds fullpath = sdscat(sdsdup(exepath), filename);
+#if EMSCRIPTEN
+    sds baseurl = par_asset_baseurl();
+    sds fullurl = sdscat(sdsdup(baseurl), filename);
+    par_buffer* retval = 0;
+    printf("TODO: download %s here\n", fullurl);
+    sdsfree(fullurl);
+#else
+    sds execdir = par_asset_whereami();
+    sds fullpath = sdscat(sdsdup(execdir), filename);
     if (!par_asset_fileexists(fullpath)) {
         par_asset_download(filename, fullpath);
     }
     par_buffer* retval = par_buffer_from_file(fullpath);
     sdsfree(fullpath);
+#endif
     return retval;
 }
 

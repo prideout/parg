@@ -25,7 +25,7 @@ if GetOption('javascript'):
         CXXFLAGS = '-O3 -Wall --bind -std=c++11 ',
         LINKFLAGS = (
             "--post-js src/window.js "
-            "-O3 --memory-init-file 0 --bind " +
+            "-O3 --memory-init-file 0 --profiling --bind " +
             "-s 'MODULARIZE=1' " +
             "-s 'EXPORT_NAME=\"CreatePar\"' " +
             "-s 'NO_FILESYSTEM=1' "))

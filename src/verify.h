@@ -13,4 +13,4 @@
             printf("%s\n", exception_key);                                 \
         }                                                                  \
     }                                                                      \
-    assert(expr);
+    assert((expr) && exception_key);

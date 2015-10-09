@@ -2,8 +2,19 @@
 #include <assert.h>
 
 static sds _exedir = 0;
+static sds _baseurl = 0;
+
+sds par_asset_baseurl()
+{
+    if (!_baseurl) {
+        _baseurl = sdsnew("http://github.prideout.net/assets/");
+    }
+    return _baseurl;
+}
 
 #if EMSCRIPTEN
+
+void par_asset_set_baseurl(const char* url) { _baseurl = sdsnew(url); }
 
 sds par_asset_whereami()
 {
@@ -43,10 +54,7 @@ int par_asset_fileexists(sds fullpath) { return access(fullpath, F_OK) != -1; }
 
 int par_asset_download(const char* filename, sds targetpath)
 {
-    static sds baseurl = 0;
-    if (!baseurl) {
-        baseurl = sdsnew("http://github.prideout.net/assets/");
-    }
+    sds baseurl = par_asset_baseurl();
     sds fullurl = sdscat(sdsdup(baseurl), filename);
     printf("Downloading %s...\n", fullurl);
     int source = 0;

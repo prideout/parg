@@ -1,4 +1,3 @@
-
 Module.par_startup = function(dims) {
     $('#canvas3d').css({
         width: dims[0] + 'px',
@@ -15,8 +14,27 @@ Module.par_startup = function(dims) {
 
     Module.Window.init();
 
-    // TODO set up mouse handlers here...
-    // call Module.Window.input as needed
+    var onmouse = function(event) {
+        var box = canvas.getBoundingClientRect();
+        var x = event.clientX - box.left;
+        var y = event.clientY - box.top;
+        var etype = event.type;
+        if (etype == "mousedown") {
+            // Module.Window.input
+            window.console.log('down', [x, y]);
+        } else if (etype == "mouseup") {
+            // Module.Window.input
+            window.console.log('up', [x, y]);
+        } else if (etype == "mousemove") {
+            // Module.Window.input
+            window.console.log('move', [x, y]);
+        }
+    };
+
+    canvas.addEventListener("mousedown", onmouse);
+    canvas.addEventListener("mouseup", onmouse);
+    canvas.addEventListener("mousemove", onmouse);
+    // canvas.addEventListener("mouseenter", onmouse);
 
     function raf() {
         var milliseconds = window.performance.now();
