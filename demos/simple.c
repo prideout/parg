@@ -5,7 +5,8 @@
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
-    F(U_COLOR, "u_color")
+    F(U_COLOR, "u_color")       \
+    F(SHADER_SIMPLE, "simple.glsl")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -20,7 +21,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     par_state_clearcolor(bgcolor);
     par_state_cullfaces(1);
-    par_shader_load_from_asset("simple.glsl");
+    par_shader_load_from_asset(SHADER_SIMPLE);
 
     const float h = 5.0f;
     const float w = h * winwidth / winheight;
@@ -71,6 +72,7 @@ void dispose()
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
+    par_asset_preload(SHADER_SIMPLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

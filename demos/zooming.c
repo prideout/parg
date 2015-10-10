@@ -8,7 +8,12 @@
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")
 
+#define ASSET_TABLE(F)                \
+    F(SHADER_ZOOMING, "zooming.glsl") \
+    F(TEXTURE_PALMS, "arecaceae.png")
+
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
+ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_mesh* rectmesh;
 par_texture* palmstexture;
@@ -22,8 +27,8 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
     par_state_depthtest(0);
     par_state_cullfaces(0);
-    par_shader_load_from_asset("zooming.glsl");
-    palmstexture = par_texture_from_asset("arecaceae.png");
+    par_shader_load_from_asset(SHADER_ZOOMING);
+    palmstexture = par_texture_from_asset(TEXTURE_PALMS);
     int imgwidth, imgheight;
     par_texture_info(palmstexture, &imgwidth, &imgheight);
     float worldheight = worldwidth * imgheight / imgwidth;
@@ -80,6 +85,8 @@ void input(par_event evt, float x, float y, float z)
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
+    ASSET_TABLE(PAR_TOKEN_DEFINE);
+    ASSET_TABLE(PAR_ASSET_PRELOAD);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

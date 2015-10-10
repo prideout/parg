@@ -13,6 +13,19 @@
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
+#define ASSET_TABLE(F)                \
+    F(SHADER_MARINA, "marina.glsl")   \
+    F(TEXTURE_DOGGIES, "doggies.png") \
+    F(TEXTURE_ORIGIN, "origin_z02.png")
+
+ASSET_TABLE(PAR_TOKEN_DECLARE);
+
+#define ASSET_LIST(F)   \
+    F("marina_z05.png") \
+    F("marina_z10.png") \
+    F("marina_z15.png") \
+    F("marina_z20.png")
+
 #define NUM_LEVELS 4
 
 const float gray = 0.8;
@@ -33,8 +46,8 @@ float tscale;
 void init(float winwidth, float winheight, float pixratio)
 {
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
-    par_shader_load_from_asset("marina.glsl");
-    origin_texture = par_texture_from_asset("origin_z02.png");
+    par_shader_load_from_asset(SHARER_MARINA);
+    origin_texture = par_texture_from_asset(TEXTURE_ORIGIN);
     int imgwidth, imgheight;
     par_texture_info(origin_texture, &imgwidth, &imgheight);
     assert(imgwidth == imgheight);
@@ -49,10 +62,11 @@ void init(float winwidth, float winheight, float pixratio)
     for (int i = 0; i < NUM_LEVELS; i++) {
         sds name = sdsnew("marina_z");
         name = sdscatprintf(name, "%02d.png", levels[i]);
-        marina_textures[i] = par_texture_from_asset(name);
+        par_token id = par_token_from_string(name);
+        marina_textures[i] = par_texture_from_asset(id);
         sdsfree(name);
     }
-    doggies_texture = par_texture_from_asset("doggies.png");
+    doggies_texture = par_texture_from_asset(TEXTURE_DOGGIES);
     par_texture_info(doggies_texture, &imgwidth, &imgheight);
     photo_mesh = par_mesh_create_rectangle(1, (float) imgheight / imgwidth);
     int nverts = 4;
@@ -152,6 +166,9 @@ void input(par_event evt, float x, float y, float z)
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
+    ASSET_TABLE(PAR_TOKEN_DEFINE);
+    ASSET_TABLE(PAR_ASSET_PRELOAD);
+    ASSET_LIST(par_asset_preload);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

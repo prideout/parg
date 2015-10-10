@@ -6,7 +6,8 @@
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
-    F(U_MVP, "u_mvp")
+    F(U_MVP, "u_mvp")           \
+    F(SHADER_SIMPLE, "sierpinski.glsl")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -21,7 +22,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
     par_state_depthtest(0);
     par_state_cullfaces(0);
-    par_shader_load_from_asset("sierpinski.glsl");
+    par_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
     par_zcam_init(worldwidth, worldheight, fovy);
     trimesh = par_mesh_create_sierpinski(worldwidth, 10);
@@ -74,6 +75,7 @@ void input(par_event evt, float x, float y, float z)
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
+    par_asset_preload(SHADER_SIMPLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

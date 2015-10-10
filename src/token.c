@@ -9,12 +9,17 @@ KHASH_MAP_INIT_INT(parstr, sds)
 
 static khash_t(parstr)* _token_registry = 0;
 
-const char* par_token_to_string(par_token token)
+sds par_token_to_sds(par_token token)
 {
     par_verify(_token_registry, "Uninitialized token registry", 0);
     khiter_t iter = kh_get(parstr, _token_registry, token);
     par_verify(iter != kh_end(_token_registry), "Unknown token", 0);
     return kh_value(_token_registry, iter);
+}
+
+const char* par_token_to_string(par_token token)
+{
+    return par_token_to_sds(token);
 }
 
 par_token par_token_from_string(const char* cstring)

@@ -1,8 +1,17 @@
 #include "asset.h"
+#include <par.h>
 #include <assert.h>
 
 static sds _exedir = 0;
 static sds _baseurl = 0;
+
+sds par_token_to_sds(par_token token);
+
+void par_asset_preload(par_token id)
+{
+    sds filename = par_token_to_sds(id);
+    // ...
+}
 
 sds par_asset_baseurl()
 {

@@ -6,7 +6,8 @@
     F(A_POSITION, "a_position") \
     F(A_NORMAL, "a_normal")     \
     F(U_MVP, "u_mvp")           \
-    F(U_IMV, "u_imv")
+    F(U_IMV, "u_imv")           \
+    F(SHADER_PICKING, "picking.glsl")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -22,7 +23,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_clearcolor(bgcolor);
     par_state_depthtest(1);
     par_state_cullfaces(1);
-    par_shader_load_from_asset("picking.glsl");
+    par_shader_load_from_asset(SHADER_PICKING);
 
     const float fovy = 16 * PAR_TWOPI / 180;
     const float aspect = (float) winwidth / winheight;
@@ -71,6 +72,7 @@ void dispose()
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
+    par_asset_preload(SHADER_PICKING);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

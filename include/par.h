@@ -27,6 +27,19 @@ typedef enum {
 
 typedef enum { PAR_READ, PAR_WRITE, PAR_MODIFY } par_buffer_mode;
 
+// TOKEN
+
+typedef uint32_t par_token;
+#define PAR_TOKEN_DECLARE(NAME, VAL) static par_token NAME
+#define PAR_TOKEN_DEFINE(NAME, VAL) NAME = par_token_from_string(VAL)
+const char* par_token_to_string(par_token);
+par_token par_token_from_string(const char*);
+
+// ASSET
+
+#define PAR_ASSET_PRELOAD(NAME, VAL) par_asset_preload(NAME)
+void parn_asset_preload(par_token id);
+
 // BUFFER
 
 typedef struct par_buffer_s par_buffer;
@@ -38,16 +51,7 @@ void* par_buffer_lock(par_buffer*, par_buffer_mode);
 void par_buffer_unlock(par_buffer*);
 void par_buffer_gpu_bind(par_buffer*);
 int par_buffer_gpu_check(par_buffer*);
-par_buffer* par_buffer_from_file(const char* filepath);
-par_buffer* par_buffer_from_asset(const char* filename);
-
-// TOKEN
-
-typedef uint32_t par_token;
-#define PAR_TOKEN_DECLARE(NAME, VAL) static par_token NAME;
-#define PAR_TOKEN_DEFINE(NAME, VAL) NAME = par_token_from_string(VAL);
-const char* par_token_to_string(par_token);
-par_token par_token_from_string(const char*);
+par_buffer* par_buffer_from_asset(par_token id);
 
 // MESH
 
@@ -66,14 +70,14 @@ int par_mesh_ntriangles(par_mesh* m);
 // SHADER
 
 void par_shader_load_from_buffer(par_buffer*);
-void par_shader_load_from_asset(const char* filename);
+void par_shader_load_from_asset(par_token id);
 void par_shader_bind(par_token);
 void par_shader_free(par_token);
 
 // TEXTURE
 
 typedef struct par_texture_s par_texture;
-par_texture* par_texture_from_asset(const char* filename);
+par_texture* par_texture_from_asset(par_token id);
 void par_texture_bind(par_texture*, int stage);
 void par_texture_info(par_texture*, int* width, int* height);
 void par_texture_free(par_texture*);
