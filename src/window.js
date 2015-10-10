@@ -1,16 +1,21 @@
-Module.par_startup = function(dims) {
-    $('#canvas3d').css({
+Module.parg.canvas = '#canvas3d';
+
+Module.parg.start = function(dims) {
+    var $canvas = $(Module.parg.canvas);
+    var canvas = $canvas[0];
+    $canvas.css({
         width: dims[0] + 'px',
         height: dims[1] + 'px'
     });
-    var canvas = $('#canvas3d')[0];
+    canvas.width = dims[0] * window.devicePixelRatio;
+    canvas.height = dims[1] * window.devicePixelRatio;
     var gl = GLctx = window.GLctx = canvas.getContext('webgl', {
         alpha: true,
         antialias: true
     });
     gl.clearColor(0.2, 0.4, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    $('#canvas3d').show();
+    $canvas.show();
 
     Module.Window.init();
 
@@ -45,5 +50,3 @@ Module.par_startup = function(dims) {
 
     window.requestAnimationFrame(raf);
 };
-
-Module.par_startup(Module.par_window_dims);

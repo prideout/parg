@@ -20,6 +20,7 @@ file(GLOB VENDORC src/vendor/*.c)
 file(GLOB SRCFILES ${COREC} ${VENDORC})
 file(GLOB JSEXCLUSIONS src/window.c)
 file(GLOB JSCPP src/windowjs.cpp)
+file(GLOB POSTJS src/window.js)
 
 include_directories(
     include
@@ -50,6 +51,7 @@ set(EMLINKARGS
     -s 'MODULARIZE=1'
     -s 'EXPORT_NAME="CreatePar"'
     -s 'NO_FILESYSTEM=1'
+    -s 'ALLOW_MEMORY_GROWTH=1'
 )
 
 set(JSSRC ${SRCFILES})
@@ -101,6 +103,6 @@ foreach(DEMONAME ${DEMOS})
     add_custom_command(
         OUTPUT ${DEMONAME}.js
         COMMAND emcc -o ${DEMONAME}.js ${EMLINKARGS} ${JSOBJECTS} ${DEMONAME}.js.o
-        DEPENDS ${DEMONAME}.js.o ${JSOBJECTS}
+        DEPENDS ${DEMONAME}.js.o ${JSOBJECTS} ${POSTJS}
     )
 endforeach()

@@ -11,6 +11,20 @@ static khash_t(assmap)* _asset_registry = 0;
 static sds _exedir = 0;
 static sds _baseurl = 0;
 
+#ifdef EMSCRIPTEN
+void par_asset_onload(const char* name, par_buffer* buf)
+{
+    par_token id = par_token_from_string(name);
+    par_verify(buf, "Unable to load asset", 0);
+    if (!_asset_registry) {
+        _asset_registry = kh_init(assmap);
+    }
+    int ret;
+    int iter = kh_put(assmap, _asset_registry, id, &ret);
+    kh_value(_asset_registry, iter) = buf;
+}
+
+#else
 void par_asset_preload(par_token id)
 {
     sds filename = par_token_to_sds(id);
@@ -23,6 +37,8 @@ void par_asset_preload(par_token id)
     int iter = kh_put(assmap, _asset_registry, id, &ret);
     kh_value(_asset_registry, iter) = buf;
 }
+
+#endif
 
 par_buffer* par_asset_to_buffer(par_token id)
 {

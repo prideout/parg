@@ -129,7 +129,13 @@ void par_shader_load_from_buffer(par_buffer* buf)
         sds vshader_body = kv_A(chunk_bodies, vshader_index);
         sds fshader_body = kv_A(chunk_bodies, fshader_index);
         vshader_body = sdscat(sdsdup(prefix_body), vshader_body);
+#if EMSCRIPTEN
+        sds qualified_prefix =
+            sdscatsds(sdsnew("precision highp float;\n"), prefix_body);
+        fshader_body = sdscat(qualified_prefix, fshader_body);
+#else
         fshader_body = sdscat(sdsdup(prefix_body), fshader_body);
+#endif
         par_token program_name = par_token_from_string(args[0]);
         sdsfreesplitres(args, nargs);
         sdsfree(argstring);

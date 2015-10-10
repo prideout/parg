@@ -28,9 +28,9 @@ par_texture* par_texture_from_asset(par_token id)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex->width, tex->height, 0,
         GL_LUMINANCE, GL_UNSIGNED_BYTE, grayvals);
     free(grayvals);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
     return tex;
 }

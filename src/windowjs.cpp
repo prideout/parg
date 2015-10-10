@@ -3,9 +3,11 @@ extern "C" {
     #include <parwin.h>
     #include "pargl.h"
     void par_asset_set_baseurl(const char* url);
+    void par_asset_onload(const char* name, par_buffer* buf);
 }
 
 #include <stdio.h>
+#include <string>
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
@@ -79,6 +81,31 @@ static void input(int evt, float x, float y, float z)
     _input((par_event) evt, x, y, z);
 }
 
+par_buffer* g_buffer;
+
+static int alloc(std::string id, int nbytes)
+{
+    using namespace emscripten;
+    printf("Allocating %d bytes for %s\n", nbytes, id.c_str());
+    auto parg = val::module_property("parg");
+    g_buffer = par_buffer_alloc(nbytes, PAR_CPU);
+    return (int) par_buffer_lock(g_buffer, PAR_WRITE);
+}
+
+static void commit(std::string id)
+{
+    par_buffer_unlock(g_buffer);
+    par_asset_onload(id.c_str(), g_buffer);
+}
+
+void par_asset_preload(par_token id)
+{
+    using namespace emscripten;
+    auto parg = val::module_property("parg");
+    std::string name(par_token_to_string(id));
+    parg.call<void>("asset_preload", name);
+}
+
 EMSCRIPTEN_BINDINGS(par)
 {
     using namespace emscripten;
@@ -87,7 +114,8 @@ EMSCRIPTEN_BINDINGS(par)
         .class_function("init", &init)
         .class_function("draw", &draw)
         .class_function("tick", &tick)
-        .class_function("input", &input);
-    std::string baseurl = "parg/";
-    par_asset_set_baseurl(baseurl.c_str());
+        .class_function("input", &input)
+        .class_function("alloc", &alloc) // TODO diff namespace pls
+        .class_function("commit", &commit); // TODO diff namespace pls
+    par_asset_set_baseurl("parg/");
 }

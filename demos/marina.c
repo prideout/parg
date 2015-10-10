@@ -47,7 +47,7 @@ void init(float winwidth, float winheight, float pixratio)
     int imgwidth, imgheight;
     par_texture_info(origin_texture, &imgwidth, &imgheight);
     assert(imgwidth == imgheight);
-    tscale = imgwidth / 256;
+    tscale = 1280 / 256;
     par_zcam_init(1, 1, fovy);
     par_zcam_grab_update(0.5, 0.5, 20);
     tile_mesh = par_mesh_create_rectangle(1, 1);

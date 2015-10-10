@@ -25,4 +25,4 @@ par_buffer* par_asset_to_buffer(par_token id);
             printf("%s\n", exception_key);                                 \
         }                                                                  \
     }                                                                      \
-    assert((expr) && exception_key);
+    assert(expr);
