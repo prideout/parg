@@ -43,7 +43,9 @@ int draw()
 }
 
 void tick(float seconds, float winwidth, float winheight, float pixratio) {}
+
 void dispose() {}
+
 int main(int argc, char* argv[])
 {
     par_window_setargs(argc, argv);

@@ -17,6 +17,9 @@ find_library(OPENGL_LIB OpenGL)
 
 file(GLOB COREC src/*.c)
 file(GLOB VENDORC src/vendor/*.c)
+file(GLOB SRCFILES ${COREC} ${VENDORC})
+file(GLOB JSEXCLUSIONS src/window.c)
+file(GLOB JSCPP src/windowjs.cpp)
 
 include_directories(
     include
@@ -24,13 +27,60 @@ include_directories(
     ${GLFW_INCLUDE_DIRS}
 )
 
-add_library(parg STATIC ${COREC} ${VENDORC})
+add_library(parg STATIC ${SRCFILES})
+
+set(EMCCARGS
+    -c
+    -std=c99
+    -O3
+    -Wall
+    -I../include
+    -I../src/vendor
+)
+set(EMCXXARGS
+    -O3
+    -std=c++11
+    -Wall
+    -I../include
+    -I../src/vendor
+)
+set(EMLINKARGS
+    --post-js ../src/window.js
+    -O3 --memory-init-file 0 --profiling --bind
+    -s 'MODULARIZE=1'
+    -s 'EXPORT_NAME="CreatePar"'
+    -s 'NO_FILESYSTEM=1'
+)
+
+set(JSSRC ${SRCFILES})
+list(REMOVE_ITEM JSSRC ${JSEXCLUSIONS})
+foreach(SRCFILE ${JSSRC})
+    get_filename_component(BASENAME ${SRCFILE} NAME_WE)
+    set(JSOBJECT ${BASENAME}.js.o)
+    add_custom_command(
+        OUTPUT ${JSOBJECT}
+        COMMAND emcc -o ${JSOBJECT} ${EMCCARGS} ${SRCFILE}
+        DEPENDS ${SRCFILE}
+    )
+    list(APPEND JSOBJECTS ${JSOBJECT})
+endforeach()
+foreach(SRCFILE ${JSCPP})
+    get_filename_component(BASENAME ${SRCFILE} NAME_WE)
+    set(JSOBJECT ${BASENAME}.js.o)
+    add_custom_command(
+        OUTPUT ${JSOBJECT}
+        COMMAND emcc -o ${JSOBJECT} ${EMCXXARGS} ${SRCFILE}
+        DEPENDS ${SRCFILE}
+    )
+    list(APPEND JSOBJECTS ${JSOBJECT})
+endforeach()
 
 foreach(DEMONAME ${DEMOS})
     add_executable(
         ${DEMONAME}
         demos/${DEMONAME}.c
         ${DEMONAME}.glsl
+        ${DEMONAME}.js
     )
     add_custom_command(
         OUTPUT ${DEMONAME}.glsl
@@ -42,5 +92,15 @@ foreach(DEMONAME ${DEMOS})
         parg
         ${OPENGL_LIB}
         ${GLFW_LIBRARIES}
+    )
+    add_custom_command(
+        OUTPUT ${DEMONAME}.js.o
+        COMMAND emcc -o ${DEMONAME}.js.o ${EMCCARGS} ../demos/${DEMONAME}.c
+        DEPENDS demos/${DEMONAME}.c
+    )
+    add_custom_command(
+        OUTPUT ${DEMONAME}.js
+        COMMAND emcc -o ${DEMONAME}.js ${EMLINKARGS} ${JSOBJECTS} ${DEMONAME}.js.o
+        DEPENDS ${DEMONAME}.js.o ${JSOBJECTS}
     )
 endforeach()

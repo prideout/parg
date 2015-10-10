@@ -99,7 +99,7 @@ int draw()
     for (int i = 0; i < NUM_LEVELS; i++) {
         scale = tscale / pow(2, levels[i]);
         model = M4Mul(M4MakeTranslation(translation),
-            M4MakeScale((Vector3){scale, scale, scale}));
+                M4MakeScale((Vector3){scale, scale, scale}));
         mvp = M4Mul(projection, M4Mul(view, model));
         par_texture_bind(marina_textures[i], 0);
         par_uniform_matrix4f(U_MVP, &mvp);
@@ -115,7 +115,7 @@ int draw()
         par_mesh_coord(photo_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     scale = tscale / pow(2, 25);
     model = M4Mul(M4MakeTranslation(translation),
-        M4MakeScale((Vector3){scale, scale, scale}));
+            M4MakeScale((Vector3){scale, scale, scale}));
     mvp = M4Mul(projection, M4Mul(view, model));
     par_texture_bind(doggies_texture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
@@ -143,16 +143,16 @@ void dispose()
 void input(par_event evt, float x, float y, float z)
 {
     switch (evt) {
-        case PAR_EVENT_DOWN:
-            par_zcam_grab_begin(x, y);
-            break;
-        case PAR_EVENT_UP:
-            par_zcam_grab_update(x, y, z);
-            par_zcam_grab_release();
-            break;
-        case PAR_EVENT_MOVE:
-            par_zcam_grab_update(x, y, z);
-            break;
+    case PAR_EVENT_DOWN:
+        par_zcam_grab_begin(x, y);
+        break;
+    case PAR_EVENT_UP:
+        par_zcam_grab_update(x, y, z);
+        par_zcam_grab_release();
+        break;
+    case PAR_EVENT_MOVE:
+        par_zcam_grab_update(x, y, z);
+        break;
     }
 }
 

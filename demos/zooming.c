@@ -68,16 +68,16 @@ void dispose()
 void input(par_event evt, float x, float y, float z)
 {
     switch (evt) {
-        case PAR_EVENT_DOWN:
-            par_zcam_grab_begin(x, y);
-            break;
-        case PAR_EVENT_UP:
-            par_zcam_grab_update(x, y, z);
-            par_zcam_grab_release();
-            break;
-        case PAR_EVENT_MOVE:
-            par_zcam_grab_update(x, y, z);
-            break;
+    case PAR_EVENT_DOWN:
+        par_zcam_grab_begin(x, y);
+        break;
+    case PAR_EVENT_UP:
+        par_zcam_grab_update(x, y, z);
+        par_zcam_grab_release();
+        break;
+    case PAR_EVENT_MOVE:
+        par_zcam_grab_update(x, y, z);
+        break;
     }
 }
 
