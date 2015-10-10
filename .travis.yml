@@ -3,5 +3,5 @@ script:
     - brew update &>/dev/null
     - brew install cmake uncrustify glfw3 emscripten
     - python emsetup.py
-    - . env.sh
-    - init && build
+    - cmake -H. -Bbuild
+    - cmake --build build

@@ -88,12 +88,6 @@ EMSCRIPTEN_BINDINGS(par)
         .class_function("draw", &draw)
         .class_function("tick", &tick)
         .class_function("input", &input);
-
-    // document.location.href + '../'
-    // auto v = val::get_global("document");
-    // auto location = v["location"];
-    // auto href = v["href"];
-
-    std::string baseurl = "http://document.location.href/../";
+    std::string baseurl = "parg/";
     par_asset_set_baseurl(baseurl.c_str());
 }
