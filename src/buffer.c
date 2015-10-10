@@ -1,9 +1,7 @@
 #include <par.h>
-#include <stdlib.h>
-#include <sds.h>
+#include "internal.h"
 #include "pargl.h"
-#include "verify.h"
-#include "asset.h"
+#include <stdlib.h>
 
 struct par_buffer_s {
     char* data;
@@ -90,7 +88,12 @@ par_buffer* par_buffer_from_file(const char* filepath)
     return retval;
 }
 
-par_buffer* par_buffer_from_asset(const char* filename)
+par_buffer* par_buffer_from_asset(par_token id)
+{
+    return par_asset_to_buffer(id);
+}
+
+par_buffer* par_buffer_from_path(const char* filename)
 {
 #if EMSCRIPTEN
     sds baseurl = par_asset_baseurl();
@@ -112,7 +115,7 @@ par_buffer* par_buffer_from_asset(const char* filename)
 
 void par_buffer_gpu_bind(par_buffer* buf)
 {
-    par_verify(par_buffer_gpu_check(buf), "GPU buffer required.", 0)
+    par_verify(par_buffer_gpu_check(buf), "GPU buffer required", 0)
     GLenum target = buf->memtype == PAR_GPU_ARRAY ? GL_ARRAY_BUFFER
         : GL_ELEMENT_ARRAY_BUFFER;
     glBindBuffer(target, par_buffer_gpu_handle(buf));

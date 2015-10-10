@@ -1,7 +1,7 @@
 #include <par.h>
-#include <assert.h>
-#include <stdlib.h>
+#include "internal.h"
 #include "pargl.h"
+#include <stdlib.h>
 #include "lodepng.h"
 
 struct par_texture_s {
@@ -10,17 +10,16 @@ struct par_texture_s {
     GLuint handle;
 };
 
-par_texture* par_texture_from_asset(const char* filename)
+par_texture* par_texture_from_asset(par_token id)
 {
-    par_buffer* pngbuf = par_buffer_from_asset(filename);
-    assert(pngbuf);
+    par_buffer* pngbuf = par_buffer_from_asset(id);
     par_texture* tex = malloc(sizeof(struct par_texture_s));
     unsigned char* grayvals;
     const unsigned char* pngbytes = par_buffer_lock(pngbuf, PAR_READ);
     unsigned err = lodepng_decode_memory(&grayvals, (unsigned int*) &tex->width,
             (unsigned int*) &tex->height, pngbytes, par_buffer_length(pngbuf),
             LCT_GREY, 8);
-    assert(err == 0);
+    par_verify(err == 0, "PNG decoding error", 0);
     par_buffer_unlock(pngbuf);
     par_buffer_free(pngbuf);
     glGenTextures(1, &tex->handle);

@@ -1,8 +1,7 @@
 #include <par.h>
+#include "internal.h"
 #include "pargl.h"
-#include <sds.h>
 #include <string.h>
-#include "verify.h"
 #include "kvec.h"
 #include "khash.h"
 
@@ -153,9 +152,9 @@ void par_shader_load_from_buffer(par_buffer* buf)
     sdsfree(PREFIX);
 }
 
-void par_shader_load_from_asset(const char* filename)
+void par_shader_load_from_asset(par_token id)
 {
-    par_buffer* buf = par_buffer_from_asset(filename);
+    par_buffer* buf = par_buffer_from_asset(id);
     par_shader_load_from_buffer(buf);
     par_buffer_free(buf);
 }

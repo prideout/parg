@@ -1,16 +1,35 @@
-#include "asset.h"
 #include <par.h>
-#include <assert.h>
+#include "internal.h"
+#include "kvec.h"
+#include "khash.h"
+
+// Mapping from asset ids (which are tokens) to buffer pointers.
+KHASH_MAP_INIT_INT(assmap, par_buffer*)
+
+static khash_t(assmap)* _asset_registry = 0;
 
 static sds _exedir = 0;
 static sds _baseurl = 0;
 
-sds par_token_to_sds(par_token token);
-
 void par_asset_preload(par_token id)
 {
     sds filename = par_token_to_sds(id);
-    // ...
+    par_buffer* buf = par_buffer_from_path(filename);
+    par_verify(buf, "Unable to load asset", 0);
+    if (!_asset_registry) {
+        _asset_registry = kh_init(assmap);
+    }
+    int ret;
+    int iter = kh_put(assmap, _asset_registry, id, &ret);
+    kh_value(_asset_registry, iter) = buf;
+}
+
+par_buffer* par_asset_to_buffer(par_token id)
+{
+    par_verify(_asset_registry, "Uninitialized asset registry", 0);
+    khiter_t iter = kh_get(assmap, _asset_registry, id);
+    par_verify(iter != kh_end(_asset_registry), "Unknown token", 0);
+    return kh_value(_asset_registry, iter);
 }
 
 sds par_asset_baseurl()

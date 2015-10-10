@@ -1,9 +1,8 @@
 #include <par.h>
-#include "sds.h"
+#include "internal.h"
 #include "khash.h"
-#include "verify.h"
 
-// Mapping from token to C strings.
+// Mapping from tokens to C strings.
 // There's no need for a mapping from C strings to tokens because of math.
 KHASH_MAP_INIT_INT(parstr, sds)
 

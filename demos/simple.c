@@ -7,7 +7,6 @@
     F(U_MVP, "u_mvp")           \
     F(U_COLOR, "u_color")       \
     F(SHADER_SIMPLE, "simple.glsl")
-
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 Matrix4 projection;
@@ -18,23 +17,19 @@ par_buffer* tricoords;
 void init(float winwidth, float winheight, float pixratio)
 {
     const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
-
     par_state_clearcolor(bgcolor);
     par_state_cullfaces(1);
     par_shader_load_from_asset(SHADER_SIMPLE);
-
     const float h = 5.0f;
     const float w = h * winwidth / winheight;
     const float znear = 65;
     const float zfar = 90;
     projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
-
     Point3 eye = {0, 0, 75};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
-
     tricoords = par_buffer_alloc(sizeof(Point3) * 3, PAR_GPU_ARRAY);
     Point3* pdata = (Point3*) par_buffer_lock(tricoords, PAR_WRITE);
     *pdata++ = (Point3){1, 1, 0};

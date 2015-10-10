@@ -30,15 +30,18 @@ typedef enum { PAR_READ, PAR_WRITE, PAR_MODIFY } par_buffer_mode;
 // TOKEN
 
 typedef uint32_t par_token;
-#define PAR_TOKEN_DECLARE(NAME, VAL) static par_token NAME
-#define PAR_TOKEN_DEFINE(NAME, VAL) NAME = par_token_from_string(VAL)
+#define PAR_TOKEN_DECLARE(NAME, VAL) static par_token NAME;
+#define PAR_TOKEN_DEFINE(NAME, VAL) NAME = par_token_from_string(VAL);
 const char* par_token_to_string(par_token);
 par_token par_token_from_string(const char*);
 
 // ASSET
 
-#define PAR_ASSET_PRELOAD(NAME, VAL) par_asset_preload(NAME)
-void parn_asset_preload(par_token id);
+#define PAR_ASSET_TABLE(NAME, VAL) \
+    PAR_TOKEN_DEFINE(NAME, VAL);   \
+    par_asset_preload(NAME);
+#define PAR_ASSET_LIST(VAL) par_asset_preload(par_token_from_string(VAL));
+void par_asset_preload(par_token id);
 
 // BUFFER
 

@@ -8,7 +8,6 @@
     F(U_MVP, "u_mvp")           \
     F(U_IMV, "u_imv")           \
     F(SHADER_PICKING, "picking.glsl")
-
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 Matrix4 projection;
@@ -19,24 +18,20 @@ par_mesh* knot;
 void init(float winwidth, float winheight, float pixratio)
 {
     const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
-
     par_state_clearcolor(bgcolor);
     par_state_depthtest(1);
     par_state_cullfaces(1);
     par_shader_load_from_asset(SHADER_PICKING);
-
     const float fovy = 16 * PAR_TWOPI / 180;
     const float aspect = (float) winwidth / winheight;
     const float znear = 0.1;
     const float zfar = 300;
     projection = M4MakePerspective(fovy, aspect, znear, zfar);
-
     Point3 eye = {0, 0, 4};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
-
     knot = par_mesh_create_knot(400, 100, 8, 2);
 }
 

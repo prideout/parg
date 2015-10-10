@@ -10,14 +10,12 @@
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")
-
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                \
     F(SHADER_MARINA, "marina.glsl")   \
     F(TEXTURE_DOGGIES, "doggies.png") \
     F(TEXTURE_ORIGIN, "origin_z02.png")
-
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_LIST(F)   \
@@ -27,13 +25,11 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
     F("marina_z20.png")
 
 #define NUM_LEVELS 4
-
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float lon = -122.3245;
 const float lat = 37.8743;
 const int levels[NUM_LEVELS] = {5, 10, 15, 20};
-
 par_texture* marina_textures[NUM_LEVELS];
 par_texture* origin_texture;
 par_texture* doggies_texture;
@@ -46,7 +42,7 @@ float tscale;
 void init(float winwidth, float winheight, float pixratio)
 {
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
-    par_shader_load_from_asset(SHARER_MARINA);
+    par_shader_load_from_asset(SHADER_MARINA);
     origin_texture = par_texture_from_asset(TEXTURE_ORIGIN);
     int imgwidth, imgheight;
     par_texture_info(origin_texture, &imgwidth, &imgheight);
@@ -109,13 +105,11 @@ int draw()
         par_uniform_matrix4f(U_MVP, &mvp);
         par_draw_one_quad();
     }
-
     par_shader_bind(P_SOLID);
     mvp = M4Mul(projection, view);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(lines_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_lines(2);
-
     par_shader_bind(P_TEXTURED);
     par_varray_enable(
         par_mesh_coord(photo_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
@@ -126,7 +120,6 @@ int draw()
     par_texture_bind(doggies_texture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_one_quad();
-
     return 1;
 }
 
@@ -166,9 +159,8 @@ void input(par_event evt, float x, float y, float z)
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
-    ASSET_TABLE(PAR_TOKEN_DEFINE);
-    ASSET_TABLE(PAR_ASSET_PRELOAD);
-    ASSET_LIST(par_asset_preload);
+    ASSET_TABLE(PAR_ASSET_TABLE);
+    ASSET_LIST(PAR_ASSET_LIST);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

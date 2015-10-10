@@ -7,12 +7,11 @@
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")
+TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                \
     F(SHADER_ZOOMING, "zooming.glsl") \
     F(TEXTURE_PALMS, "arecaceae.png")
-
-TOKEN_TABLE(PAR_TOKEN_DECLARE);
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_mesh* rectmesh;
@@ -85,8 +84,7 @@ void input(par_event evt, float x, float y, float z)
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
-    ASSET_TABLE(PAR_TOKEN_DEFINE);
-    ASSET_TABLE(PAR_ASSET_PRELOAD);
+    ASSET_TABLE(PAR_ASSET_TABLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);

@@ -1,6 +1,6 @@
 #include <par.h>
 #include "pargl.h"
-#include "verify.h"
+#include "internal.h"
 
 void par_varray_enable(par_buffer* buf, par_token attr, int ncomps,
     par_data_type type, int stride, int offset)

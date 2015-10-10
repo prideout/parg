@@ -8,11 +8,9 @@
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
     F(SHADER_SIMPLE, "sierpinski.glsl")
-
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 par_mesh* trimesh;
-
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 6000;
