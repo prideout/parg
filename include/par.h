@@ -90,7 +90,9 @@ void par_texture_fliprows(void* data, int rowsize, int nrows);
 // UNIFORM
 
 void par_uniform1f(par_token tok, float val);
+void par_uniform3f(par_token, const Vector3* val);
 void par_uniform4f(par_token, const Vector4* val);
+void par_uniform_point(par_token, const Point3* val);
 void par_uniform_matrix4f(par_token, const Matrix4* val);
 void par_uniform_matrix3f(par_token, const Matrix3* val);
 

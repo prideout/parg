@@ -1,8 +1,9 @@
 
 // @program p_textured, vertex, fragment
-// @program p_solid, vertex, solid
+// @program p_solid, vertex_highp, solid
 
 uniform mat4 u_mvp;
+uniform vec3 u_eyepos;
 varying vec2 v_texcoord;
 
 -- vertex
@@ -13,6 +14,18 @@ attribute vec2 a_texcoord;
 void main()
 {
     gl_Position = u_mvp * a_position;
+    v_texcoord = a_texcoord;
+}
+
+-- vertex_highp
+
+attribute vec3 a_position;
+attribute vec2 a_texcoord;
+
+void main()
+{
+    vec3 p = a_position - u_eyepos;
+    gl_Position = u_mvp * vec4(p, 1.0);
     v_texcoord = a_texcoord;
 }
 

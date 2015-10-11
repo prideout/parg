@@ -9,7 +9,8 @@
     F(P_SOLID, "p_solid")       \
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
-    F(U_MVP, "u_mvp")
+    F(U_MVP, "u_mvp")           \
+    F(U_EYEPOS, "u_eyepos")
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                \
@@ -110,10 +111,12 @@ void init(float winwidth, float winheight, float pixratio)
 int draw()
 {
     double scale;
-    DMatrix4 view, projection, model;
+    DMatrix4 view, projection, model, special_view;
     Matrix4 mvp;
     DPoint3 camera_position = par_zcam_dmatrices(&projection, &view);
     par_draw_clear();
+
+    // First, draw the map "tiles" (these aren't really slippy map tiles)
     par_shader_bind(P_TEXTURED);
     par_varray_enable(
         par_mesh_coord(tile_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
@@ -133,11 +136,23 @@ int draw()
         par_uniform_matrix4f(U_MVP, &mvp);
         par_draw_one_quad();
     }
+
+    // Recompute the MVP, pretending that the camera is at the origin.
+    DPoint3 origin = {0, 0, 0};
+    DPoint3 target = {0, 0, -1};
+    DVector3 up = {0, 1, 0};
+    special_view = DM4MakeLookAt(origin, target, up);
+    mvp = M4MakeFromDM4(DM4Mul(projection, special_view));
+
+    // Draw the crosshair lines.
     par_shader_bind(P_SOLID);
-    mvp = M4MakeFromDM4(DM4Mul(projection, view));
     par_uniform_matrix4f(U_MVP, &mvp);
+    Point3 eyepos = P3MakeFromDP3(camera_position);
+    par_uniform_point(U_EYEPOS, &eyepos);
     par_varray_enable(linesfp32_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_lines(2);
+
+    // Draw the photo.
     par_shader_bind(P_TEXTURED);
     par_varray_enable(
         par_mesh_coord(photo_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);

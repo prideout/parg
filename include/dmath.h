@@ -8935,3 +8935,12 @@ static inline Matrix4 M4MakeFromDM4(DMatrix4 dmat)
     m.col3.w = dmat.col3.w;
     return m;
 }
+
+static inline Point3 P3MakeFromDP3(DPoint3 dv)
+{
+    Point3 v;
+    v.x = dv.x;
+    v.y = dv.y;
+    v.z = dv.z;
+    return v;
+}
