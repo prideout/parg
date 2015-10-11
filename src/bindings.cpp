@@ -27,6 +27,7 @@ static par_window_fn_tick _tick = null_tick;
 static par_window_fn_draw _draw = null_draw;
 static par_window_fn_exit _dispose = null_dispose;
 static par_window_fn_input _input = null_input;
+static par_buffer* g_buffer;
 
 void par_window_setargs(int argc, char* argv[])
 {
@@ -80,8 +81,6 @@ static void input(int evt, float x, float y, float z)
 {
     _input((par_event) evt, x, y, z);
 }
-
-par_buffer* g_buffer;
 
 static int alloc(std::string id, int nbytes)
 {

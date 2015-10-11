@@ -6,11 +6,14 @@ parg.module = null;
 
 parg.init = function() {
 
-    // Execute main() in its entirety:
+    // First, execute the user-defined main() function in its entirety:
     parg.module = CreateParg({parg: parg});
 
-    // Make HTTP requests for all assets:
+    // Now, make HTTP requests for all assets:
     parg.request_assets();
+
+    // After receiving the response from all HTTP requests, parg will
+    // automatically call the user-defined init() function.
 
 };
 
@@ -25,15 +28,7 @@ parg.asset_preload = function(id) {
     xhr.responseType = 'arraybuffer';
     var onloadFunc = function() {
         if (xhr.response) {
-            var ptr = parg.module.Asset.alloc(id, xhr.response.byteLength);
-            var u8buffer = new Uint8Array(xhr.response);
-            parg.module.HEAPU8.set(u8buffer, ptr);
-            parg.module.Asset.commit(id);
-            if (--parg.nrequests == 0) {
-
-                // Start the game loop only after every asset is fetched:
-                parg.start();
-            }
+            parg.onasset(id, xhr.response)
         }
     };
     var errorFunc = function() {
@@ -50,9 +45,25 @@ parg.request_assets = function() {
     }
 };
 
+parg.onasset = function(id, arraybuffer) {
+    var ptr = parg.module.Asset.alloc(id, arraybuffer.byteLength);
+    var u8buffer = new Uint8Array(arraybuffer);
+    parg.module.HEAPU8.set(u8buffer, ptr);
+    parg.module.Asset.commit(id);
+    if (--parg.nrequests == 0) {
+        parg.start();
+    }
+};
+
 parg.canvas = '#canvas3d';
 
 parg.start = function() {
+
+    var cevents = {
+        PAR_EVENT_DOWN: 0,
+        PAR_EVENT_UP: 1,
+        PAR_EVENT_MOVE: 2
+    };
 
     var dims = parg.module.par_window_dims;
     var $canvas = $(parg.canvas);
@@ -74,20 +85,21 @@ parg.start = function() {
 
     parg.module.Window.init();
 
+    var clientWidth = canvas.clientWidth;
+    var clientHeight = canvas.clientHeight;
+    var clientMaxY = clientHeight - 1;
+
     var onmouse = function(event) {
         var box = canvas.getBoundingClientRect();
-        var x = event.clientX - box.left;
-        var y = event.clientY - box.top;
+        var x = (event.clientX - box.left) / clientWidth;
+        var y = (clientMaxY - event.clientY + box.top) / clientHeight;
         var etype = event.type;
         if (etype == "mousedown") {
-            // Module.Window.input
-            window.console.log('down', [x, y]);
+            parg.module.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
         } else if (etype == "mouseup") {
-            // Module.Window.input
-            window.console.log('up', [x, y]);
+            parg.module.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
         } else if (etype == "mousemove") {
-            // Module.Window.input
-            window.console.log('move', [x, y]);
+            parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
         }
     };
 
