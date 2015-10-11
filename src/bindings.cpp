@@ -114,8 +114,10 @@ EMSCRIPTEN_BINDINGS(par)
         .class_function("init", &init)
         .class_function("draw", &draw)
         .class_function("tick", &tick)
-        .class_function("input", &input)
-        .class_function("alloc", &alloc) // TODO diff namespace pls
-        .class_function("commit", &commit); // TODO diff namespace pls
+        .class_function("input", &input);
+    struct Asset {};
+    class_<Asset>("Asset")
+        .class_function("alloc", &alloc)
+        .class_function("commit", &commit);
     par_asset_set_baseurl("parg/");
 }

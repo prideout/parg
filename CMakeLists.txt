@@ -19,8 +19,7 @@ file(GLOB COREC src/*.c)
 file(GLOB VENDORC src/vendor/*.c)
 file(GLOB SRCFILES ${COREC} ${VENDORC})
 file(GLOB JSEXCLUSIONS src/window.c)
-file(GLOB JSCPP src/windowjs.cpp)
-file(GLOB POSTJS src/window.js)
+file(GLOB JSCPP src/bindings.cpp)
 
 include_directories(
     include
@@ -46,10 +45,9 @@ set(EMCXXARGS
     -I../src/vendor
 )
 set(EMLINKARGS
-    --post-js ../src/window.js
     -O3 --memory-init-file 0 --profiling --bind
     -s 'MODULARIZE=1'
-    -s 'EXPORT_NAME="CreatePar"'
+    -s 'EXPORT_NAME="CreateParg"'
     -s 'NO_FILESYSTEM=1'
     -s 'ALLOW_MEMORY_GROWTH=1'
 )
