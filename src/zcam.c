@@ -6,7 +6,7 @@ static DVector3 _worldsize;
 static double _maxcamz;
 static double _mincamz;
 static double _fovy;
-static double _winaspect;
+static double _winaspect = 0;
 static double _zplanes[2];
 static DPoint3 _grabpt;
 static int _grabbing = 0;
@@ -40,8 +40,11 @@ void par_zcam_init(float worldwidth, float worldheight, float fovy)
 
 void par_zcam_tick(float winaspect, float seconds)
 {
-    _winaspect = winaspect;
-    _projmat = DM4MakePerspective(_fovy, _winaspect, _zplanes[0], _zplanes[1]);
+    if (_winaspect != winaspect) {
+        _winaspect = winaspect;
+        double* z = _zplanes;
+        _projmat = DM4MakePerspective(_fovy, _winaspect, z[0], z[1]);
+    }
 }
 
 void par_zcam_grab_begin(float winx, float winy)
@@ -70,18 +73,20 @@ void par_zcam_grab_update(float winx, float winy, float scrolldelta)
 
 void par_zcam_grab_end() { _grabbing = 0; }
 
-void par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
+DPoint3 par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
 {
     *proj = _projmat;
     DPoint3 target = {_camerapos.x, _camerapos.y, 0};
     DVector3 up = {0, 1, 0};
     *view = DM4MakeLookAt(_camerapos, target, up);
+    return _camerapos;
 }
 
-void par_zcam_matrices(Matrix4* proj, Matrix4* view)
+Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view)
 {
     *proj = M4MakeFromDM4(_projmat);
     DPoint3 target = {_camerapos.x, _camerapos.y, 0};
     DVector3 up = {0, 1, 0};
     *view = M4MakeFromDM4(DM4MakeLookAt(_camerapos, target, up));
+    return (Point3){_camerapos.x, _camerapos.y, _camerapos.z};
 }

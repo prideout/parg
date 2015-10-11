@@ -108,8 +108,7 @@ par_mesh* par_mesh_knot(int slices, int stacks, float major, float minor)
     return surf;
 }
 
-par_mesh* par_mesh_torus(
-    int slices, int stacks, float major, float minor)
+par_mesh* par_mesh_torus(int slices, int stacks, float major, float minor)
 {
     par_mesh* surf = malloc(sizeof(struct par_mesh_s));
     float dphi = PAR_TWOPI / stacks;

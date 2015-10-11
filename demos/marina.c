@@ -27,15 +27,15 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 #define NUM_LEVELS 4
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
-const float lon = -122.3245;
-const float lat = 37.8743;
+const float photo_lon = -122.3245;
+const float photo_lat = 37.8743;
 const int levels[NUM_LEVELS] = {5, 10, 15, 20};
 par_texture* marina_textures[NUM_LEVELS];
 par_texture* origin_texture;
 par_texture* doggies_texture;
 par_buffer* linesfp32_buffer;
 par_buffer* linesfp64_buffer;
-DVector3 translation = {0};
+DVector3 photo_position = {0};
 par_mesh* tile_mesh;
 par_mesh* photo_mesh;
 float tscale;
@@ -62,10 +62,10 @@ void init(float winwidth, float winheight, float pixratio)
     par_zcam_init(1, 1, fovy);
     par_zcam_grab_update(0.5, 0.5, 20);
     tile_mesh = par_mesh_rectangle(1, 1);
-    translation.x = lon / 360;
-    float latrad = lat * PAR_PI / 180;
+    photo_position.x = photo_lon / 360;
+    float latrad = photo_lat * PAR_PI / 180;
     float mercN = log(tan((PAR_PI / 4) + (latrad / 2)));
-    translation.y = mercN / (2 * PAR_PI);
+    photo_position.y = mercN / (2 * PAR_PI);
     for (int i = 0; i < NUM_LEVELS; i++) {
         sds name = sdsnew("marina_z");
         name = sdscatprintf(name, "%02d.png", levels[i]);
@@ -82,28 +82,28 @@ void init(float winwidth, float winheight, float pixratio)
     int vstride = sizeof(float) * 2;
     linesfp32_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
     float* plines = par_buffer_lock(linesfp32_buffer, PAR_WRITE);
-    *plines++ = translation.x;
+    *plines++ = photo_position.x;
     *plines++ = -1;
-    *plines++ = translation.x;
+    *plines++ = photo_position.x;
     *plines++ = 1;
     *plines++ = -1;
-    *plines++ = translation.y;
+    *plines++ = photo_position.y;
     *plines++ = 1;
-    *plines++ = translation.y;
+    *plines++ = photo_position.y;
     par_buffer_unlock(linesfp32_buffer);
 
     // Populate a double-precision buffer of vec2's for the lines.
     vstride = sizeof(float) * 4;
     linesfp64_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
     plines = par_buffer_lock(linesfp64_buffer, PAR_WRITE);
-    plines = write_fp64(plines, translation.x);
+    plines = write_fp64(plines, photo_position.x);
     plines = write_fp64(plines, 1);
-    plines = write_fp64(plines, translation.x);
+    plines = write_fp64(plines, photo_position.x);
     plines = write_fp64(plines, 1);
     plines = write_fp64(plines, -1);
-    plines = write_fp64(plines, translation.y);
+    plines = write_fp64(plines, photo_position.y);
     plines = write_fp64(plines, 1);
-    plines = write_fp64(plines, translation.y);
+    plines = write_fp64(plines, photo_position.y);
     par_buffer_unlock(linesfp64_buffer);
 }
 
@@ -112,7 +112,7 @@ int draw()
     double scale;
     DMatrix4 view, projection, model;
     Matrix4 mvp;
-    par_zcam_dmatrices(&projection, &view);
+    DPoint3 camera_position = par_zcam_dmatrices(&projection, &view);
     par_draw_clear();
     par_shader_bind(P_TEXTURED);
     par_varray_enable(
@@ -126,7 +126,7 @@ int draw()
     par_draw_one_quad();
     for (int i = 0; i < NUM_LEVELS; i++) {
         scale = tscale / pow(2, levels[i]);
-        model = DM4Mul(DM4MakeTranslation(translation),
+        model = DM4Mul(DM4MakeTranslation(photo_position),
                 DM4MakeScale((DVector3){scale, scale, scale}));
         mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
         par_texture_bind(marina_textures[i], 0);
@@ -142,7 +142,7 @@ int draw()
     par_varray_enable(
         par_mesh_coord(photo_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     scale = tscale / pow(2, 25);
-    model = DM4Mul(DM4MakeTranslation(translation),
+    model = DM4Mul(DM4MakeTranslation(photo_position),
             DM4MakeScale((DVector3){scale, scale, scale}));
     mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
     par_texture_bind(doggies_texture, 0);
