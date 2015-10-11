@@ -1,3 +1,3 @@
 'using strict';
 
-parg.init();
+parg.init('canvas3d', 'status');

@@ -4,6 +4,7 @@ extern "C" {
     #include "pargl.h"
     void par_asset_set_baseurl(const char* url);
     void par_asset_onload(const char* name, par_buffer* buf);
+    void par_write_message(const char* msg);
 }
 
 #include <stdio.h>
@@ -103,6 +104,13 @@ void par_asset_preload(par_token id)
     auto parg = val::module_property("parg");
     std::string name(par_token_to_string(id));
     parg.call<void>("asset_preload", name);
+}
+
+void par_write_message(const char* msg)
+{
+    using namespace emscripten;
+    auto parg = val::module_property("parg");
+    parg.call<void>("write_message", std::string(msg));
 }
 
 EMSCRIPTEN_BINDINGS(par)

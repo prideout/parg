@@ -12,6 +12,7 @@ struct par_texture_s {
 
 par_texture* par_texture_from_asset(par_token id)
 {
+    par_write_message(par_token_to_string(id));
     par_buffer* pngbuf = par_buffer_from_asset(id);
     par_texture* tex = malloc(sizeof(struct par_texture_s));
     unsigned char* grayvals;

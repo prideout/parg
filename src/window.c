@@ -19,6 +19,12 @@ static par_window_fn_draw _draw = 0;
 static par_window_fn_exit _dispose = 0;
 static par_window_fn_input _input = 0;
 
+void par_write_message(const char* msg)
+{
+    puts(msg);
+    puts("\n");
+}
+
 void par_window_setargs(int argc, char* argv[])
 {
     _argc = argc;

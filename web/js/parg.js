@@ -4,7 +4,10 @@ var parg = {};
 
 parg.module = null;
 
-parg.init = function() {
+parg.init = function(canvasid, statusid) {
+
+    parg.canvas = '#' + canvasid;
+    parg.status = '#' + statusid;
 
     // First, execute the user-defined main() function in its entirety:
     parg.module = CreateParg({parg: parg});
@@ -20,6 +23,11 @@ parg.init = function() {
 parg.nrequests = 0;
 
 parg.requests = [];
+
+parg.write_message = function(msg) {
+    $(parg.status).text(msg);
+    window.console.info(msg);
+};
 
 parg.asset_preload = function(id) {
     var url = 'parg/' + id;
@@ -55,8 +63,6 @@ parg.onasset = function(id, arraybuffer) {
     }
 };
 
-parg.canvas = '#canvas3d';
-
 parg.start = function() {
 
     var cevents = {
@@ -81,9 +87,10 @@ parg.start = function() {
     })
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
-    $canvas.show();
 
+    $canvas.show();
     parg.module.Window.init();
+    $(parg.status).hide();
 
     var clientWidth = canvas.clientWidth;
     var clientHeight = canvas.clientHeight;
