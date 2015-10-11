@@ -100,13 +100,22 @@ parg.start = function() {
             parg.module.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
         } else if (etype == "mousemove") {
             parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
+        } else if (etype == "mousewheel") {
+            event.preventDefault();
+            var delta = event.wheelDelta / 10.0;
+            parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+        } else if (etype == "DOMMouseScroll") {
+            event.preventDefault();
+            var delta = -event.detail / 2.0;
+            parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         }
     };
 
     canvas.addEventListener("mousedown", onmouse);
     canvas.addEventListener("mouseup", onmouse);
     canvas.addEventListener("mousemove", onmouse);
-    // canvas.addEventListener("mouseenter", onmouse);
+    canvas.addEventListener("mousewheel", onmouse);
+    canvas.addEventListener("DOMMouseScroll", onmouse);
 
     function raf() {
         var milliseconds = window.performance.now();
