@@ -32,7 +32,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_texture_info(palmstexture, &imgwidth, &imgheight);
     float worldheight = worldwidth * imgheight / imgwidth;
     par_zcam_init(worldwidth, worldheight, fovy);
-    rectmesh = par_mesh_create_rectangle(worldwidth, worldheight);
+    rectmesh = par_mesh_rectangle(worldwidth, worldheight);
 }
 
 int draw()
@@ -73,7 +73,7 @@ void input(par_event evt, float x, float y, float z)
         break;
     case PAR_EVENT_UP:
         par_zcam_grab_update(x, y, z);
-        par_zcam_grab_release();
+        par_zcam_grab_end();
         break;
     case PAR_EVENT_MOVE:
         par_zcam_grab_update(x, y, z);

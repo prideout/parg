@@ -50,7 +50,7 @@ void init(float winwidth, float winheight, float pixratio)
     tscale = 1280 / 256;
     par_zcam_init(1, 1, fovy);
     par_zcam_grab_update(0.5, 0.5, 20);
-    tile_mesh = par_mesh_create_rectangle(1, 1);
+    tile_mesh = par_mesh_rectangle(1, 1);
     translation.x = lon / 360;
     float latrad = lat * PAR_PI / 180;
     float mercN = log(tan((PAR_PI / 4) + (latrad / 2)));
@@ -64,7 +64,7 @@ void init(float winwidth, float winheight, float pixratio)
     }
     doggies_texture = par_texture_from_asset(TEXTURE_DOGGIES);
     par_texture_info(doggies_texture, &imgwidth, &imgheight);
-    photo_mesh = par_mesh_create_rectangle(1, (float) imgheight / imgwidth);
+    photo_mesh = par_mesh_rectangle(1, (float) imgheight / imgwidth);
     int nverts = 4;
     int vstride = sizeof(float) * 2;
     lines_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
@@ -149,7 +149,7 @@ void input(par_event evt, float x, float y, float z)
         break;
     case PAR_EVENT_UP:
         par_zcam_grab_update(x, y, z);
-        par_zcam_grab_release();
+        par_zcam_grab_end();
         break;
     case PAR_EVENT_MOVE:
         par_zcam_grab_update(x, y, z);

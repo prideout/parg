@@ -23,7 +23,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
     par_zcam_init(worldwidth, worldheight, fovy);
-    trimesh = par_mesh_create_sierpinski(worldwidth, 10);
+    trimesh = par_mesh_sierpinski(worldwidth, 10);
     printf("%d triangles\n", par_mesh_ntriangles(trimesh));
 }
 
@@ -62,7 +62,7 @@ void input(par_event evt, float x, float y, float z)
         break;
     case PAR_EVENT_UP:
         par_zcam_grab_update(x, y, z);
-        par_zcam_grab_release();
+        par_zcam_grab_end();
         break;
     case PAR_EVENT_MOVE:
         par_zcam_grab_update(x, y, z);

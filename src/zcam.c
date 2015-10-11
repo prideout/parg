@@ -68,7 +68,7 @@ void par_zcam_grab_update(float winx, float winy, float scrolldelta)
     }
 }
 
-void par_zcam_grab_release() { _grabbing = 0; }
+void par_zcam_grab_end() { _grabbing = 0; }
 
 void par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
 {

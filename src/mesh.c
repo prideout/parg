@@ -52,7 +52,7 @@ Point3 knot_fn(float s, float t)
     return range;
 }
 
-par_mesh* par_mesh_create_knot(int slices, int stacks, float major, float minor)
+par_mesh* par_mesh_knot(int slices, int stacks, float major, float minor)
 {
     par_mesh* surf = malloc(sizeof(struct par_mesh_s));
     float ds = 1.0f / slices;
@@ -108,7 +108,7 @@ par_mesh* par_mesh_create_knot(int slices, int stacks, float major, float minor)
     return surf;
 }
 
-par_mesh* par_mesh_create_torus(
+par_mesh* par_mesh_torus(
     int slices, int stacks, float major, float minor)
 {
     par_mesh* surf = malloc(sizeof(struct par_mesh_s));
@@ -175,7 +175,7 @@ par_mesh* par_mesh_create_torus(
     return surf;
 }
 
-par_mesh* par_mesh_create_rectangle(float width, float height)
+par_mesh* par_mesh_rectangle(float width, float height)
 {
     par_mesh* surf = malloc(sizeof(struct par_mesh_s));
     surf->normals = 0;
@@ -209,7 +209,7 @@ par_mesh* par_mesh_create_rectangle(float width, float height)
     return surf;
 }
 
-par_mesh* par_mesh_create_sierpinski(float width, int depth)
+par_mesh* par_mesh_sierpinski(float width, int depth)
 {
     par_mesh* surf = malloc(sizeof(struct par_mesh_s));
     surf->normals = 0;

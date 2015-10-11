@@ -32,7 +32,7 @@ void init(float winwidth, float winheight, float pixratio)
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
-    knot = par_mesh_create_knot(400, 100, 8, 2);
+    knot = par_mesh_knot(400, 100, 8, 2);
 }
 
 int draw()

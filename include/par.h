@@ -60,10 +60,10 @@ par_buffer* par_buffer_from_asset(par_token id);
 // MESH
 
 typedef struct par_mesh_s par_mesh;
-par_mesh* par_mesh_create_knot(int cols, int rows, float major, float minor);
-par_mesh* par_mesh_create_torus(int cols, int rows, float major, float minor);
-par_mesh* par_mesh_create_rectangle(float width, float height);
-par_mesh* par_mesh_create_sierpinski(float width, int depth);
+par_mesh* par_mesh_knot(int cols, int rows, float major, float minor);
+par_mesh* par_mesh_torus(int cols, int rows, float major, float minor);
+par_mesh* par_mesh_rectangle(float width, float height);
+par_mesh* par_mesh_sierpinski(float width, int depth);
 void par_mesh_free(par_mesh* m);
 par_buffer* par_mesh_coord(par_mesh* m);
 par_buffer* par_mesh_uv(par_mesh* m);
@@ -121,6 +121,6 @@ void par_zcam_init(float world_width, float world_height, float fovy);
 void par_zcam_tick(float window_aspect, float seconds);
 void par_zcam_grab_begin(float winx, float winy);
 void par_zcam_grab_update(float winx, float winy, float scrolldelta);
-void par_zcam_grab_release();
+void par_zcam_grab_end();
 void par_zcam_matrices(Matrix4* proj, Matrix4* view);
 void par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view);
