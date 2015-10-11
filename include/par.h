@@ -123,3 +123,4 @@ void par_zcam_grab_begin(float winx, float winy);
 void par_zcam_grab_update(float winx, float winy, float scrolldelta);
 void par_zcam_grab_release();
 void par_zcam_matrices(Matrix4* proj, Matrix4* view);
+void par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view);
