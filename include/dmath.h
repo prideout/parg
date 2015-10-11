@@ -8944,3 +8944,30 @@ static inline Point3 P3MakeFromDP3(DPoint3 dv)
     v.z = dv.z;
     return v;
 }
+
+static inline DPoint3 DP3MakeFromP3(Point3 sv)
+{
+    DPoint3 v;
+    v.x = sv.x;
+    v.y = sv.y;
+    v.z = sv.z;
+    return v;
+}
+
+static inline Vector3 V3MakeFromDV3(DVector3 dv)
+{
+    Vector3 v;
+    v.x = dv.x;
+    v.y = dv.y;
+    v.z = dv.z;
+    return v;
+}
+
+static inline DVector3 DV3MakeFromV3(Vector3 sv)
+{
+    DVector3 v;
+    v.x = sv.x;
+    v.y = sv.y;
+    v.z = sv.z;
+    return v;
+}

@@ -6,11 +6,12 @@
 
 #define TOKEN_TABLE(F)          \
     F(P_TEXTURED, "p_textured") \
-    F(P_SOLID, "p_solid")       \
+    F(P_HIGHP, "p_highp")       \
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")           \
-    F(U_EYEPOS, "u_eyepos")
+    F(U_EYEPOS, "u_eyepos")     \
+    F(U_EYEPOS_LOWPART, "u_eyepos_lowpart")
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                \
@@ -31,25 +32,15 @@ const float fovy = 16 * PAR_TWOPI / 180;
 const float photo_lon = -122.3245;
 const float photo_lat = 37.8743;
 const int levels[NUM_LEVELS] = {5, 10, 15, 20};
+int mode_highp = 1;
 par_texture* marina_textures[NUM_LEVELS];
 par_texture* origin_texture;
 par_texture* doggies_texture;
-par_buffer* linesfp32_buffer;
-par_buffer* linesfp64_buffer;
+par_buffer* lines_buffer;
 DVector3 photo_position = {0};
 par_mesh* tile_mesh;
 par_mesh* photo_mesh;
 float tscale;
-
-// Write out a double using two floats: a low part and a high part.
-float* write_fp64(float* dst, double val)
-{
-    float high = (float) val;
-    double low = val - (double) low;
-    *dst++ = high;
-    *dst++ = low;
-    return dst;
-}
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -81,8 +72,8 @@ void init(float winwidth, float winheight, float pixratio)
 
     // Populate a single-precision buffer of vec2's for the lines.
     int vstride = sizeof(float) * 2;
-    linesfp32_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
-    float* plines = par_buffer_lock(linesfp32_buffer, PAR_WRITE);
+    lines_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
+    float* plines = par_buffer_lock(lines_buffer, PAR_WRITE);
     *plines++ = photo_position.x;
     *plines++ = -1;
     *plines++ = photo_position.x;
@@ -91,21 +82,7 @@ void init(float winwidth, float winheight, float pixratio)
     *plines++ = photo_position.y;
     *plines++ = 1;
     *plines++ = photo_position.y;
-    par_buffer_unlock(linesfp32_buffer);
-
-    // Populate a double-precision buffer of vec2's for the lines.
-    vstride = sizeof(float) * 4;
-    linesfp64_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
-    plines = par_buffer_lock(linesfp64_buffer, PAR_WRITE);
-    plines = write_fp64(plines, photo_position.x);
-    plines = write_fp64(plines, 1);
-    plines = write_fp64(plines, photo_position.x);
-    plines = write_fp64(plines, 1);
-    plines = write_fp64(plines, -1);
-    plines = write_fp64(plines, photo_position.y);
-    plines = write_fp64(plines, 1);
-    plines = write_fp64(plines, photo_position.y);
-    par_buffer_unlock(linesfp64_buffer);
+    par_buffer_unlock(lines_buffer);
 }
 
 int draw()
@@ -145,11 +122,20 @@ int draw()
     mvp = M4MakeFromDM4(DM4Mul(projection, special_view));
 
     // Draw the crosshair lines.
-    par_shader_bind(P_SOLID);
+    par_shader_bind(P_HIGHP);
     par_uniform_matrix4f(U_MVP, &mvp);
     Point3 eyepos = P3MakeFromDP3(camera_position);
     par_uniform_point(U_EYEPOS, &eyepos);
-    par_varray_enable(linesfp32_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
+    if (mode_highp) {
+        DPoint3 deyepos = DP3MakeFromP3(eyepos);
+        DVector3 difference = DP3Sub(camera_position, deyepos);
+        Vector3 eyepos_lowpart = V3MakeFromDV3(difference);
+        par_uniform3f(U_EYEPOS_LOWPART, &eyepos_lowpart);
+    } else {
+        Vector3 eyepos_lowpart = {0};
+        par_uniform3f(U_EYEPOS_LOWPART, &eyepos_lowpart);
+    }
+    par_varray_enable(lines_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_lines(2);
 
     // Draw the photo.
@@ -173,7 +159,7 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 
 void dispose()
 {
-    par_buffer_free(linesfp32_buffer);
+    par_buffer_free(lines_buffer);
     par_mesh_free(tile_mesh);
     par_mesh_free(photo_mesh);
     par_texture_free(origin_texture);

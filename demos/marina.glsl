@@ -1,9 +1,10 @@
 
 // @program p_textured, vertex, fragment
-// @program p_solid, vertex_highp, solid
+// @program p_highp, vertex_highp, solid
 
 uniform mat4 u_mvp;
 uniform vec3 u_eyepos;
+uniform vec3 u_eyepos_lowpart;
 varying vec2 v_texcoord;
 
 -- vertex
@@ -25,6 +26,7 @@ attribute vec2 a_texcoord;
 void main()
 {
     vec3 p = a_position - u_eyepos;
+    p -= u_eyepos_lowpart;
     gl_Position = u_mvp * vec4(p, 1.0);
     v_texcoord = a_texcoord;
 }
