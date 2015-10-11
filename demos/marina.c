@@ -33,11 +33,22 @@ const int levels[NUM_LEVELS] = {5, 10, 15, 20};
 par_texture* marina_textures[NUM_LEVELS];
 par_texture* origin_texture;
 par_texture* doggies_texture;
-par_buffer* lines_buffer;
+par_buffer* linesfp32_buffer;
+par_buffer* linesfp64_buffer;
 DVector3 translation = {0};
 par_mesh* tile_mesh;
 par_mesh* photo_mesh;
 float tscale;
+
+// Write out a double using two floats: a low part and a high part.
+float* write_fp64(float* dst, double val)
+{
+    float high = (float) val;
+    double low = val - (double) low;
+    *dst++ = high;
+    *dst++ = low;
+    return dst;
+}
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -66,9 +77,11 @@ void init(float winwidth, float winheight, float pixratio)
     par_texture_info(doggies_texture, &imgwidth, &imgheight);
     photo_mesh = par_mesh_rectangle(1, (float) imgheight / imgwidth);
     int nverts = 4;
+
+    // Populate a single-precision buffer of vec2's for the lines.
     int vstride = sizeof(float) * 2;
-    lines_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
-    float* plines = par_buffer_lock(lines_buffer, PAR_WRITE);
+    linesfp32_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
+    float* plines = par_buffer_lock(linesfp32_buffer, PAR_WRITE);
     *plines++ = translation.x;
     *plines++ = -1;
     *plines++ = translation.x;
@@ -77,7 +90,21 @@ void init(float winwidth, float winheight, float pixratio)
     *plines++ = translation.y;
     *plines++ = 1;
     *plines++ = translation.y;
-    par_buffer_unlock(lines_buffer);
+    par_buffer_unlock(linesfp32_buffer);
+
+    // Populate a double-precision buffer of vec2's for the lines.
+    vstride = sizeof(float) * 4;
+    linesfp64_buffer = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
+    plines = par_buffer_lock(linesfp64_buffer, PAR_WRITE);
+    plines = write_fp64(plines, translation.x);
+    plines = write_fp64(plines, 1);
+    plines = write_fp64(plines, translation.x);
+    plines = write_fp64(plines, 1);
+    plines = write_fp64(plines, -1);
+    plines = write_fp64(plines, translation.y);
+    plines = write_fp64(plines, 1);
+    plines = write_fp64(plines, translation.y);
+    par_buffer_unlock(linesfp64_buffer);
 }
 
 int draw()
@@ -109,7 +136,7 @@ int draw()
     par_shader_bind(P_SOLID);
     mvp = M4MakeFromDM4(DM4Mul(projection, view));
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_varray_enable(lines_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_varray_enable(linesfp32_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_lines(2);
     par_shader_bind(P_TEXTURED);
     par_varray_enable(
@@ -131,7 +158,7 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 
 void dispose()
 {
-    par_buffer_free(lines_buffer);
+    par_buffer_free(linesfp32_buffer);
     par_mesh_free(tile_mesh);
     par_mesh_free(photo_mesh);
     par_texture_free(origin_texture);
