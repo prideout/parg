@@ -34,7 +34,7 @@ par_texture* marina_textures[NUM_LEVELS];
 par_texture* origin_texture;
 par_texture* doggies_texture;
 par_buffer* lines_buffer;
-Vector3 translation = {0};
+DVector3 translation = {0};
 par_mesh* tile_mesh;
 par_mesh* photo_mesh;
 float tscale;
@@ -82,31 +82,32 @@ void init(float winwidth, float winheight, float pixratio)
 
 int draw()
 {
-    float scale;
-    Matrix4 view, projection, model, mvp;
-    par_zcam_matrices(&projection, &view);
+    double scale;
+    DMatrix4 view, projection, model;
+    Matrix4 mvp;
+    par_zcam_dmatrices(&projection, &view);
     par_draw_clear();
     par_shader_bind(P_TEXTURED);
     par_varray_enable(
         par_mesh_coord(tile_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_varray_enable(par_mesh_uv(tile_mesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
     scale = tscale / pow(2, 2);
-    model = M4MakeScale((Vector3){scale, scale, scale});
-    mvp = M4Mul(projection, M4Mul(view, model));
+    model = DM4MakeScale((DVector3){scale, scale, scale});
+    mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
     par_texture_bind(origin_texture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_one_quad();
     for (int i = 0; i < NUM_LEVELS; i++) {
         scale = tscale / pow(2, levels[i]);
-        model = M4Mul(M4MakeTranslation(translation),
-                M4MakeScale((Vector3){scale, scale, scale}));
-        mvp = M4Mul(projection, M4Mul(view, model));
+        model = DM4Mul(DM4MakeTranslation(translation),
+                DM4MakeScale((DVector3){scale, scale, scale}));
+        mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
         par_texture_bind(marina_textures[i], 0);
         par_uniform_matrix4f(U_MVP, &mvp);
         par_draw_one_quad();
     }
     par_shader_bind(P_SOLID);
-    mvp = M4Mul(projection, view);
+    mvp = M4MakeFromDM4(DM4Mul(projection, view));
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(lines_buffer, A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_lines(2);
@@ -114,9 +115,9 @@ int draw()
     par_varray_enable(
         par_mesh_coord(photo_mesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     scale = tscale / pow(2, 25);
-    model = M4Mul(M4MakeTranslation(translation),
-            M4MakeScale((Vector3){scale, scale, scale}));
-    mvp = M4Mul(projection, M4Mul(view, model));
+    model = DM4Mul(DM4MakeTranslation(translation),
+            DM4MakeScale((DVector3){scale, scale, scale}));
+    mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
     par_texture_bind(doggies_texture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_one_quad();

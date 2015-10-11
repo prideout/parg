@@ -8913,3 +8913,25 @@ static inline DmathMatrix3 dmathV3CrossMatrixMul_V(
 #define DT3Inverse dmathT3Inverse_V
 #define DT3OrthoInverse dmathT3OrthoInverse_V
 #define DT3Select dmathT3Select_V
+
+static inline Matrix4 M4MakeFromDM4(DMatrix4 dmat)
+{
+    Matrix4 m;
+    m.col0.x = dmat.col0.x;
+    m.col0.y = dmat.col0.y;
+    m.col0.z = dmat.col0.z;
+    m.col0.w = dmat.col0.w;
+    m.col1.x = dmat.col1.x;
+    m.col1.y = dmat.col1.y;
+    m.col1.z = dmat.col1.z;
+    m.col1.w = dmat.col1.w;
+    m.col2.x = dmat.col2.x;
+    m.col2.y = dmat.col2.y;
+    m.col2.z = dmat.col2.z;
+    m.col2.w = dmat.col2.w;
+    m.col3.x = dmat.col3.x;
+    m.col3.y = dmat.col3.y;
+    m.col3.z = dmat.col3.z;
+    m.col3.w = dmat.col3.w;
+    return m;
+}
