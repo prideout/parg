@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <vmath.h>
+#include <dmath.h>
 
 // ENUMS & CONSTANTS
 
