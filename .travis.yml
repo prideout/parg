@@ -3,5 +3,5 @@ script:
     - brew update &>/dev/null
     - brew install uncrustify glfw3 emscripten
     - python emsetup.py
-    - cmake -H. -Bbuild
+    - cmake -DEMSCRIPTEN=ON -H. -Bbuild
     - cmake --build build

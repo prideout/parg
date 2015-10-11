@@ -1,4 +1,5 @@
 alias init="cmake -H. -Bbuild"
+alias initjs="cmake -DEMSCRIPTEN=ON -H. -Bbuild"
 alias build="cmake --build build"
 alias clean="rm -rf build"
 alias format="

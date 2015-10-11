@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(parg)
 
+option(EMSCRIPTEN "enable JavaScript output via emcc")
+
 set(DEMOS
     clipping
     gamma
@@ -76,12 +78,20 @@ foreach(SRCFILE ${JSCPP})
 endforeach()
 
 foreach(DEMONAME ${DEMOS})
-    add_executable(
-        ${DEMONAME}
-        demos/${DEMONAME}.c
-        ${DEMONAME}.glsl
-        ${DEMONAME}.js
-    )
+    if(EMSCRIPTEN)
+        add_executable(
+            ${DEMONAME}
+            demos/${DEMONAME}.c
+            ${DEMONAME}.glsl
+            ${DEMONAME}.js
+        )
+    else()
+        add_executable(
+            ${DEMONAME}
+            demos/${DEMONAME}.c
+            ${DEMONAME}.glsl
+        )
+    endif()
     add_custom_command(
         OUTPUT ${DEMONAME}.glsl
         COMMAND cp ../demos/${DEMONAME}.glsl ${DEMONAME}.glsl
