@@ -18,6 +18,7 @@ static par_window_fn_tick _tick = 0;
 static par_window_fn_draw _draw = 0;
 static par_window_fn_exit _dispose = 0;
 static par_window_fn_input _input = 0;
+static par_window_fn_message _message = 0;
 
 void par_window_setargs(int argc, char* argv[])
 {
@@ -34,6 +35,8 @@ void par_window_ondraw(par_window_fn_draw fn) { _draw = fn; }
 void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
 
 void par_window_oninput(par_window_fn_input fn) { _input = fn; }
+
+void par_window_onmessage(par_window_fn_message fn) { _message = fn; }
 
 static void onerror(int error, const char* description)
 {

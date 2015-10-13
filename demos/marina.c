@@ -90,7 +90,7 @@ int draw()
     double scale;
     DMatrix4 view, projection, model;
     Matrix4 mvp;
-    DPoint3 camera_position = par_zcam_dmatrices(&projection, &view);
+    par_zcam_dmatrices(&projection, &view);
     par_draw_clear();
 
     // First, draw the map "tiles" (these aren't really slippy map tiles)
@@ -176,6 +176,15 @@ void input(par_event evt, float x, float y, float z)
     }
 }
 
+void message(const char* msg)
+{
+    if (!strcmp(msg, "high")) {
+        mode_highp = 1;
+    } else if (!strcmp(msg, "low")) {
+        mode_highp = 0;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
@@ -187,5 +196,6 @@ int main(int argc, char* argv[])
     par_window_ondraw(draw);
     par_window_onexit(dispose);
     par_window_oninput(input);
+    par_window_onmessage(message);
     return par_window_exec(600, 400, 1);
 }

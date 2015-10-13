@@ -1,3 +1,0 @@
-'using strict';
-
-parg.init();

@@ -17,6 +17,7 @@ static int null_draw() { return 0; }
 static void null_dispose() { }
 static void null_init(float, float, float) {}
 static void null_input(par_event, float, float, float) {}
+static void null_message(const char*) {}
 static int _argc = 0;
 static char** _argv = 0;
 static float _pixscale = 1.0f;
@@ -27,6 +28,7 @@ static par_window_fn_tick _tick = null_tick;
 static par_window_fn_draw _draw = null_draw;
 static par_window_fn_exit _dispose = null_dispose;
 static par_window_fn_input _input = null_input;
+static par_window_fn_message _message = null_message;
 static par_buffer* g_buffer;
 
 void par_window_setargs(int argc, char* argv[])
@@ -45,6 +47,8 @@ void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
 
 void par_window_oninput(par_window_fn_input fn) { _input = fn; }
 
+void par_window_onmessage(par_window_fn_message fn) { _message = fn; }
+
 int par_window_exec(float winwidth, float winheight, int vsync)
 {
     _winwidth = winwidth;
@@ -57,8 +61,15 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     return 0;
 }
 
-static void init()
+static void message(emscripten::val msgval)
 {
+    std::string msg = msgval.as<std::string>();
+    _message(msg.c_str());
+}
+
+static void init(emscripten::val args)
+{
+    message(args);
     _init(_winwidth, _winheight, _pixscale);
 }
 
@@ -113,7 +124,8 @@ EMSCRIPTEN_BINDINGS(par)
         .class_function("init", &init)
         .class_function("draw", &draw)
         .class_function("tick", &tick)
-        .class_function("input", &input);
+        .class_function("input", &input)
+        .class_function("message", &message);
     struct Asset {};
     class_<Asset>("Asset")
         .class_function("alloc", &alloc)

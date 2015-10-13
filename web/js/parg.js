@@ -1,63 +1,56 @@
 'using strict';
 
-var parg = {};
-
-parg.module = null;
-
-parg.init = function() {
+var PargApp = function(canvas, args) {
+    this.canvas = canvas;
+    this.args = args;
+    this.nrequests = 0;
+    this.requests = [];
 
     // First, execute the user-defined main() function in its entirety:
-    parg.module = CreateParg({parg: parg});
+    this.module = CreateParg({parg: this});
 
     // Now, make HTTP requests for all assets:
-    parg.request_assets();
+    this.request_assets();
 
-    // After receiving the response from all HTTP requests, parg will
+    // After receiving responses from all HTTP requests, parg will
     // automatically call the user-defined init() function.
-
 };
 
-parg.nrequests = 0;
-
-parg.requests = [];
-
-parg.asset_preload = function(id) {
+PargApp.prototype.asset_preload = function(id) {
     var url = 'parg/' + id;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = 'arraybuffer';
     var onloadFunc = function() {
         if (xhr.response) {
-            parg.onasset(id, xhr.response)
+            this.onasset(id, xhr.response)
         }
-    };
+    }.bind(this);
     var errorFunc = function() {
         window.console.error('Unable to download ' + url);
     };
     xhr.onload = onloadFunc;
     xhr.onerror = errorFunc;
-    parg.requests[parg.nrequests++] = xhr;
+    this.requests[this.nrequests++] = xhr;
 };
 
-parg.request_assets = function() {
-    for (var i = 0, len = parg.requests.length; i < len; i++) {
-        parg.requests[i].send(null);
+PargApp.prototype.request_assets = function() {
+    for (var i = 0, len = this.requests.length; i < len; i++) {
+        this.requests[i].send(null);
     }
 };
 
-parg.onasset = function(id, arraybuffer) {
-    var ptr = parg.module.Asset.alloc(id, arraybuffer.byteLength);
+PargApp.prototype.onasset = function(id, arraybuffer) {
+    var ptr = this.module.Asset.alloc(id, arraybuffer.byteLength);
     var u8buffer = new Uint8Array(arraybuffer);
-    parg.module.HEAPU8.set(u8buffer, ptr);
-    parg.module.Asset.commit(id);
-    if (--parg.nrequests == 0) {
-        parg.start();
+    this.module.HEAPU8.set(u8buffer, ptr);
+    this.module.Asset.commit(id);
+    if (--this.nrequests == 0) {
+        this.start();
     }
 };
 
-parg.canvas = '#canvas3d';
-
-parg.start = function() {
+PargApp.prototype.start = function() {
 
     var cevents = {
         PAR_EVENT_DOWN: 0,
@@ -65,8 +58,8 @@ parg.start = function() {
         PAR_EVENT_MOVE: 2
     };
 
-    var dims = parg.module.par_window_dims;
-    var $canvas = $(parg.canvas);
+    var dims = this.module.par_window_dims;
+    var $canvas = $(this.canvas);
     var canvas = $canvas[0];
     $canvas.css({
         width: dims[0] + 'px',
@@ -75,7 +68,7 @@ parg.start = function() {
     canvas.width = dims[0] * window.devicePixelRatio;
     canvas.height = dims[1] * window.devicePixelRatio;
 
-    var GLctx = parg.module.createContext(canvas, 1, 1, {
+    var GLctx = this.module.createContext(canvas, 1, 1, {
         alpha: true,
         antialias: true
     })
@@ -83,7 +76,7 @@ parg.start = function() {
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
     $canvas.show();
 
-    parg.module.Window.init();
+    this.module.Window.init(this.args);
 
     var clientWidth = canvas.clientWidth;
     var clientHeight = canvas.clientHeight;
@@ -95,21 +88,21 @@ parg.start = function() {
         var y = (clientMaxY - event.clientY + box.top) / clientHeight;
         var etype = event.type;
         if (etype == "mousedown") {
-            parg.module.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
+            this.module.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
         } else if (etype == "mouseup") {
-            parg.module.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
+            this.module.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
         } else if (etype == "mousemove") {
-            parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
+            this.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
         } else if (etype == "mousewheel") {
             event.preventDefault();
             var delta = event.wheelDelta / 10.0;
-            parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "DOMMouseScroll") {
             event.preventDefault();
             var delta = -event.detail / 2.0;
-            parg.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         }
-    };
+    }.bind(this);
 
     canvas.addEventListener("mousedown", onmouse);
     canvas.addEventListener("mouseup", onmouse);
@@ -117,12 +110,12 @@ parg.start = function() {
     canvas.addEventListener("mousewheel", onmouse);
     canvas.addEventListener("DOMMouseScroll", onmouse);
 
-    function raf() {
+    var raf = function() {
         var milliseconds = window.performance.now();
-        parg.module.Window.tick(milliseconds / 1000.0);
-        parg.module.Window.draw();
+        this.module.Window.tick(milliseconds / 1000.0);
+        this.module.Window.draw();
         window.requestAnimationFrame(raf);
-    };
+    }.bind(this);
 
     window.requestAnimationFrame(raf);
 };

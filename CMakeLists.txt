@@ -52,6 +52,7 @@ set(EMLINKARGS
     -s 'EXPORT_NAME="CreateParg"'
     -s 'NO_FILESYSTEM=1'
     -s 'ALLOW_MEMORY_GROWTH=1'
+    -s 'PRECISE_F32=1'
 )
 
 set(JSSRC ${SRCFILES})
