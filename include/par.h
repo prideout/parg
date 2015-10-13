@@ -126,4 +126,4 @@ void par_zcam_grab_update(float winx, float winy, float scrolldelta);
 void par_zcam_grab_end();
 Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view);
 DPoint3 par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view);
- 
+void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi);

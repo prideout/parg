@@ -90,3 +90,17 @@ Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view)
     *view = M4MakeFromDM4(DM4MakeLookAt(_camerapos, target, up));
     return (Point3){_camerapos.x, _camerapos.y, _camerapos.z};
 }
+
+void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi)
+{
+    DPoint3 origin = {0, 0, 0};
+    DPoint3 target = {0, 0, -1};
+    DVector3 up = {0, 1, 0};
+    DMatrix4 view = DM4MakeLookAt(origin, target, up);
+    *vp = M4MakeFromDM4(DM4Mul(_projmat, view));
+    Point3 eyepos = P3MakeFromDP3(_camerapos);
+    DPoint3 deyepos = DP3MakeFromP3(eyepos);
+    DVector3 difference = DP3Sub(_camerapos, deyepos);
+    *eyepos_lo = P3MakeFromV3(V3MakeFromDV3(difference));
+    *eyepos_hi = eyepos;
+}
