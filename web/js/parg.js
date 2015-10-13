@@ -104,6 +104,10 @@ PargApp.prototype.start = function() {
             event.preventDefault();
             delta = -event.detail / 2.0;
             this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+        } else if (etype == "wheel") {
+            event.preventDefault();
+            delta = -event.deltaY / 2.0;
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         }
     };
 
@@ -122,6 +126,7 @@ PargApp.prototype.start = function() {
     canvas.addEventListener("mousemove", onmouse);
     canvas.addEventListener("mousewheel", onmouse);
     canvas.addEventListener("DOMMouseScroll", onmouse);
+    canvas.addEventListener("wheel", onmouse);
 
     var raf = function() {
         var milliseconds = window.performance.now();
