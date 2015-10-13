@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <sds.h>
 #include <stdio.h>
+#include <string.h>
 
 #define TOKEN_TABLE(F)          \
     F(P_TEXTURED, "p_textured") \
@@ -197,5 +198,5 @@ int main(int argc, char* argv[])
     par_window_onexit(dispose);
     par_window_oninput(input);
     par_window_onmessage(message);
-    return par_window_exec(600, 400, 1);
+    return par_window_exec(400, 300, 1);
 }

@@ -5,6 +5,7 @@ var PargApp = function(canvas, args) {
     this.args = args;
     this.nrequests = 0;
     this.requests = [];
+    this.linked_module = null;
 
     // First, execute the user-defined main() function in its entirety:
     this.module = CreateParg({parg: this});
@@ -82,27 +83,37 @@ PargApp.prototype.start = function() {
     var clientHeight = canvas.clientHeight;
     var clientMaxY = clientHeight - 1;
 
-    var onmouse = function(event) {
+    var onmousecore = function(event) {
         var box = canvas.getBoundingClientRect();
         var x = (event.clientX - box.left) / clientWidth;
         var y = (clientMaxY - event.clientY + box.top) / clientHeight;
         var etype = event.type;
         if (etype == "mousedown") {
-            this.module.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
+            this.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
         } else if (etype == "mouseup") {
-            this.module.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
+            this.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
         } else if (etype == "mousemove") {
-            this.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
         } else if (etype == "mousewheel") {
             event.preventDefault();
             var delta = event.wheelDelta / 10.0;
-            this.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "DOMMouseScroll") {
             event.preventDefault();
             var delta = -event.detail / 2.0;
-            this.module.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         }
-    }.bind(this);
+    };
+
+    var onmouse = onmousecore.bind(this.module);
+    if (this.linked_module) {
+        var fn1 = onmouse;
+        var fn2 = onmousecore.bind(this.linked_module);
+        onmouse = function(event) {
+            fn1(event);
+            fn2(event);
+        };
+    }
 
     canvas.addEventListener("mousedown", onmouse);
     canvas.addEventListener("mouseup", onmouse);
