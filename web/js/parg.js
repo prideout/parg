@@ -1,8 +1,9 @@
 'using strict';
 
-var PargApp = function(canvas, args) {
+var PargApp = function(canvas, args, baseurl) {
     this.canvas = canvas;
     this.args = args;
+    this.baseurl = baseurl || 'parg/';
     this.nrequests = 0;
     this.requests = [];
     this.linked_module = null;
@@ -18,7 +19,7 @@ var PargApp = function(canvas, args) {
 };
 
 PargApp.prototype.asset_preload = function(id) {
-    var url = 'parg/' + id;
+    var url = this.baseurl + id;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = 'arraybuffer';

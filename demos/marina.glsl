@@ -20,13 +20,18 @@ void main()
 
 -- vertex_highp
 
+attribute vec3 a_position_lowpart;
 attribute vec3 a_position;
 attribute vec2 a_texcoord;
 
 void main()
 {
-    vec3 p = a_position - u_eyepos;
-    p -= u_eyepos_lowpart;
+    vec3 t1 = a_position_lowpart - u_eyepos_lowpart;
+    vec3 e = t1 - a_position_lowpart;
+    vec3 t2 = ((-u_eyepos_lowpart - e) + (a_position_lowpart - (t1 - e))) + a_position - u_eyepos;
+    vec3 high_delta = t1 + t2;
+    vec3 low_delta = t2 - (high_delta - t1);
+    vec3 p = high_delta + low_delta;
     gl_Position = u_mvp * vec4(p, 1.0);
     v_texcoord = a_texcoord;
 }
