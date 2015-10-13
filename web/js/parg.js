@@ -25,7 +25,7 @@ PargApp.prototype.asset_preload = function(id) {
     xhr.responseType = 'arraybuffer';
     var onloadFunc = function() {
         if (xhr.response) {
-            this.onasset(id, xhr.response)
+            this.onasset(id, xhr.response);
         }
     }.bind(this);
     var errorFunc = function() {
@@ -47,7 +47,7 @@ PargApp.prototype.onasset = function(id, arraybuffer) {
     var u8buffer = new Uint8Array(arraybuffer);
     this.module.HEAPU8.set(u8buffer, ptr);
     this.module.Asset.commit(id);
-    if (--this.nrequests == 0) {
+    if (--this.nrequests === 0) {
         this.start();
     }
 };
@@ -73,7 +73,7 @@ PargApp.prototype.start = function() {
     var GLctx = this.module.createContext(canvas, 1, 1, {
         alpha: true,
         antialias: true
-    })
+    });
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
     $canvas.show();
@@ -89,6 +89,7 @@ PargApp.prototype.start = function() {
         var x = (event.clientX - box.left) / clientWidth;
         var y = (clientMaxY - event.clientY + box.top) / clientHeight;
         var etype = event.type;
+        var delta;
         if (etype == "mousedown") {
             this.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
         } else if (etype == "mouseup") {
@@ -97,11 +98,11 @@ PargApp.prototype.start = function() {
             this.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
         } else if (etype == "mousewheel") {
             event.preventDefault();
-            var delta = event.wheelDelta / 10.0;
+            delta = event.wheelDelta / 10.0;
             this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "DOMMouseScroll") {
             event.preventDefault();
-            var delta = -event.detail / 2.0;
+            delta = -event.detail / 2.0;
             this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         }
     };
