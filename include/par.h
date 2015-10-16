@@ -4,6 +4,10 @@
 #include <vmath.h>
 #include <dmath.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // ENUMS & CONSTANTS
 
 #define PAR_PI 3.14159265359
@@ -127,3 +131,7 @@ void par_zcam_grab_end();
 Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view);
 DPoint3 par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view);
 void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi);
+
+#ifdef __cplusplus
+}
+#endif
