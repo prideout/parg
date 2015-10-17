@@ -1,7 +1,9 @@
 language: objective-c
+osx_image: xcode7
 script:
     - brew update &>/dev/null
-    - brew install uncrustify glfw3 emscripten libcurl
+    - curl --version
+    - brew install uncrustify glfw3 emscripten
     - python emsetup.py
-    - cmake -DEMSCRIPTEN=ON -H. -Bbuild
+    - cmake -DEMSCRIPTEN=ON -H. -Bbuild -GXcode
     - cmake --build build
