@@ -15,6 +15,7 @@ set(DEMOS
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
+pkg_search_module(CURL REQUIRED libcurl)
 find_library(OPENGL_LIB OpenGL)
 
 file(GLOB COREC src/*.c)
@@ -27,6 +28,7 @@ include_directories(
     include
     src/vendor
     ${GLFW_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIRS}
 )
 
 add_library(parg STATIC ${SRCFILES})
@@ -103,6 +105,7 @@ foreach(DEMONAME ${DEMOS})
         parg
         ${OPENGL_LIB}
         ${GLFW_LIBRARIES}
+        ${CURL_LIBRARIES}
     )
     add_custom_command(
         OUTPUT ${DEMONAME}.js.o
