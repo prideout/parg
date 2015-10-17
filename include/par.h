@@ -22,6 +22,7 @@ extern "C" {
 #define PAR_DOUBLE 0x140A
 
 typedef unsigned int par_data_type;
+typedef unsigned char par_byte;
 
 typedef enum {
     PAR_CPU,
@@ -131,6 +132,20 @@ void par_zcam_grab_end();
 Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view);
 DPoint3 par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view);
 void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi);
+
+// EASYCURL
+
+void par_easycurl_init(uint32_t flags);
+int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes);
+int par_easycurl_to_file(const char* srcurl, const char* dstpath);
+
+// FILECACHE
+
+void par_filecache_init(const char* path, int maxsize);
+int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
+    par_byte* header, int headersize);
+void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
+    par_byte* header, int headersize);
 
 #ifdef __cplusplus
 }
