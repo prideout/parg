@@ -1,7 +1,7 @@
 language: objective-c
 script:
     - brew update &>/dev/null
-    - brew install uncrustify glfw3 emscripten
+    - brew install uncrustify glfw3 emscripten libcurl
     - python emsetup.py
     - cmake -DEMSCRIPTEN=ON -H. -Bbuild
     - cmake --build build
