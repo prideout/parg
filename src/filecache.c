@@ -48,7 +48,8 @@ typedef struct {
     int totalbytes;
 } filecache_table_t;
 
-static void _update_table(const char* entry_name, int entry_size);
+static void _update_table(const char* item_name, int item_size);
+static void _append_table(const char* item_name, int item_size);
 static void _read_or_create_tablefile();
 static void _save_tablefile();
 static void _evict_lru();
@@ -67,9 +68,20 @@ void par_filecache_init(const char* prefix, int maxsize)
     strcpy(_tablepath, _fileprefix);
     strcat(_tablepath, "table");
     _maxtotalbytes = maxsize;
-    _table->nentries = 0;
-    _table->totalbytes = 0;
 }
+
+#if IOS_EXAMPLE
+NSString* getPrefix()
+{
+    NSString *cachesFolder = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+    NSError *error = nil;
+    if (![[NSFileManager defaultManager] createDirectoryAtPath:cachesFolder withIntermediateDirectories:YES attributes:nil error:&error]) {
+        NSLog(@"MGMPlatformGetCachesFolder error: %@", error);
+        return nil;
+    }
+    return [cachesFolder stringByAppendingString:@"/_cache."];
+}
+#endif
 
 int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     par_byte* header, int headersize)
@@ -93,18 +105,22 @@ int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     if (headersize > 0) {
         fread(header, headersize, 1, cachefile);
     }
-    int cnbytes = fsize - headersize - sizeof(int32_t);
     int32_t dnbytes;
+    long cnbytes = fsize - headersize - sizeof(dnbytes);
     fread(&dnbytes, 1, sizeof(dnbytes), cachefile);
     char* cbuff = malloc(cnbytes);
-    char* dbuff = malloc(dnbytes);
     fread(cbuff, 1, cnbytes, cachefile);
-    LZ4_decompress_safe(cbuff, dbuff, cnbytes, dnbytes);
+    #if ENABLE_LZ4
+    char* dbuff = malloc(dnbytes);
+    LZ4_decompress_safe(cbuff, dbuff, (int) cnbytes, dnbytes);
     free(cbuff);
+    #else
+    char* dbuff = cbuff;
+    #endif
     fclose(cachefile);
     *payload = (par_byte*) dbuff;
     *payloadsize = dnbytes;
-    _update_table(name, 0);
+    _update_table(name, (int) cnbytes);
     return 1;
 }
 
@@ -128,50 +144,67 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
     if (payloadsize > 0) {
         int32_t nbytes = payloadsize;
         fwrite(&nbytes, 1, sizeof(nbytes), cachefile);
+        #if ENABLE_LZ4
         int maxsize = LZ4_compressBound(nbytes);
         char* dst = malloc(maxsize);
         const char* src = (const char*) payload;
+        assert(nbytes < LZ4_MAX_INPUT_SIZE);
         csize = LZ4_compress_default(src, dst, nbytes, maxsize);
         fwrite(dst, 1, csize, cachefile);
         free(dst);
+        #else
+        csize = payloadsize;
+        fwrite(payload, 1, csize, cachefile);
+        #endif
     }
     fclose(cachefile);
-    _update_table(name, csize + headersize);
+    _append_table(name, csize + headersize);
 }
 
-// If entry_size is nonzero, adds the given item to the table and evicts the LRU
-// item if the total cache size exceeds the specified maxsize.  If nbytes is
-// zero, then this simply updates the timestamp associated with the given item.
-static void _update_table(const char* entry_name, int entry_size)
+// Adds the given item to the table and evicts the LRU items if the total cache
+// size exceeds the specified maxsize.
+static void _append_table(const char* item_name, int item_size)
 {
     time_t now = time(0);
     if (!_table) {
         _read_or_create_tablefile();
     }
-    int64_t hashed_name = _hash(entry_name);
-    if (entry_size == 0) {
-        filecache_entry_t* entry = _table->entries;
-        int i;
-        for (i = 0; i < _table->nentries; i++, entry++) {
-            if (entry->hashed_name == hashed_name) {
-                break;
-            }
-        }
-        assert(i < _table->nentries);
-        entry->last_used_timestamp = now;
-    } else {
-        int total = _table->totalbytes + entry_size;
-        while (_table->nentries >= MAX_ENTRIES || total > _maxtotalbytes) {
-            _evict_lru();
-            total = _table->totalbytes + entry_size;
-        }
-        _table->totalbytes = total;
-        filecache_entry_t* entry = &_table->entries[_table->nentries++];
-        entry->last_used_timestamp = now;
-        entry->hashed_name = hashed_name;
-        entry->name = strdup(entry_name);
-        entry->nbytes = entry_size;
+    int64_t hashed_name = _hash(item_name);
+    int total = _table->totalbytes + item_size;
+    while (_table->nentries >= MAX_ENTRIES || total > _maxtotalbytes) {
+        assert(_table->nentries > 0 && "Cache size is too small.");
+        _evict_lru();
+        total = _table->totalbytes + item_size;
     }
+    _table->totalbytes = total;
+    filecache_entry_t* entry = &_table->entries[_table->nentries++];
+    entry->last_used_timestamp = now;
+    entry->hashed_name = hashed_name;
+    entry->name = strdup(item_name);
+    entry->nbytes = item_size;
+    _save_tablefile();
+}
+
+// Updates the timestamp associated with the given item.
+static void _update_table(const char* item_name, int item_size)
+{
+    time_t now = time(0);
+    if (!_table) {
+        _read_or_create_tablefile();
+    }
+    int64_t hashed_name = _hash(item_name);
+    filecache_entry_t* entry = _table->entries;
+    int i;
+    for (i = 0; i < _table->nentries; i++, entry++) {
+        if (entry->hashed_name == hashed_name) {
+            break;
+        }
+    }
+    if (i < _table->nentries) {
+        _append_table(item_name, item_size);
+        return;
+    }
+    entry->last_used_timestamp = now;
     _save_tablefile();
 }
 
@@ -187,7 +220,7 @@ static void _read_or_create_tablefile()
         char name[PATH_MAX];
         while (1) {
             int nargs = fscanf(fhandle, "%ld %d %s", &entry.last_used_timestamp,
-                    &entry.nbytes, name);
+                &entry.nbytes, name);
             if (nargs != 3) {
                 break;
             }
@@ -230,7 +263,9 @@ static void _evict_lru()
         assert(len + strlen(_fileprefix) < PATH_MAX);
         strcpy(qualified, _fileprefix);
         strcat(qualified, entry->name);
+        printf("Evicting %s\n", entry->name);
         remove(qualified);
+        _table->totalbytes -= entry->nbytes;
         if (_table->nentries-- > 1) {
             *entry = _table->entries[_table->nentries];
         }
@@ -242,7 +277,7 @@ static void _evict_lru()
 static uint64_t _hash(const char* name)
 {
     const uint64_t OFFSET = 14695981039346656037ull;
-    const uint64_t PRIME = 1099511628211ull;
+    const uint64_t PRIME  = 1099511628211ull;
     const unsigned char* str = (const unsigned char*) name;
     uint64_t hval = OFFSET;
     while (*str) {
