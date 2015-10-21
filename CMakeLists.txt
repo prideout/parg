@@ -21,7 +21,7 @@ find_library(OPENGL_LIB OpenGL)
 file(GLOB COREC src/*.c)
 file(GLOB VENDORC src/vendor/*.c)
 file(GLOB SRCFILES ${COREC} ${VENDORC})
-file(GLOB JSEXCLUSIONS src/window.c)
+file(GLOB JSEXCLUSIONS src/window.c src/easycurl.c src/filecache.c)
 file(GLOB JSCPP src/bindings.cpp)
 
 include_directories(
