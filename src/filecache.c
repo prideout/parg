@@ -200,7 +200,7 @@ static void _update_table(const char* item_name, int item_size)
             break;
         }
     }
-    if (i < _table->nentries) {
+    if (i >= _table->nentries) {
         _append_table(item_name, item_size);
         return;
     }
