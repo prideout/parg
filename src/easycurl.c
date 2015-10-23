@@ -1,4 +1,3 @@
-// parg: a tiny C library of GL utilities and demos
 // https://github.com/prideout/parg
 //
 // The MIT License
@@ -24,8 +23,13 @@
 
 #include <strings.h>
 #include <stdlib.h>
-#include "par.h"
 #include <curl/curl.h>
+
+typedef unsigned char par_byte;
+
+void par_easycurl_init(uint32_t flags);
+int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes);
+int par_easycurl_to_file(const char* srcurl, const char* dstpath);
 
 static int _ready = 0;
 
@@ -44,7 +48,7 @@ void par_easycurl_shutdown()
     }
 }
 
-static size_t onheader(void *v, size_t size, size_t nmemb)
+static size_t onheader(void* v, size_t size, size_t nmemb)
 {
     size_t n = size * nmemb;
     char* h = v;
@@ -65,7 +69,7 @@ typedef struct {
     int nbytes;
 } par_easycurl_buffer;
 
-static size_t onwrite(char* contents, size_t size, size_t nmemb, void *udata)
+static size_t onwrite(char* contents, size_t size, size_t nmemb, void* udata)
 {
     size_t realsize = size * nmemb;
     par_easycurl_buffer* mem = (par_easycurl_buffer*) udata;
@@ -82,13 +86,17 @@ static size_t onwrite(char* contents, size_t size, size_t nmemb, void *udata)
 #if IOS_EXAMPLE
 bool curlToMemory(const char* url, uint8_t** data, int* nbytes)
 {
-    NSString* nsurl = [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
-    NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
-    [request setTimeoutInterval:TIMEOUT_SECONDS];
+    NSString* nsurl =
+    [NSString stringWithCString:url encoding:NSASCIIStringEncoding];
+    NSMutableURLRequest* request =
+    [NSMutableURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
+    [request setTimeoutInterval : TIMEOUT_SECONDS];
     NSURLResponse* response = nil;
     NSError* error = nil;
     // Use the simple non-async API because we're in a secondary thread anyway.
-    NSData* nsdata = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+    NSData* nsdata = [NSURLConnection sendSynchronousRequest:request
+    returningResponse:&response
+    error:&error];
     if (error == nil) {
         *nbytes = (int) [nsdata length];
         *data = (uint8_t*) malloc([nsdata length]);
@@ -98,6 +106,7 @@ bool curlToMemory(const char* url, uint8_t** data, int* nbytes)
     BLAZE_ERROR("%s\n", [[error localizedDescription] UTF8String]);
     return false;
 }
+
 #endif
 
 int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes)
@@ -107,7 +116,7 @@ int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes)
     long status = 0;
     CURL* handle = curl_easy_init();
     curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1);
-    curl_easy_setopt(handle, CURLOPT_ENCODING,  "gzip, deflate");
+    curl_easy_setopt(handle, CURLOPT_ENCODING, "gzip, deflate");
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(handle, CURLOPT_MAXREDIRS, 8);
     curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1);
@@ -141,7 +150,7 @@ int par_easycurl_to_file(const char* srcurl, const char* dstpath)
     }
     CURL* handle = curl_easy_init();
     curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1);
-    curl_easy_setopt(handle, CURLOPT_ENCODING,  "gzip, deflate");
+    curl_easy_setopt(handle, CURLOPT_ENCODING, "gzip, deflate");
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(handle, CURLOPT_MAXREDIRS, 8);
     curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1);

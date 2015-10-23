@@ -1,4 +1,3 @@
-// parg: a tiny C library of GL utilities and demos
 // https://github.com/prideout/parg
 //
 // The MIT License
@@ -22,8 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "par.h"
-#include "lz4.h"
 #include <limits.h>
 #include <string.h>
 #include <assert.h>
@@ -32,6 +29,18 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+
+#if ENABLE_LZ4
+#include "lz4.h"
+#endif
+
+typedef unsigned char par_byte;
+
+void par_filecache_init(const char* path, int maxsize);
+int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
+    par_byte* header, int headersize);
+void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
+    par_byte* header, int headersize);
 
 #define MAX_ENTRIES 64
 
@@ -73,14 +82,19 @@ void par_filecache_init(const char* prefix, int maxsize)
 #if IOS_EXAMPLE
 NSString* getPrefix()
 {
-    NSString *cachesFolder = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
-    NSError *error = nil;
-    if (![[NSFileManager defaultManager] createDirectoryAtPath:cachesFolder withIntermediateDirectories:YES attributes:nil error:&error]) {
-        NSLog(@"MGMPlatformGetCachesFolder error: %@", error);
+    NSString* cachesFolder = [NSSearchPathForDirectoriesInDomains(
+        NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+    NSError* error = nil;
+    if (![[NSFileManager defaultManager] createDirectoryAtPath : cachesFolder
+        withIntermediateDirectories : YES
+        attributes : nil
+        error : &error]) {
+        NSLog(@ "MGMPlatformGetCachesFolder error: %@", error);
         return nil;
     }
-    return [cachesFolder stringByAppendingString:@"/_cache."];
+    return [cachesFolder stringByAppendingString : @ "/_cache."];
 }
+
 #endif
 
 int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
@@ -110,13 +124,13 @@ int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     fread(&dnbytes, 1, sizeof(dnbytes), cachefile);
     char* cbuff = malloc(cnbytes);
     fread(cbuff, 1, cnbytes, cachefile);
-    #if ENABLE_LZ4
+#if ENABLE_LZ4
     char* dbuff = malloc(dnbytes);
     LZ4_decompress_safe(cbuff, dbuff, (int) cnbytes, dnbytes);
     free(cbuff);
-    #else
+#else
     char* dbuff = cbuff;
-    #endif
+#endif
     fclose(cachefile);
     *payload = (par_byte*) dbuff;
     *payloadsize = dnbytes;
@@ -144,7 +158,7 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
     if (payloadsize > 0) {
         int32_t nbytes = payloadsize;
         fwrite(&nbytes, 1, sizeof(nbytes), cachefile);
-        #if ENABLE_LZ4
+#if ENABLE_LZ4
         int maxsize = LZ4_compressBound(nbytes);
         char* dst = malloc(maxsize);
         const char* src = (const char*) payload;
@@ -152,10 +166,10 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
         csize = LZ4_compress_default(src, dst, nbytes, maxsize);
         fwrite(dst, 1, csize, cachefile);
         free(dst);
-        #else
+#else
         csize = payloadsize;
         fwrite(payload, 1, csize, cachefile);
-        #endif
+#endif
     }
     fclose(cachefile);
     _append_table(name, csize + headersize);
@@ -220,7 +234,7 @@ static void _read_or_create_tablefile()
         char name[PATH_MAX];
         while (1) {
             int nargs = fscanf(fhandle, "%ld %d %s", &entry.last_used_timestamp,
-                &entry.nbytes, name);
+                    &entry.nbytes, name);
             if (nargs != 3) {
                 break;
             }
@@ -277,7 +291,7 @@ static void _evict_lru()
 static uint64_t _hash(const char* name)
 {
     const uint64_t OFFSET = 14695981039346656037ull;
-    const uint64_t PRIME  = 1099511628211ull;
+    const uint64_t PRIME = 1099511628211ull;
     const unsigned char* str = (const unsigned char*) name;
     uint64_t hval = OFFSET;
     while (*str) {

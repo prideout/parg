@@ -1,10 +1,30 @@
-# par
+# parg
 
-[![Build Status](https://travis-ci.org/prideout/parg.svg?branch=master)](https://travis-ci.org/prideout/parg) 
+[![Build Status](https://travis-ci.org/prideout/parg.svg?branch=master)](https://travis-ci.org/prideout/parg)
 
-For now, the `par` library only supports OpenGL 2.1 with OS X, and OpenGL ES 2.0 with Emscripten.
+This is a C99 library with some basic stuff for bootstrapping a graphics engine.  Currently it is tested against OpenGL 2.1 on OS X, and WebGL 1.0 via Emscripten.
 
-## OS X Setup
+The entire API is defined in [parg.h](https://github.com/prideout/parg/blob/master/include/par.h).  It's divided into the following areas of functionality:
+
+- **token** string-to-uint32 hashing, and a lookup table for uint32-to-string.
+- **asset** unified way of loading buffers, shaders, and textures.
+- **buffer** an untyped blob of memory that can live on the CPU or GPU.
+- **mesh** triangle meshes and utilities for procedural geometry.
+- **texture** thin wrapper around OpenGL texture objects.
+- **uniform** thin wrapper around OpenGL shader uniforms.
+- **state** thin wrapper around miscellaneous portions of the OpenGL state machine.
+- **varray** an association of buffers with vertex attributes.
+- **draw** thin wrapper around OpenGL draw calls.
+- **zcam** simple map-style camera with basic zoom & pan controls.
+- **easycurl** simple HTTP requests; wraps libcurl.
+- **filecache** simple LRU caching on your device's filesystem.
+
+The source code is organized in a very simple way: one C file for each of the above areas.  Some of the source files have no dependencies on the rest of the library, which makes them easier to integrate into your project:
+
+- [easycurl.c](https://github.com/prideout/parg/blob/master/src/easycurl.c)
+- [filecache.c](https://github.com/prideout/parg/blob/master/src/filecache.c)
+
+## How to Build (OS X)
 
 ```
 brew update
