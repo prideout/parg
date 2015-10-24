@@ -2,7 +2,7 @@
 // Copyright (c) 2015 Philip Rideout and Johannes Kopf
 // https://github.com/prideout/parg
 //
-// Implementation of the algorithms described in:
+// Implementation of an algorithm described in:
 //
 // Recursive Wang Tiles for Real-Time Blue Noise
 // Johannes Kopf, Daniel Cohen-Or, Oliver Deussen, Dani Lischinski
@@ -59,105 +59,90 @@ float* par_bluenoise_generate(
     par_bluenoise_context* ctx, float x, float y, float z, int* npts);
 
 #define MAX_POINTS 1024 * 1024
-
-static int sqri(int a) { return a * a; };
-static int mini(int a, int b)
-{
-    if (a < b)
-        return a;
-    else
-        return b;
-};
-static int floori(float a) { return floor(a); };
-static int clampi(int x, int min, int max)
-{
-    if (x < min)
-        x = min;
-    if (x > max)
-        x = max;
-    return x;
-}
+#define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
+#define sqri(a) (a * a)
+#define mini(a, b) ((a < b) ? a : b)
 
 typedef struct {
     float x;
     float y;
-} Vec2;
+} par_vec2;
 
 typedef struct {
     int n, e, s, w;
-    int numSubtiles, numSubdivs, numPoints, numSubPoints;
+    int nsubtiles, nsubdivs, npoints, nsubpts;
     int** subdivs;
-    Vec2* points;
-    Vec2* subPoints;
-} Tile;
+    par_vec2* points;
+    par_vec2* subpts;
+} par_tile;
 
 struct par_bluenoise_context_s {
-    Vec2* points;
-    Tile* tiles;
+    par_vec2* points;
+    par_tile* tiles;
     float toneScale;
     float clipMinX, clipMaxX, clipMinY, clipMaxY;
-    int numTiles, numSubtiles, numSubdivs;
+    int ntiles, nsubtiles, nsubdivs;
     float vpos[3];
-    int numPoints;
-    int densTexSize;
-    float* densTex;
+    int npoints;
+    int ndensity;
+    float* density;
 };
 
-static float sampleDensMap(par_bluenoise_context* ctx, float x, float y)
+static float sample_density(par_bluenoise_context* ctx, float x, float y)
 {
-    int densTexSize = ctx->densTexSize;
-    float* densTex = ctx->densTex;
-    float tx = x * densTexSize;
-    float ty = y * densTexSize;
-    int ix = clampi(floori(tx), 0, densTexSize - 2);
-    int iy = clampi(floori(ty), 0, densTexSize - 2);
+    int ndensity = ctx->ndensity;
+    float* density = ctx->density;
+    float tx = x * ndensity;
+    float ty = y * ndensity;
+    int ix = clampi((int) tx, 0, ndensity - 2);
+    int iy = clampi((int) ty, 0, ndensity - 2);
     tx -= ix;
     ty -= iy;
-    float sample = (densTex[iy * densTexSize + ix] * (1 - tx) * (1 - ty) +
-        densTex[iy * densTexSize + ix + 1] * tx * (1 - ty) +
-        densTex[(iy + 1) * densTexSize + ix] * (1 - tx) * ty +
-        densTex[(iy + 1) * densTexSize + ix + 1] * tx * ty);
+    float sample = (density[iy * ndensity + ix] * (1 - tx) * (1 - ty) +
+        density[iy * ndensity + ix + 1] * tx * (1 - ty) +
+        density[(iy + 1) * ndensity + ix] * (1 - tx) * ty +
+        density[(iy + 1) * ndensity + ix + 1] * tx * ty);
     return sample;
 }
 
-static void recurseTile(
-    par_bluenoise_context* ctx, Tile* tile, float x, float y, int level)
+static void recurse_tile(
+    par_bluenoise_context* ctx, par_tile* tile, float x, float y, int level)
 {
-    float tileSize = 1.f / powf(ctx->numSubtiles, level);
+    float tileSize = 1.f / powf(ctx->nsubtiles, level);
     if ((x + tileSize < ctx->clipMinX) || (x > ctx->clipMaxX) ||
         (y + tileSize < ctx->clipMinY) || (y > ctx->clipMaxY)) {
         return;
     }
-    int numTests = mini(tile->numSubPoints,
-            powf(ctx->vpos[2], -2.f) / powf(ctx->numSubtiles, 2.f * level) *
+    int numTests = mini(tile->nsubpts,
+            powf(ctx->vpos[2], -2.f) / powf(ctx->nsubtiles, 2.f * level) *
             ctx->toneScale -
-            tile->numPoints);
+            tile->npoints);
     float factor = 1.f / powf(ctx->vpos[2], -2.f) *
-        powf(ctx->numSubtiles, 2.f * level) / ctx->toneScale;
+        powf(ctx->nsubtiles, 2.f * level) / ctx->toneScale;
     for (int i = 0; i < numTests; i++) {
-        float px = x + tile->subPoints[i].x * tileSize,
-            py = y + tile->subPoints[i].y * tileSize;
+        float px = x + tile->subpts[i].x * tileSize,
+            py = y + tile->subpts[i].y * tileSize;
         if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
             (py < ctx->clipMinY) || (py > ctx->clipMaxY)) {
             continue;
         }
-        if (sampleDensMap(ctx, px, py) < (i + tile->numPoints) * factor) {
+        if (sample_density(ctx, px, py) < (i + tile->npoints) * factor) {
             continue;
         }
-        ctx->points[ctx->numPoints].x = px;
-        ctx->points[ctx->numPoints].y = py;
-        ctx->numPoints++;
+        ctx->points[ctx->npoints].x = px;
+        ctx->points[ctx->npoints].y = py;
+        ctx->npoints++;
     }
-    const float scale = tileSize / ctx->numSubtiles;
-    if (powf(ctx->vpos[2], -2.f) / powf(ctx->numSubtiles, 2.f * level) *
+    const float scale = tileSize / ctx->nsubtiles;
+    if (powf(ctx->vpos[2], -2.f) / powf(ctx->nsubtiles, 2.f * level) *
         ctx->toneScale -
-        tile->numPoints >
-        tile->numSubPoints) {
-        for (int ty = 0; ty < ctx->numSubtiles; ty++) {
-            for (int tx = 0; tx < ctx->numSubtiles; tx++) {
-                int tileIndex = tile->subdivs[0][ty * ctx->numSubtiles + tx];
-                Tile* subtile = &ctx->tiles[tileIndex];
-                recurseTile(
+        tile->npoints >
+        tile->nsubpts) {
+        for (int ty = 0; ty < ctx->nsubtiles; ty++) {
+            for (int tx = 0; tx < ctx->nsubtiles; tx++) {
+                int tileIndex = tile->subdivs[0][ty * ctx->nsubtiles + tx];
+                par_tile* subtile = &ctx->tiles[tileIndex];
+                recurse_tile(
                     ctx, subtile, x + tx * scale, y + ty * scale, level + 1);
             }
         }
@@ -174,9 +159,8 @@ float* par_bluenoise_generate(
     ctx->clipMaxX = x + z;
     ctx->clipMinY = y;
     ctx->clipMaxY = y + z;
-    ctx->numPoints = 0;
-    int numTests =
-        mini(ctx->tiles[0].numPoints, powf(z, -2.f) * ctx->toneScale);
+    ctx->npoints = 0;
+    int numTests = mini(ctx->tiles[0].npoints, powf(z, -2.f) * ctx->toneScale);
     float factor = 1.f / powf(z, -2) / ctx->toneScale;
     for (int i = 0; i < numTests; i++) {
         float px = ctx->tiles[0].points[i].x, py = ctx->tiles[0].points[i].y;
@@ -184,37 +168,37 @@ float* par_bluenoise_generate(
             (py < ctx->clipMinY) || (py > ctx->clipMaxY)) {
             continue;
         }
-        if (sampleDensMap(ctx, px, py) < i * factor) {
+        if (sample_density(ctx, px, py) < i * factor) {
             continue;
         }
-        ctx->points[ctx->numPoints].x = px;
-        ctx->points[ctx->numPoints].y = py;
-        ctx->numPoints++;
+        ctx->points[ctx->npoints].x = px;
+        ctx->points[ctx->npoints].y = py;
+        ctx->npoints++;
     }
-    recurseTile(ctx, &ctx->tiles[0], 0, 0, 0);
-    *npts = ctx->numPoints;
+    recurse_tile(ctx, &ctx->tiles[0], 0, 0, 0);
+    *npts = ctx->npoints;
     return &ctx->points->x;
 }
 
-#define freadi()     \
+#define freadi()   \
     *((int*) ptr); \
     ptr += sizeof(int)
 
-#define freadf()       \
+#define freadf()     \
     *((float*) ptr); \
     ptr += sizeof(float)
 
 par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes)
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
-    ctx->points = malloc(MAX_POINTS * sizeof(Vec2));
+    ctx->points = malloc(MAX_POINTS * sizeof(par_vec2));
     ctx->toneScale = 200000;
-    ctx->densTex = 0;
+    ctx->density = 0;
 
     char* buf = 0;
     if (nbytes == 0) {
         FILE* fin = fopen(filepath, "rb");
-		assert(fin);
+        assert(fin);
         fseek(fin, 0, SEEK_END);
         nbytes = ftell(fin);
         fseek(fin, 0, SEEK_SET);
@@ -223,55 +207,63 @@ par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes)
         fclose(fin);
     }
 
-	const char* ptr = buf ? buf : filepath;
-    int numTiles = ctx->numTiles = freadi();
-    int numSubtiles = ctx->numSubtiles = freadi();
-    int numSubdivs = ctx->numSubdivs = freadi();
-    Tile* tiles = ctx->tiles = malloc(sizeof(Tile) * numTiles);
-    for (int i = 0; i < numTiles; i++) {
+    const char* ptr = buf ? buf : filepath;
+    int ntiles = ctx->ntiles = freadi();
+    int nsubtiles = ctx->nsubtiles = freadi();
+    int nsubdivs = ctx->nsubdivs = freadi();
+    par_tile* tiles = ctx->tiles = malloc(sizeof(par_tile) * ntiles);
+    for (int i = 0; i < ntiles; i++) {
         tiles[i].n = freadi();
         tiles[i].e = freadi();
         tiles[i].s = freadi();
         tiles[i].w = freadi();
-        tiles[i].subdivs = malloc(sizeof(int) * numSubdivs);
-        for (int j = 0; j < numSubdivs; j++) {
-            int* subdiv = malloc(sizeof(int) * sqri(numSubtiles));
-            for (int k = 0; k < sqri(numSubtiles); k++) {
+        tiles[i].subdivs = malloc(sizeof(int) * nsubdivs);
+        for (int j = 0; j < nsubdivs; j++) {
+            int* subdiv = malloc(sizeof(int) * sqri(nsubtiles));
+            for (int k = 0; k < sqri(nsubtiles); k++) {
                 subdiv[k] = freadi();
             }
             tiles[i].subdivs[j] = subdiv;
         }
-        tiles[i].numPoints = freadi();
-        tiles[i].points = malloc(sizeof(Vec2) * tiles[i].numPoints);
-        for (int j = 0; j < tiles[i].numPoints; j++) {
+        tiles[i].npoints = freadi();
+        tiles[i].points = malloc(sizeof(par_vec2) * tiles[i].npoints);
+        for (int j = 0; j < tiles[i].npoints; j++) {
             tiles[i].points[j].x = freadf();
             tiles[i].points[j].y = freadf();
         }
-        tiles[i].numSubPoints = freadi();
-        tiles[i].subPoints = malloc(sizeof(Vec2) * tiles[i].numSubPoints);
-        for (int j = 0; j < tiles[i].numSubPoints; j++) {
-            tiles[i].subPoints[j].x = freadf();
-            tiles[i].subPoints[j].y = freadf();
+        tiles[i].nsubpts = freadi();
+        tiles[i].subpts = malloc(sizeof(par_vec2) * tiles[i].nsubpts);
+        for (int j = 0; j < tiles[i].nsubpts; j++) {
+            tiles[i].subpts[j].x = freadf();
+            tiles[i].subpts[j].y = freadf();
         }
     }
-	free(buf);
+    free(buf);
     return ctx;
 }
 
 void par_bluenoise_set_density(
     par_bluenoise_context* ctx, const unsigned char* pixels, int size)
 {
-    ctx->densTexSize = size;
-    ctx->densTex = malloc(sqri(size) * sizeof(float));
+    ctx->ndensity = size;
+    ctx->density = malloc(sqri(size) * sizeof(float));
     float scale = 1.0f / 255.0f;
     for (int i = 0; i < sqri(size); i++) {
-        ctx->densTex[i] = 1 - pixels[i] * scale;
+        ctx->density[i] = 1 - pixels[i] * scale;
     }
 }
 
 void par_bluenoise_free(par_bluenoise_context* ctx)
 {
-    // TODO free files
     free(ctx->points);
-    ctx->points = 0;
+    for (int t = 0; t < ctx->ntiles; t++) {
+        for (int s = 0; s < ctx->nsubdivs; s++) {
+            free(ctx->tiles[t].subdivs[s]);
+        }
+        free(ctx->tiles[t].subdivs);
+        free(ctx->tiles[t].points);
+        free(ctx->tiles[t].subpts);
+    }
+    free(ctx->tiles);
+    free(ctx->density);
 }
