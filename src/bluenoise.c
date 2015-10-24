@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <math.h>
 
 // Encapsulates a tile set and an optional density function.
@@ -75,20 +76,6 @@ static int clampi(int x, int min, int max)
     if (x > max)
         x = max;
     return x;
-}
-
-static int freadi(FILE* fIn)
-{
-    int iTemp;
-    fread(&iTemp, sizeof(int), 1, fIn);
-    return iTemp;
-}
-
-static float freadf(FILE* fIn)
-{
-    float fTemp;
-    fread(&fTemp, sizeof(float), 1, fIn);
-    return fTemp;
 }
 
 typedef struct {
@@ -209,44 +196,65 @@ float* par_bluenoise_generate(
     return &ctx->points->x;
 }
 
+#define freadi()     \
+    *((int*) ptr); \
+    ptr += sizeof(int)
+
+#define freadf()       \
+    *((float*) ptr); \
+    ptr += sizeof(float)
+
 par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes)
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
     ctx->points = malloc(MAX_POINTS * sizeof(Vec2));
     ctx->toneScale = 200000;
     ctx->densTex = 0;
-    FILE* fin = fopen(filepath, "rb");
-    int numTiles = ctx->numTiles = freadi(fin);
-    int numSubtiles = ctx->numSubtiles = freadi(fin);
-    int numSubdivs = ctx->numSubdivs = freadi(fin);
+
+    char* buf = 0;
+    if (nbytes == 0) {
+        FILE* fin = fopen(filepath, "rb");
+		assert(fin);
+        fseek(fin, 0, SEEK_END);
+        nbytes = ftell(fin);
+        fseek(fin, 0, SEEK_SET);
+        buf = malloc(nbytes);
+        fread(buf, nbytes, 1, fin);
+        fclose(fin);
+    }
+
+	const char* ptr = buf ? buf : filepath;
+    int numTiles = ctx->numTiles = freadi();
+    int numSubtiles = ctx->numSubtiles = freadi();
+    int numSubdivs = ctx->numSubdivs = freadi();
     Tile* tiles = ctx->tiles = malloc(sizeof(Tile) * numTiles);
     for (int i = 0; i < numTiles; i++) {
-        tiles[i].n = freadi(fin);
-        tiles[i].e = freadi(fin);
-        tiles[i].s = freadi(fin);
-        tiles[i].w = freadi(fin);
+        tiles[i].n = freadi();
+        tiles[i].e = freadi();
+        tiles[i].s = freadi();
+        tiles[i].w = freadi();
         tiles[i].subdivs = malloc(sizeof(int) * numSubdivs);
         for (int j = 0; j < numSubdivs; j++) {
             int* subdiv = malloc(sizeof(int) * sqri(numSubtiles));
             for (int k = 0; k < sqri(numSubtiles); k++) {
-                subdiv[k] = freadi(fin);
+                subdiv[k] = freadi();
             }
             tiles[i].subdivs[j] = subdiv;
         }
-        tiles[i].numPoints = freadi(fin);
+        tiles[i].numPoints = freadi();
         tiles[i].points = malloc(sizeof(Vec2) * tiles[i].numPoints);
         for (int j = 0; j < tiles[i].numPoints; j++) {
-            tiles[i].points[j].x = freadf(fin);
-            tiles[i].points[j].y = freadf(fin);
+            tiles[i].points[j].x = freadf();
+            tiles[i].points[j].y = freadf();
         }
-        tiles[i].numSubPoints = freadi(fin);
+        tiles[i].numSubPoints = freadi();
         tiles[i].subPoints = malloc(sizeof(Vec2) * tiles[i].numSubPoints);
         for (int j = 0; j < tiles[i].numSubPoints; j++) {
-            tiles[i].subPoints[j].x = freadf(fin);
-            tiles[i].subPoints[j].y = freadf(fin);
+            tiles[i].subPoints[j].x = freadf();
+            tiles[i].subPoints[j].y = freadf();
         }
     }
-    fclose(fin);
+	free(buf);
     return ctx;
 }
 

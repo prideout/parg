@@ -52,10 +52,22 @@ void init(float winwidth, float winheight, float pixratio)
     par_bluenoise_context* ctx;
     int dims[3];
     unsigned char* data;
-    printf("Running algorithm...\n");
-    ctx = par_bluenoise_create("build/bluenoise.bin", 0);
-    lodepng_decode_file(&data, (unsigned*) &dims[0], (unsigned*) &dims[1],
-        "build/trillium.png", LCT_GREY, 8);
+    par_buffer* buffer;
+    void* buffer_data;
+
+    buffer = par_buffer_from_asset(BUFFER_BLUENOISE);
+    buffer_data = par_buffer_lock(buffer, PAR_READ);
+    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer));
+    par_buffer_unlock(buffer);
+    par_buffer_free(buffer);
+
+	buffer = par_buffer_from_asset(TEXTURE_TRILLIUM);
+    buffer_data = par_buffer_lock(buffer, PAR_READ);
+	lodepng_decode_memory(&data, (unsigned*) &dims[0], (unsigned*) &dims[1],
+		buffer_data, par_buffer_length(buffer), LCT_GREY, 8);
+    par_buffer_unlock(buffer);
+    par_buffer_free(buffer);
+
     assert(dims[0] == dims[1]);
     par_bluenoise_set_density(ctx, data, dims[0]);
     free(data);
