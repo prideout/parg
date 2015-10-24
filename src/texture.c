@@ -35,6 +35,18 @@ par_texture* par_texture_from_asset(par_token id)
     return tex;
 }
 
+void* par_texture_decode_asset(par_token id, int dims[3])
+{
+    void* filedata;
+    par_buffer* filebuf = par_buffer_slurp_asset(id, &filedata);
+    unsigned char* decoded;
+    lodepng_decode_memory(&decoded, (unsigned*) &dims[0], (unsigned*) &dims[1],
+        filedata, par_buffer_length(filebuf), LCT_GREY, 8);
+    dims[2] = 1;
+    par_buffer_free(filebuf);
+    return decoded;
+}
+
 void par_texture_bind(par_texture* tex, int stage)
 {
     glActiveTexture(GL_TEXTURE0 + stage);

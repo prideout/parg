@@ -2,8 +2,7 @@
 #include <parwin.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
-#include <lodepng.h>
+#include <string.h>
 
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
@@ -43,19 +42,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_free(buffer);
 
     printf("Decoding PNG file...\n");
-    buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
-    lodepng_decode_memory(&data, (unsigned*) &dims[0], (unsigned*) &dims[1],
-        buffer_data, par_buffer_length(buffer), LCT_GREY, 8);
-    par_buffer_free(buffer);
-    assert(dims[0] == dims[1]);
-
-    // HACK: Ensure that the background is pure white:
-    for (int i = 0; i < sqri(dims[0]); i++) {
-        if (data[i] > 0xF0) {
-            data[i] = 0xFF;
-        }
-    }
-
+    data = par_texture_decode_asset(TEXTURE_TRILLIUM, dims);
     par_bluenoise_set_density(ctx, data, dims[0]);
     free(data);
 
