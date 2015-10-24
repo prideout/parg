@@ -55,17 +55,13 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer* buffer;
     void* buffer_data;
 
-    buffer = par_buffer_from_asset(BUFFER_BLUENOISE);
-    buffer_data = par_buffer_lock(buffer, PAR_READ);
+	buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
     ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer));
-    par_buffer_unlock(buffer);
     par_buffer_free(buffer);
 
-	buffer = par_buffer_from_asset(TEXTURE_TRILLIUM);
-    buffer_data = par_buffer_lock(buffer, PAR_READ);
+	buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
 	lodepng_decode_memory(&data, (unsigned*) &dims[0], (unsigned*) &dims[1],
 		buffer_data, par_buffer_length(buffer), LCT_GREY, 8);
-    par_buffer_unlock(buffer);
     par_buffer_free(buffer);
 
     assert(dims[0] == dims[1]);

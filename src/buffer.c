@@ -93,6 +93,13 @@ par_buffer* par_buffer_from_asset(par_token id)
     return par_asset_to_buffer(id);
 }
 
+par_buffer* par_buffer_slurp_asset(par_token id, void** ptr)
+{
+    par_buffer* buf = par_asset_to_buffer(id);
+    *ptr = par_buffer_lock(buf, PAR_READ);
+    return buf;
+}
+
 par_buffer* par_buffer_from_path(const char* filename)
 {
 #if EMSCRIPTEN
