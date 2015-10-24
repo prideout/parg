@@ -12,6 +12,7 @@ set(DEMOS
     simple
     zooming
     trillium
+    terrainpts
 )
 
 find_package(PkgConfig REQUIRED)
