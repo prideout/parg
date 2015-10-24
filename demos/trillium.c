@@ -24,6 +24,7 @@ par_buffer* ptsvbo;
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
+const int maxpts = 1024 * 1024;
 
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
@@ -36,10 +37,12 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer* buffer;
     void* buffer_data;
 
+    printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
-    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer));
+    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), maxpts);
     par_buffer_free(buffer);
 
+    printf("Decoding PNG file...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
     lodepng_decode_memory(&data, (unsigned*) &dims[0], (unsigned*) &dims[1],
         buffer_data, par_buffer_length(buffer), LCT_GREY, 8);
@@ -56,9 +59,10 @@ void init(float winwidth, float winheight, float pixratio)
     par_bluenoise_set_density(ctx, data, dims[0]);
     free(data);
 
+    printf("Generating point sequence...\n");
     int npts;
     float* cpupts = par_bluenoise_generate(ctx, 0, 0, 1, &npts);
-    printf("%d points\n", npts);
+    printf("%d points.\n", npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 2, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));

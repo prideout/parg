@@ -48,7 +48,7 @@ typedef struct par_bluenoise_context_s par_bluenoise_context;
 // either a filepath to the tileset, or the contents of the tileset.  For the
 // latter option, the caller should specify a non-zero buffer length (bytes).
 par_bluenoise_context* par_bluenoise_create(
-    const char* filepath_or_buffer, int buffer_length);
+    const char* filepath_or_buffer, int buffer_length, int maxpts);
 
 // Frees all memory associated with the given bluenoise context.
 void par_bluenoise_free(par_bluenoise_context* ctx);
@@ -65,7 +65,6 @@ void par_bluenoise_set_density(
 float* par_bluenoise_generate(
     par_bluenoise_context* ctx, float x, float y, float z, int* npts);
 
-#define MAX_POINTS 1024 * 1024
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
 #define mini(a, b) ((a < b) ? a : b)
@@ -91,6 +90,7 @@ struct par_bluenoise_context_s {
     int ntiles, nsubtiles, nsubdivs;
     float vpos[3];
     int npoints;
+    int maxpoints;
     int ndensity;
     float* density;
 };
@@ -195,11 +195,12 @@ float* par_bluenoise_generate(
     *((float*) ptr); \
     ptr += sizeof(float)
 
-par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes)
+par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes, int maxpts)
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
-    ctx->points = malloc(MAX_POINTS * sizeof(par_vec2));
-    ctx->toneScale = 6000000;  // 200000;
+    ctx->maxpoints = maxpts;
+    ctx->points = malloc(maxpts * sizeof(par_vec2));
+    ctx->toneScale = 200000; // 6000000;  // 200000;
     ctx->density = 0;
 
     char* buf = 0;
