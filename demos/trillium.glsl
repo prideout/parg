@@ -13,6 +13,7 @@ void main()
     p.xy -= 0.5;
     p.y *= -1.0;
     gl_Position = u_mvp * p;
+    gl_PointSize = 2.0;
 }
 
 -- fragment
