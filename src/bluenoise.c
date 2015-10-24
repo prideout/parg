@@ -56,8 +56,8 @@ void par_bluenoise_free(par_bluenoise_context* ctx);
 // Copies a grayscale image into the bluenoise context to guide point density.
 // Darker regions generate a higher number of points. The given bytes-per-pixel
 // value is the stride between pixels.
-void par_bluenoise_set_density(
-    par_bluenoise_context* ctx, const unsigned char* pixels, int size, int bpp);
+void par_bluenoise_set_density(par_bluenoise_context* ctx,
+    const unsigned char* pixels, int width, int height, int bpp);
 
 // Generates samples using Recursive Wang Tiles.  This is really fast!
 // The returned pointer points to a list of two-tuples in the [0,1] range.
@@ -69,6 +69,7 @@ float* par_bluenoise_generate(
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
 #define mini(a, b) ((a < b) ? a : b)
+#define maxi(a, b) ((a > b) ? a : b)
 
 typedef struct {
     float x;
@@ -92,24 +93,34 @@ struct par_bluenoise_context_s {
     float vpos[3];
     int npoints;
     int maxpoints;
-    int ndensity;
+    int density_width;
+    int density_height;
     float* density;
 };
 
 static float sample_density(par_bluenoise_context* ctx, float x, float y)
 {
-    int ndensity = ctx->ndensity;
     float* density = ctx->density;
-    float tx = x * ndensity;
-    float ty = y * ndensity;
-    int ix = clampi((int) tx, 0, ndensity - 2);
-    int iy = clampi((int) ty, 0, ndensity - 2);
+    int width = ctx->density_width;
+    int height = ctx->density_height;
+
+    x -= 0.5;
+    y -= 0.5;
+    float tx = x * maxi(width, height);
+    float ty = y * maxi(width, height);
+    x += 0.5;
+    y += 0.5;
+    tx += width / 2;
+    ty += height / 2;
+
+    int ix = clampi((int) tx, 0, width - 2);
+    int iy = clampi((int) ty, 0, height - 2);
     tx -= ix;
     ty -= iy;
-    float sample = (density[iy * ndensity + ix] * (1 - tx) * (1 - ty) +
-        density[iy * ndensity + ix + 1] * tx * (1 - ty) +
-        density[(iy + 1) * ndensity + ix] * (1 - tx) * ty +
-        density[(iy + 1) * ndensity + ix + 1] * tx * ty);
+    float sample = (density[iy * width + ix] * (1 - tx) * (1 - ty) +
+        density[iy * width + ix + 1] * tx * (1 - ty) +
+        density[(iy + 1) * width + ix] * (1 - tx) * ty +
+        density[(iy + 1) * width + ix + 1] * tx * ty);
     return sample;
 }
 
@@ -252,14 +263,19 @@ par_bluenoise_context* par_bluenoise_create(
     return ctx;
 }
 
-void par_bluenoise_set_density(
-    par_bluenoise_context* ctx, const unsigned char* pixels, int size, int bpp)
+void par_bluenoise_set_density(par_bluenoise_context* ctx,
+    const unsigned char* pixels, int width, int height, int bpp)
 {
-    ctx->ndensity = size;
-    ctx->density = malloc(sqri(size) * sizeof(float));
+    ctx->density_width = width;
+    ctx->density_height = height;
+    ctx->density = malloc(width * height * sizeof(float));
     float scale = 1.0f / 255.0f;
-    for (int i = 0; i < sqri(size); i++) {
-        ctx->density[i] = 1 - pixels[i * bpp] * scale;
+    float* dst = ctx->density;
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            *dst++ = 1 - (*pixels) * scale;
+            pixels += bpp;
+        }
     }
 }
 

@@ -13,8 +13,8 @@
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
-#define ASSET_TABLE(F)                  \
-    F(SHADER_SIMPLE, "terrainpts.glsl")   \
+#define ASSET_TABLE(F)                   \
+    F(SHADER_SIMPLE, "terrainpts.glsl")  \
     F(TEXTURE_TERRAIN, "terrainpts.png") \
     F(BUFFER_BLUENOISE, "bluenoise.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
@@ -41,7 +41,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Pushing density function...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
-    par_bluenoise_set_density(ctx, buffer_data + 12, 3500, 4);
+    par_bluenoise_set_density(ctx, buffer_data + 12, 4096, 2048, 4);
     par_buffer_free(buffer);
 
     printf("Generating point sequence...\n");
