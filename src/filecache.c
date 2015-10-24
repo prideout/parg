@@ -1,6 +1,20 @@
+// FILECACHE :: https://github.com/prideout/parg
+// Simple file-based LRU cache for blobs with content-addressable names.
+//
+// Each cached item is stored on disk as "{PREFIX}{NAME}", where {PREFIX}
+// is passed in when initializing the cache.  You'll probably want to specify
+// a folder path for your prefix, including the trailing slash.
+//
+// Each item is divided into a payload (arbitrary size) and a header (a priori
+// size). The structure of the payload and header are completely up to you. The
+// list of items is stored in a text file at "{PREFIX}table", which contains a
+// list of names, timestamps, and byte counts.  This table is loaded only once,
+// but is saved every time the client fetches a blob from the cache, so that
+// the most-recently-accessed timestamps are always up to date, even when
+// your application doesn't close gracefully.
+//
 // The MIT License
 // Copyright (c) 2015 Philip Rideout
-// https://github.com/prideout/parg
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,10 +49,23 @@
 
 typedef unsigned char par_byte;
 
-void par_filecache_init(const char* path, int maxsize);
-int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
-    par_byte* header, int headersize);
+// Initialize the filecache using the given prefix (usually a folder path with
+// a trailing slash) and the given maximum byte count.  If items already exist
+// in the cache when this is called, they are not evicted.  Cached items are
+// meant to persist from run to run.
+void par_filecache_init(const char* prefix, int maxsize);
+
+// Save a blob to the cache using the given unique name.  If adding the blob
+// would cause the cache to exceed maxsize, the least-recently-used item is
+// evicted at this time.
 void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
+    par_byte* header, int headersize);
+
+// Check if the given blob is in the cache; if not, return 0.  If so, return 1
+// and returns newly-allocated memory for payload.  The caller should free the
+// payload.  The header is preallocated and the caller need to know its size
+// ahead of time.
+int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     par_byte* header, int headersize);
 
 #define MAX_ENTRIES 64

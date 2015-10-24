@@ -1,15 +1,17 @@
+// BLUENOISE :: https://github.com/prideout/parg
+// Generator for 2D point sample sequences using Recursive Wang Tiles.
+//
+// This is an implementation of the algorithm described in:
+//
+//              Recursive Wang Tiles for Real-Time Blue Noise
+//              Johannes Kopf, Daniel Cohen-Or, Oliver Deussen, Dani Lischinski
+//              ACM Transactions on Graphics 25, 3 (Proc. SIGGRAPH 2006)
+//
+// If you use this software for research purposes, please cite the above paper
+// in any resulting publication.
+//
 // The MIT License
 // Copyright (c) 2015 Philip Rideout and Johannes Kopf
-// https://github.com/prideout/parg
-//
-// Implementation of an algorithm described in:
-//
-// Recursive Wang Tiles for Real-Time Blue Noise
-// Johannes Kopf, Daniel Cohen-Or, Oliver Deussen, Dani Lischinski
-// In ACM Transactions on Graphics 25, 3 (Proc. SIGGRAPH 2006)
-//
-// If you use this software for research purposes, please cite
-// the aforementioned paper in any resulting publication.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

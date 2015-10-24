@@ -1,6 +1,8 @@
+// EASYCURL :: https://github.com/prideout/parg
+// Wrapper around libcurl for performing simple synchronous HTTP requests.
+//
 // The MIT License
 // Copyright (c) 2015 Philip Rideout
-// https://github.com/prideout/parg
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +28,18 @@
 
 typedef unsigned char par_byte;
 
+// Call this before calling any other easycurl function.  The flags are
+// currently unused, so you can just pass 0.
 void par_easycurl_init(uint32_t flags);
+
+// Allocates a memory buffer and downloads a data blob into it.
+// Returns 1 for success and 0 otherwise.  The byte count should be
+// pre-allocated.  The caller is responsible for freeing the returned data.
+// This does not do any caching!
 int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes);
+
+// Downloads a file from the given URL and saves it to disk.  Returns 1 for
+// success and 0 otherwise.
 int par_easycurl_to_file(const char* srcurl, const char* dstpath);
 
 static int _ready = 0;
