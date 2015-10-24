@@ -18,7 +18,26 @@ var PargApp = function(canvas, args, baseurl) {
     // automatically call the user-defined init() function.
 };
 
+PargApp.prototype.image_preload = function(id) {
+    var url = this.baseurl + id;
+    var img = new Image();
+    var onloadFunc = function() {
+        this.onimage(id, img);
+    }.bind(this);
+    var errorFunc = function() {
+        window.console.error('Unable to download ' + url);
+    };
+    img.onload = onloadFunc;
+    img.onerror = errorFunc;
+    this.requests[this.nrequests++] = img;
+    img.src = url;
+};
+
 PargApp.prototype.asset_preload = function(id) {
+    if (id.endsWith('.png')) {
+        this.image_preload(id);
+        return;
+    }
     var url = this.baseurl + id;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -38,7 +57,9 @@ PargApp.prototype.asset_preload = function(id) {
 
 PargApp.prototype.request_assets = function() {
     for (var i = 0, len = this.requests.length; i < len; i++) {
-        this.requests[i].send(null);
+        if (this.requests[i].send) {
+            this.requests[i].send(null);
+        }
     }
 };
 
@@ -50,6 +71,15 @@ PargApp.prototype.onasset = function(id, arraybuffer) {
     if (--this.nrequests === 0) {
         this.start();
     }
+};
+
+PargApp.prototype.onimage = function(id, img) {
+    var canvas = document.createElement("canvas");
+    var w = canvas.width = img.width;
+    var h = canvas.height = img.height;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    this.onasset(id, ctx.getImageData(0, 0, w, h).data.buffer);
 };
 
 PargApp.prototype.start = function() {

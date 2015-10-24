@@ -31,8 +31,6 @@ const int maxpts = 1024 * 1024;
 void init(float winwidth, float winheight, float pixratio)
 {
     par_bluenoise_context* ctx;
-    int dims[3];
-    unsigned char* data;
     par_buffer* buffer;
     void* buffer_data;
 
@@ -41,10 +39,10 @@ void init(float winwidth, float winheight, float pixratio)
     ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), maxpts);
     par_buffer_free(buffer);
 
-    printf("Decoding PNG file...\n");
-    data = par_texture_decode_asset(TEXTURE_TRILLIUM, dims);
-    par_bluenoise_set_density(ctx, data, dims[0]);
-    free(data);
+    printf("Pushing density function...\n");
+    buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
+    par_bluenoise_set_density(ctx, buffer_data, 3500, 4);
+    par_buffer_free(buffer);
 
     printf("Generating point sequence...\n");
     int npts;

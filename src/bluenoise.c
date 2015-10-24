@@ -53,10 +53,11 @@ par_bluenoise_context* par_bluenoise_create(
 // Frees all memory associated with the given bluenoise context.
 void par_bluenoise_free(par_bluenoise_context* ctx);
 
-// Copies a grayscale one-byte-per-pixel image into the bluenoise context to
-// guide point density.  Darker regions generate a higher number of points.
+// Copies a grayscale image into the bluenoise context to guide point density.
+// Darker regions generate a higher number of points. The given bytes-per-pixel
+// value is the stride between pixels.
 void par_bluenoise_set_density(
-    par_bluenoise_context* ctx, const unsigned char* pixels, int size);
+    par_bluenoise_context* ctx, const unsigned char* pixels, int size, int bpp);
 
 // Generates samples using Recursive Wang Tiles.  This is really fast!
 // The returned pointer points to a list of two-tuples in the [0,1] range.
@@ -251,13 +252,13 @@ par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes, in
 }
 
 void par_bluenoise_set_density(
-    par_bluenoise_context* ctx, const unsigned char* pixels, int size)
+    par_bluenoise_context* ctx, const unsigned char* pixels, int size, int bpp)
 {
     ctx->ndensity = size;
     ctx->density = malloc(sqri(size) * sizeof(float));
     float scale = 1.0f / 255.0f;
     for (int i = 0; i < sqri(size); i++) {
-        ctx->density[i] = 1 - pixels[i] * scale;
+        ctx->density[i] = 1 - pixels[i * bpp] * scale;
     }
 }
 
