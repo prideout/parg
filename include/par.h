@@ -147,6 +147,17 @@ int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
 void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
     par_byte* header, int headersize);
 
+// BLUENOISE
+
+typedef struct par_bluenoise_context_s par_bluenoise_context;
+par_bluenoise_context* par_bluenoise_create(const char* file_or_data,
+	int data_length);
+void par_bluenoise_free(par_bluenoise_context* ctx);
+void par_bluenoise_set_density(par_bluenoise_context* ctx,
+	const unsigned char* pixels, int size);
+float* par_bluenoise_generate(par_bluenoise_context* ctx, float x, float y,
+	float z, int* npts);
+
 #ifdef __cplusplus
 }
 #endif

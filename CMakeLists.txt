@@ -11,6 +11,7 @@ set(DEMOS
     sierpinski
     simple
     zooming
+    trillium
 )
 
 find_package(PkgConfig REQUIRED)

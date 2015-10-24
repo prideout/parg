@@ -4,7 +4,7 @@
 
 This is a C99 library with some basic stuff for bootstrapping a graphics engine.  Currently it is tested against OpenGL 2.1 on OS X, and WebGL 1.0 via Emscripten.
 
-The entire API is defined in [parg.h](https://github.com/prideout/parg/blob/master/include/par.h).  It's divided into the following areas of functionality:
+The entire API is defined in [parg.h](https://github.com/prideout/parg/blob/master/include/par.h), divided into the following areas of functionality:
 
 - **token** string-to-uint32 hashing, and a lookup table for uint32-to-string.
 - **asset** unified way of loading buffers, shaders, and textures.
@@ -17,12 +17,14 @@ The entire API is defined in [parg.h](https://github.com/prideout/parg/blob/mast
 - **draw** thin wrapper around OpenGL draw calls.
 - **zcam** simple map-style camera with basic zoom & pan controls.
 - **easycurl** simple HTTP requests; wraps libcurl.
-- **filecache** simple LRU caching on your device's filesystem.
+- **filecache** LRU caching on your device's filesystem.
+- **bluenoise** progressive point samples using Recursive Wang Tiles.
 
-The source code is organized in a very simple way: one C file for each of the above areas.  Some of the source files have no dependencies on the rest of the library, which makes them easier to integrate into your project:
+The `src` folder contains exactly one C file for each of the above areas.  Some of the source files have no dependencies on the rest of the library, which makes them easier to snarf and integrate into your project:
 
 - [easycurl.c](https://github.com/prideout/parg/blob/master/src/easycurl.c)
 - [filecache.c](https://github.com/prideout/parg/blob/master/src/filecache.c)
+- [bluenoise.c](https://github.com/prideout/parg/blob/master/src/bluenoise.c)
 
 ## How to Build (OS X)
 
@@ -31,7 +33,7 @@ brew update
 brew tap homebrew/versions
 brew install cmake uncrustify glfw3 clang-format pkg-config emscripten
 python emsetup.py
-. env.sh
+. setup.sh
 init && build
 ```
 
@@ -44,7 +46,7 @@ I'm currently using:
 
 ## TODO
 
-- offload the buffer in emscripten builds
+- offload `par_buffer` to be external in emscripten builds
     - remove ALLOW_MEMORY_GROWTH
 - demos/picking.c
     - add rong & tan
@@ -55,7 +57,6 @@ I'm currently using:
 - demos/turntable
     - add klein to mesh.c
     - see img/wallpaper.png
-    - pnglite
 - gles3 branch: core profile + webgl2 (USE_WEBGL2 exists in emscripten)
 - fluid
     - http://codepen.io/tmrDevelops/pen/jbbeMo
