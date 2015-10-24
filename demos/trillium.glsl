@@ -9,7 +9,10 @@ attribute vec4 a_position;
 
 void main()
 {
-    gl_Position = u_mvp * a_position;
+    vec4 p = a_position;
+    p.xy -= 0.5;
+    p.y *= -1.0;
+    gl_Position = u_mvp * p;
 }
 
 -- fragment

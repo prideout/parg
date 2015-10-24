@@ -29,3 +29,5 @@ void par_draw_lines(int nsegments)
     glLineWidth(2);
     glDrawArrays(GL_LINES, 0, nsegments * 2);
 }
+
+void par_draw_points(int npoints) { glDrawArrays(GL_POINTS, 0, npoints); }

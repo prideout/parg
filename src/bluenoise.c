@@ -199,7 +199,7 @@ par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes)
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
     ctx->points = malloc(MAX_POINTS * sizeof(par_vec2));
-    ctx->toneScale = 200000;
+    ctx->toneScale = 6000000;  // 200000;
     ctx->density = 0;
 
     char* buf = 0;

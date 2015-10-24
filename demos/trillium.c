@@ -15,37 +15,18 @@
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                  \
-    F(SHADER_TRILLIUM, "trillium.glsl") \
+    F(SHADER_SIMPLE, "trillium.glsl")   \
     F(TEXTURE_TRILLIUM, "trillium.png") \
     F(BUFFER_BLUENOISE, "bluenoise.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
+par_buffer* ptsvbo;
+const float gray = 0.8;
+const float fovy = 16 * PAR_TWOPI / 180;
+const float worldwidth = 1;
+
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
-
-static void drawPoints(par_bluenoise_context* ctx, const char* dstfile,
-    float vx, float vy, float vz)
-{
-    int numPoints;
-    float* pts = par_bluenoise_generate(ctx, vx, vy, vz, &numPoints);
-    const int size = 512;
-    unsigned char* buffer = malloc(sqri(size));
-    for (int i = 0; i < sqri(size); i++) {
-        buffer[i] = 255;
-    }
-    while (numPoints--) {
-        float x = (*pts++ - vx) / vz;
-        float y = (*pts++ - vy) / vz;
-        int i = clampi(x * size, 0, size - 1);
-        int j = clampi(y * size, 0, size - 1);
-        assert(i >= 0 && i < size);
-        assert(j >= 0 && j < size);
-        buffer[i + j * size] = 0;
-    }
-    lodepng_encode_file(dstfile, buffer, size, size, LCT_GREY, 8);
-    free(buffer);
-    printf("Write %s\n", dstfile);
-}
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -63,17 +44,79 @@ void init(float winwidth, float winheight, float pixratio)
     lodepng_decode_memory(&data, (unsigned*) &dims[0], (unsigned*) &dims[1],
         buffer_data, par_buffer_length(buffer), LCT_GREY, 8);
     par_buffer_free(buffer);
-
     assert(dims[0] == dims[1]);
+
+    // HACK: Ensure that the background is pure white:
+    for (int i = 0; i < sqri(dims[0]); i++) {
+        if (data[i] > 0xF0) {
+            data[i] = 0xFF;
+        }
+    }
+
     par_bluenoise_set_density(ctx, data, dims[0]);
     free(data);
-    drawPoints(ctx, "build/output_01.png", 0, 0, 1);
-    drawPoints(ctx, "build/output_02.png", 0.25f, 0.25f, 0.5f);
-    drawPoints(ctx, "build/output_03.png", 0.45f, 0.45f, 0.1f);
+
+    int npts;
+    float* cpupts = par_bluenoise_generate(ctx, 0, 0, 1, &npts);
+    printf("%d points\n", npts);
+    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 2, PAR_GPU_ARRAY);
+    float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
+    memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
+    par_buffer_unlock(ptsvbo);
+
+    par_state_clearcolor((Vector4){gray, gray, gray, 1});
+    par_state_depthtest(0);
+    par_state_cullfaces(0);
+    par_shader_load_from_asset(SHADER_SIMPLE);
+    float worldheight = worldwidth * sqrt(0.75);
+    par_zcam_init(worldwidth, worldheight, fovy);
+
     par_bluenoise_free(ctx);
 }
 
-int draw() { return 1; }
+int draw()
+{
+    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 2);
+    Matrix4 view;
+    Matrix4 projection;
+    par_zcam_matrices(&projection, &view);
+    Matrix4 model = M4MakeIdentity();
+    Matrix4 modelview = M4Mul(view, model);
+    Matrix4 mvp = M4Mul(projection, modelview);
+    par_draw_clear();
+    par_shader_bind(P_SIMPLE);
+    par_uniform_matrix4f(U_MVP, &mvp);
+    par_varray_enable(ptsvbo, A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_draw_points(npts);
+    return 1;
+}
+
+void tick(float winwidth, float winheight, float pixratio, float seconds)
+{
+    par_zcam_tick(winwidth / winheight, seconds);
+}
+
+void dispose()
+{
+    par_shader_free(P_SIMPLE);
+    par_buffer_free(ptsvbo);
+}
+
+void input(par_event evt, float x, float y, float z)
+{
+    switch (evt) {
+    case PAR_EVENT_DOWN:
+        par_zcam_grab_begin(x, y);
+        break;
+    case PAR_EVENT_UP:
+        par_zcam_grab_update(x, y, z);
+        par_zcam_grab_end();
+        break;
+    case PAR_EVENT_MOVE:
+        par_zcam_grab_update(x, y, z);
+        break;
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -81,6 +124,9 @@ int main(int argc, char* argv[])
     ASSET_TABLE(PAR_ASSET_TABLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
+    par_window_ontick(tick);
     par_window_ondraw(draw);
-    return par_window_exec(400, 300, 1);
+    par_window_onexit(dispose);
+    par_window_oninput(input);
+    return par_window_exec(700, 350, 1);
 }
