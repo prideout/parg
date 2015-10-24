@@ -1,11 +1,16 @@
 // BLUENOISE :: https://github.com/prideout/parg
 // Generator for 2D point sample sequences using Recursive Wang Tiles.
 //
+// In addition to this source code, you'll need to download the following
+// dataset, which is about 2 MB:
+//
+//     http://github.prideout.net/assets/bluenoise.bin
+//
 // This is an implementation of the algorithm described in:
 //
-//              Recursive Wang Tiles for Real-Time Blue Noise
-//              Johannes Kopf, Daniel Cohen-Or, Oliver Deussen, Dani Lischinski
-//              ACM Transactions on Graphics 25, 3 (Proc. SIGGRAPH 2006)
+//     Recursive Wang Tiles for Real-Time Blue Noise
+//     Johannes Kopf, Daniel Cohen-Or, Oliver Deussen, Dani Lischinski
+//     ACM Transactions on Graphics 25, 3 (Proc. SIGGRAPH 2006)
 //
 // If you use this software for research purposes, please cite the above paper
 // in any resulting publication.
@@ -39,23 +44,23 @@
 // Encapsulates a tile set and an optional density function.
 typedef struct par_bluenoise_context_s par_bluenoise_context;
 
-// Create a bluenoise context using the given tile set.  The first argument is
-// a filepath if the second argument is 0.  If the second argument is a non-zero
-// byte count, then the first argument is a pointer to an in-memory tile set.
+// Creates a bluenoise context using the given tileset.  The first argument is
+// either a filepath to the tileset, or the contents of the tileset.  For the
+// latter option, the caller should specify a non-zero buffer length (bytes).
 par_bluenoise_context* par_bluenoise_create(
-    const char* file_or_data, int data_length);
+    const char* filepath_or_buffer, int buffer_length);
 
-// Free all memory associated with the given bluenoise context.
+// Frees all memory associated with the given bluenoise context.
 void par_bluenoise_free(par_bluenoise_context* ctx);
 
-// Copy a grayscale one-byte-per-pixel image into the bluenoise context.
-// Darker regions create a higher number of samples.
+// Copies a grayscale one-byte-per-pixel image into the bluenoise context to
+// guide point density.  Darker regions generate a higher number of points.
 void par_bluenoise_set_density(
     par_bluenoise_context* ctx, const unsigned char* pixels, int size);
 
-// Generate samples using the Recursive Wang Tiles algorithm.  This is fast!
-// The returner pointer is a set of two-tuples in the [0,1] interval.
-// The caller should not free the returned pointer.  The given xyz values
+// Generates samples using Recursive Wang Tiles.  This is really fast!
+// The returned pointer points to a list of two-tuples in the [0,1] range.
+// The caller should not free the returned pointer.  The xyz arguments
 // control a square region within the density function.
 float* par_bluenoise_generate(
     par_bluenoise_context* ctx, float x, float y, float z, int* npts);
