@@ -1,7 +1,7 @@
 #include <par.h>
 #include <stdlib.h>
 #include <memory.h>
-#include "internal.h"
+#include <assert.h>
 
 struct par_mesh_s {
     par_buffer* coords;
