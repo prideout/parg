@@ -196,12 +196,13 @@ float* par_bluenoise_generate(
     *((float*) ptr); \
     ptr += sizeof(float)
 
-par_bluenoise_context* par_bluenoise_create(const char* filepath, int nbytes, int maxpts)
+par_bluenoise_context* par_bluenoise_create(
+    const char* filepath, int nbytes, int maxpts)
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
     ctx->maxpoints = maxpts;
     ctx->points = malloc(maxpts * sizeof(par_vec2));
-    ctx->toneScale = 200000; // 6000000;  // 200000;
+    ctx->toneScale = 200000;  // 6000000;  // 200000;
     ctx->density = 0;
 
     char* buf = 0;

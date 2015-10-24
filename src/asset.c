@@ -45,7 +45,7 @@ void par_asset_preload(par_token id)
             unsigned dims[3] = {0, 0, 4};
             unsigned char* filedata = par_buffer_lock(buf, PAR_READ);
             unsigned err = lodepng_decode_memory(&decoded, &dims[0], &dims[1],
-                filedata, par_buffer_length(buf), LCT_RGBA, 8);
+                    filedata, par_buffer_length(buf), LCT_RGBA, 8);
             par_verify(err == 0, "PNG decoding error", 0);
             par_buffer_free(buf);
             int nbytes = dims[0] * dims[1] * dims[2];

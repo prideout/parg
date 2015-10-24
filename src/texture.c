@@ -22,8 +22,8 @@ par_texture* par_texture_from_asset(par_token id)
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
     par_texture_fliprows(rawdata, tex->width * ncomps, tex->height);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, rawdata);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, rawdata);
     par_buffer_free(pngbuf);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
