@@ -88,7 +88,6 @@ void par_shader_free(par_token);
 
 typedef struct par_texture_s par_texture;
 par_texture* par_texture_from_asset(par_token id);
-void* par_texture_decode_asset(par_token id, int dims[3]);
 void par_texture_bind(par_texture*, int stage);
 void par_texture_info(par_texture*, int* width, int* height);
 void par_texture_free(par_texture*);

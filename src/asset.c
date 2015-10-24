@@ -2,6 +2,7 @@
 #include "internal.h"
 #include "kvec.h"
 #include "khash.h"
+#include "lodepng.h"
 
 // Mapping from asset ids (which are tokens) to buffer pointers.
 KHASH_MAP_INIT_INT(assmap, par_buffer*)
@@ -25,11 +26,40 @@ void par_asset_onload(const char* name, par_buffer* buf)
 }
 
 #else
+
+static sds _pngsuffix = 0;
+
 void par_asset_preload(par_token id)
 {
+    if (!_pngsuffix) {
+        _pngsuffix = sdsnew(".png");
+    }
     sds filename = par_token_to_sds(id);
     par_buffer* buf = par_buffer_from_path(filename);
     par_verify(buf, "Unable to load asset", 0);
+    if (sdslen(filename) > 4) {
+        sds suffix = sdsdup(filename);
+        sdsrange(suffix, -4, -1);
+        if (!sdscmp(suffix, _pngsuffix)) {
+            unsigned char* decoded;
+            unsigned dims[3] = {0, 0, 4};
+            unsigned char* filedata = par_buffer_lock(buf, PAR_READ);
+            unsigned err = lodepng_decode_memory(&decoded, &dims[0], &dims[1],
+                filedata, par_buffer_length(buf), LCT_RGBA, 8);
+            par_verify(err == 0, "PNG decoding error", 0);
+            par_buffer_free(buf);
+            int nbytes = dims[0] * dims[1] * dims[2];
+            buf = par_buffer_alloc(nbytes + 12, PAR_CPU);
+            int* ptr = par_buffer_lock(buf, PAR_WRITE);
+            *ptr++ = dims[0];
+            *ptr++ = dims[1];
+            *ptr++ = dims[2];
+            memcpy(ptr, decoded, nbytes);
+            free(decoded);
+            par_buffer_unlock(buf);
+        }
+        sdsfree(suffix);
+    }
     if (!_asset_registry) {
         _asset_registry = kh_init(assmap);
     }

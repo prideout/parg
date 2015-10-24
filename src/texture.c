@@ -1,8 +1,8 @@
 #include <par.h>
+#include <stdlib.h>
+#include <string.h>
 #include "internal.h"
 #include "pargl.h"
-#include <stdlib.h>
-#include "lodepng.h"
 
 struct par_texture_s {
     int width;
@@ -12,39 +12,24 @@ struct par_texture_s {
 
 par_texture* par_texture_from_asset(par_token id)
 {
-    par_buffer* pngbuf = par_buffer_from_asset(id);
     par_texture* tex = malloc(sizeof(struct par_texture_s));
-    unsigned char* grayvals;
-    const unsigned char* pngbytes = par_buffer_lock(pngbuf, PAR_READ);
-    unsigned err = lodepng_decode_memory(&grayvals, (unsigned int*) &tex->width,
-            (unsigned int*) &tex->height, pngbytes, par_buffer_length(pngbuf),
-            LCT_GREY, 8);
-    par_verify(err == 0, "PNG decoding error", 0);
-    par_buffer_unlock(pngbuf);
-    par_buffer_free(pngbuf);
+    int* rawdata;
+    par_buffer* pngbuf = par_buffer_slurp_asset(id, (void*) &rawdata);
+    tex->width = *rawdata++;
+    tex->height = *rawdata++;
+    int ncomps = *rawdata++;
+    assert(ncomps == 4);
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
-    par_texture_fliprows(grayvals, tex->width, tex->height);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex->width, tex->height, 0,
-        GL_LUMINANCE, GL_UNSIGNED_BYTE, grayvals);
-    free(grayvals);
+    par_texture_fliprows(rawdata, tex->width * ncomps, tex->height);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE, rawdata);
+    par_buffer_free(pngbuf);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
     return tex;
-}
-
-void* par_texture_decode_asset(par_token id, int dims[3])
-{
-    void* filedata;
-    par_buffer* filebuf = par_buffer_slurp_asset(id, &filedata);
-    unsigned char* decoded;
-    lodepng_decode_memory(&decoded, (unsigned*) &dims[0], (unsigned*) &dims[1],
-        filedata, par_buffer_length(filebuf), LCT_GREY, 8);
-    dims[2] = 1;
-    par_buffer_free(filebuf);
-    return decoded;
 }
 
 void par_texture_bind(par_texture* tex, int stage)

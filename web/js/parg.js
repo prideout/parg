@@ -79,7 +79,15 @@ PargApp.prototype.onimage = function(id, img) {
     var h = canvas.height = img.height;
     var ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0);
-    this.onasset(id, ctx.getImageData(0, 0, w, h).data.buffer);
+    var pixelview = ctx.getImageData(0, 0, w, h).data;
+    var pixelbuf = pixelview.buffer;
+    var annotated = new Uint8Array(pixelbuf.byteLength + 12);
+    var metadata = new Uint32Array(annotated.buffer);
+    metadata[0] = w;
+    metadata[1] = h;
+    metadata[2] = 4;
+    annotated.subarray(12).set(pixelview);
+    this.onasset(id, annotated);
 };
 
 PargApp.prototype.start = function() {
