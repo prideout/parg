@@ -4,11 +4,11 @@
 
 This is a C99 library with some basic stuff for bootstrapping a graphics engine.  Currently it is tested against OpenGL 2.1 on OS X, and WebGL 1.0 via Emscripten.
 
-The entire API is declared in [parg.h](https://github.com/prideout/parg/blob/master/include/par.h), which is divided into the following modules.  The `src` folder contains exactly one C file for each module.  Blue modules are standalone, making them easy to snarf into your project.
+The [single-header API](https://github.com/prideout/parg/blob/master/include/par.h) is divided into the following modules, some of which are implemented with standalone C files that have no dependencies.  These are highlighted in blue.
 
-- **[easycurl](https://github.com/prideout/parg/blob/master/src/easycurl.c)** simple HTTP requests; wraps libcurl.
-- **[filecache](https://github.com/prideout/parg/blob/master/src/filecache.c)** LRU caching on your device's filesystem.
 - **[bluenoise](https://github.com/prideout/parg/blob/master/src/bluenoise.c)** progressive point samples using Recursive Wang Tiles.
+- **[filecache](https://github.com/prideout/parg/blob/master/src/filecache.c)** LRU caching on your device's filesystem.
+- **[easycurl](https://github.com/prideout/parg/blob/master/src/easycurl.c)** simple HTTP requests; wraps libcurl.
 - **token** string-to-uint32 hashing, and a lookup table for uint32-to-string.
 - **asset** unified way of loading buffers, shaders, and textures.
 - **buffer** an untyped blob of memory that can live on the CPU or GPU.
