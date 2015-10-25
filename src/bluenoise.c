@@ -66,18 +66,18 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     unsigned int background_color, int invert);
 
 // Generates samples using Recursive Wang Tiles.  This is really fast!
-// The returned pointer is a list of three-tuples, where XY are in [0,1],
+// The returned pointer is a list of three-tuples, where XY are in [-0.5, +0.5]
 // and Z is a rank value that can be used to create a progressive ordering.
-// The caller should not free the returned pointer.  The xyz arguments
-// control a square region within the density function.
+// The caller should not free the returned pointer.  The LBRT arguments
+// define a bounding box in [-0.5, +0.5].
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    float x, float y, float z, int* npts);
+    float left, float bottom, float right, float top, int* npts);
 
 // Performs an in-place sort of 3-tuples, based on the 3rd component.
 void par_bluenoise_sort_by_rank(float* pts, int npts);
 
-#define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
-#define sqri(a) (a * a)
+#define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
+#define sqr(a) (a * a)
 #define mini(a, b) ((a < b) ? a : b)
 #define maxi(a, b) ((a > b) ? a : b)
 
@@ -104,14 +104,14 @@ struct par_bluenoise_context_s {
     par_vec3* points;
     par_tile* tiles;
     float global_density;
-    float clipMinX, clipMaxX, clipMinY, clipMaxY;
+    float left, bottom, right, top;
     int ntiles, nsubtiles, nsubdivs;
-    float vpos[3];
     int npoints;
     int maxpoints;
     int density_width;
     int density_height;
     float* density;
+    float mag;
 };
 
 static float sample_density(par_bluenoise_context* ctx, float x, float y)
@@ -119,6 +119,7 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
     float* density = ctx->density;
     int width = ctx->density_width;
     int height = ctx->density_height;
+    y = 1 - y;
     x -= 0.5;
     y -= 0.5;
     float tx = x * maxi(width, height);
@@ -127,8 +128,8 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
     y += 0.5;
     tx += width / 2;
     ty += height / 2;
-    int ix = clampi((int) tx, 0, width - 2);
-    int iy = clampi((int) ty, 0, height - 2);
+    int ix = clamp((int) tx, 0, width - 2);
+    int iy = clamp((int) ty, 0, height - 2);
     tx -= ix;
     ty -= iy;
     float sample = (density[iy * width + ix] * (1 - tx) * (1 - ty) +
@@ -141,72 +142,79 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
 static void recurse_tile(
     par_bluenoise_context* ctx, par_tile* tile, float x, float y, int level)
 {
+    float left = ctx->left, right = ctx->right;
+    float top = ctx->top, bottom = ctx->bottom;
+    float mag = ctx->mag;
     float tileSize = 1.f / powf(ctx->nsubtiles, level);
-    if ((x + tileSize < ctx->clipMinX) || (x > ctx->clipMaxX) ||
-        (y + tileSize < ctx->clipMinY) || (y > ctx->clipMaxY)) {
+    if (x + tileSize < left || x > right || y + tileSize < bottom || y > top) {
         return;
     }
-    float mag = powf(ctx->vpos[2], -2.f);
-    float threshold =
-        mag / powf(ctx->nsubtiles, 2.f * level) * ctx->global_density -
-        tile->npoints;
+    float depth = powf(ctx->nsubtiles, 2 * level);
+    float threshold = mag / depth * ctx->global_density - tile->npoints;
     int ntests = mini(tile->nsubpts, threshold);
-    float factor =
-        1.f / mag * powf(ctx->nsubtiles, 2.f * level) / ctx->global_density;
+    float factor = 1.f / mag * depth / ctx->global_density;
     for (int i = 0; i < ntests; i++) {
         float px = x + tile->subpts[i].x * tileSize;
         float py = y + tile->subpts[i].y * tileSize;
-        if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
-            (py < ctx->clipMinY) || (py > ctx->clipMaxY)) {
+        if (px < left || px > right || py < bottom || py > top) {
             continue;
         }
         if (sample_density(ctx, px, py) < (i + tile->npoints) * factor) {
             continue;
         }
-        ctx->points[ctx->npoints].x = px;
-        ctx->points[ctx->npoints].y = py;
+        ctx->points[ctx->npoints].x = px - 0.5;
+        ctx->points[ctx->npoints].y = py - 0.5;
         ctx->points[ctx->npoints].rank = (level + 1) + i * factor;
         ctx->npoints++;
     }
     const float scale = tileSize / ctx->nsubtiles;
-    if (threshold > tile->nsubpts) {
-        for (int ty = 0; ty < ctx->nsubtiles; ty++) {
-            for (int tx = 0; tx < ctx->nsubtiles; tx++) {
-                int tileIndex = tile->subdivs[0][ty * ctx->nsubtiles + tx];
-                par_tile* subtile = &ctx->tiles[tileIndex];
-                recurse_tile(
-                    ctx, subtile, x + tx * scale, y + ty * scale, level + 1);
-            }
+    if (threshold <= tile->nsubpts) {
+        return;
+    }
+    level++;
+    for (int ty = 0; ty < ctx->nsubtiles; ty++) {
+        for (int tx = 0; tx < ctx->nsubtiles; tx++) {
+            int tileIndex = tile->subdivs[0][ty * ctx->nsubtiles + tx];
+            par_tile* subtile = &ctx->tiles[tileIndex];
+            recurse_tile(ctx, subtile, x + tx * scale, y + ty * scale, level);
         }
     }
 }
 
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    float x, float y, float z, int* npts)
+    float left, float bottom, float right, float top, int* npts)
 {
     ctx->global_density = density;
-    ctx->vpos[0] = x;
-    ctx->vpos[1] = y;
-    ctx->vpos[2] = z;
-    ctx->clipMinX = x;
-    ctx->clipMaxX = x + z;
-    ctx->clipMinY = y;
-    ctx->clipMaxY = y + z;
     ctx->npoints = 0;
-    int ntests =
-        mini(ctx->tiles[0].npoints, powf(z, -2.f) * ctx->global_density);
-    float factor = 1.f / powf(z, -2) / ctx->global_density;
+
+    // Transform [-.5, +.5]  to [0, 1]
+    ctx->left = left = left + 0.5;
+    ctx->right = right = right + 0.5;
+    ctx->bottom = bottom = bottom + 0.5;
+    ctx->top = top = top + 0.5;
+
+    // Determine magnification factor BEFORE clamping.
+    float mag = ctx->mag = powf(top - bottom, -2);
+
+    // The density function is only sampled in [0, +1].
+    ctx->left = left = clamp(left, 0, 1);
+    ctx->right = right = clamp(right, 0, 1);
+    ctx->bottom = bottom = clamp(bottom, 0, 1);
+    ctx->top = top = clamp(top, 0, 1);
+
+    int ntests = mini(ctx->tiles[0].npoints, mag * ctx->global_density);
+    float factor = 1.f / mag / ctx->global_density;
     for (int i = 0; i < ntests; i++) {
-        float px = ctx->tiles[0].points[i].x, py = ctx->tiles[0].points[i].y;
-        if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
-            (py < ctx->clipMinY) || (py > ctx->clipMaxY)) {
+        float px = ctx->tiles[0].points[i].x;
+        float py = ctx->tiles[0].points[i].y;
+        if (px < left || px > right || py < bottom || py > top) {
             continue;
         }
         if (sample_density(ctx, px, py) < i * factor) {
             continue;
         }
-        ctx->points[ctx->npoints].x = px;
-        ctx->points[ctx->npoints].y = py;
+        ctx->points[ctx->npoints].x = px - 0.5;
+        ctx->points[ctx->npoints].y = py - 0.5;
         ctx->points[ctx->npoints].rank = i * factor;
         ctx->npoints++;
     }
@@ -255,8 +263,8 @@ par_bluenoise_context* par_bluenoise_create(
         tiles[i].w = freadi();
         tiles[i].subdivs = malloc(sizeof(int) * nsubdivs);
         for (int j = 0; j < nsubdivs; j++) {
-            int* subdiv = malloc(sizeof(int) * sqri(nsubtiles));
-            for (int k = 0; k < sqri(nsubtiles); k++) {
+            int* subdiv = malloc(sizeof(int) * sqr(nsubtiles));
+            for (int k = 0; k < sqr(nsubtiles); k++) {
                 subdiv[k] = freadi();
             }
             tiles[i].subdivs[j] = subdiv;
@@ -304,12 +312,15 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     ctx->density = malloc(width * height * sizeof(float));
     float* dst = ctx->density;
     unsigned int mask = 0x000000ffu;
-    if (bpp > 1)
+    if (bpp > 1) {
         mask |= 0x0000ff00u;
-    if (bpp > 2)
+    }
+    if (bpp > 2) {
         mask |= 0x00ff0000u;
-    if (bpp > 3)
+    }
+    if (bpp > 3) {
         mask |= 0xff000000u;
+    }
     assert(bpp <= 4);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {

@@ -128,7 +128,8 @@ void par_draw_points(int npoints);
 
 void par_zcam_init(float world_width, float world_height, float fovy);
 void par_zcam_tick(float window_aspect, float seconds);
-float par_zcam_magnification();
+float par_zcam_get_magnification();
+void par_zcam_get_viewport(float* lbrt);
 void par_zcam_grab_begin(float winx, float winy);
 void par_zcam_grab_update(float winx, float winy, float scrolldelta);
 void par_zcam_grab_end();
@@ -162,7 +163,7 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,
     unsigned int background_color, int invert);
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    float x, float y, float z, int* npts);
+    float left, float bottom, float right, float top, int* npts);
 void par_bluenoise_sort_by_rank(float* floats, int npts);
 
 #ifdef __cplusplus

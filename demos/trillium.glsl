@@ -9,8 +9,7 @@ attribute vec3 a_position;
 
 void main()
 {
-    vec4 p = vec4(a_position.xy - 0.5, 0.0, 1.0);
-    p.y *= -1.0;
+    vec4 p = vec4(a_position.xy, 0.0, 1.0);
     gl_Position = u_mvp * p;
     gl_PointSize = 4.0;
 }

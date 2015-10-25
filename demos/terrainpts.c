@@ -29,8 +29,8 @@ const float worldwidth = 1;
 const int maxpts = 2 * 1024 * 1024;
 const unsigned int ocean_color = 0xFFB2B283;
 
-#define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
-#define sqri(a) (a * a)
+#define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
+#define sqr(a) (a * a)
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -51,7 +51,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Generating point sequence...\n");
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 20000000, 0, 0, 1, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 20000000, 0, 0, 1, 1, &npts);
     par_bluenoise_sort_by_rank(cpupts, npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
@@ -93,7 +93,7 @@ int draw()
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_point(U_EYEPOS, &eyepos);
-    par_uniform1f(U_MAGNIFICATION, par_zcam_magnification());
+    par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
     par_uniform1f(U_DENSITY, 0.01f);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_varray_enable(vidvbo, A_VERTEXID, 1, PAR_FLOAT, 0, 0);

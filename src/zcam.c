@@ -26,6 +26,20 @@ static DPoint3 window_to_world(float winx, float winy)
     return worldspace;
 }
 
+void par_zcam_get_viewport(float* lbrt)
+{
+    double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
+    double vpwidth = vpheight * _winaspect;
+    float left = _camerapos.x - vpwidth * 0.5;
+    float bottom = _camerapos.y - vpheight * 0.5;
+    float right = _camerapos.x + vpwidth * 0.5;
+    float top = _camerapos.y + vpheight * 0.5;
+    *lbrt++ = left;
+    *lbrt++ = bottom;
+    *lbrt++ = right;
+    *lbrt = top;
+}
+
 void par_zcam_init(float worldwidth, float worldheight, float fovy)
 {
     _maxcamz = 0.5 * worldheight / tan(fovy * 0.5);
@@ -47,7 +61,7 @@ void par_zcam_tick(float winaspect, float seconds)
     }
 }
 
-float par_zcam_magnification()
+float par_zcam_get_magnification()
 {
     double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
     return _worldsize.y / vpheight;

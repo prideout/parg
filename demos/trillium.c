@@ -25,10 +25,10 @@ par_bluenoise_context* ctx;
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
-const int maxpts = 10000;
+const int maxpts = 100000;
 
-#define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
-#define sqri(a) (a * a)
+#define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
+#define sqr(a) (a * a)
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -48,14 +48,22 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_depthtest(0);
     par_state_cullfaces(0);
     par_shader_load_from_asset(SHADER_SIMPLE);
-    float worldheight = worldwidth * sqrt(0.75);
+    float worldheight = worldwidth;
     par_zcam_init(worldwidth, worldheight, fovy);
 }
 
 int draw()
 {
+    float lbrt[4];
+    par_zcam_get_viewport(lbrt);
+    float left = lbrt[0];
+    float bottom = lbrt[1];
+    float right = lbrt[2];
+    float top = lbrt[3];
+
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 30000, 0, 0, 1, &npts);
+    float* cpupts =
+        par_bluenoise_generate(ctx, 30000, left, bottom, right, top, &npts);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, npts * 3 * sizeof(float));
     par_buffer_unlock(ptsvbo);
