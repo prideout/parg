@@ -41,7 +41,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Pushing density function...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
-    par_bluenoise_set_density(ctx, buffer_data + 12, 3500, 3500, 4);
+    par_bluenoise_density_from_gray(ctx, buffer_data + 12, 3500, 3500, 4);
     par_buffer_free(buffer);
 
     printf("Generating point sequence...\n");

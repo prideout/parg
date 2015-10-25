@@ -56,7 +56,7 @@ void par_bluenoise_free(par_bluenoise_context* ctx);
 // Copies a grayscale image into the bluenoise context to guide point density.
 // Darker regions generate a higher number of points. The given bytes-per-pixel
 // value is the stride between pixels.
-void par_bluenoise_set_density(par_bluenoise_context* ctx,
+void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp);
 
 // Generates samples using Recursive Wang Tiles.  This is really fast!
@@ -263,7 +263,7 @@ par_bluenoise_context* par_bluenoise_create(
     return ctx;
 }
 
-void par_bluenoise_set_density(par_bluenoise_context* ctx,
+void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp)
 {
     ctx->density_width = width;
@@ -274,6 +274,28 @@ void par_bluenoise_set_density(par_bluenoise_context* ctx,
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             *dst++ = 1 - (*pixels) * scale;
+            pixels += bpp;
+        }
+    }
+}
+
+void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
+    const unsigned char* pixels, int width, int height, int bpp,
+    unsigned int background_color)
+{
+    ctx->density_width = width;
+    ctx->density_height = height;
+    ctx->density = malloc(width * height * sizeof(float));
+    float* dst = ctx->density;
+    unsigned int mask =  0x000000ffu;
+    if (bpp > 1) mask |= 0x0000ff00u;
+    if (bpp > 2) mask |= 0x00ff0000u;
+    if (bpp > 3) mask |= 0xff000000u;
+    assert(bpp <= 4);
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            unsigned int val = (*((unsigned int*) pixels)) & mask;
+            *dst++ = val != background_color;
             pixels += bpp;
         }
     }

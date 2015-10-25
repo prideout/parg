@@ -24,6 +24,7 @@ const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
 const int maxpts = 1024 * 1024;
+const unsigned int ocean_color = 0xFFB2B283;
 
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
@@ -41,7 +42,8 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Pushing density function...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
-    par_bluenoise_set_density(ctx, buffer_data + 12, 4096, 2048, 4);
+    par_bluenoise_density_from_color(ctx, buffer_data + 12, 4096, 2048, 4,
+        ocean_color);
     par_buffer_free(buffer);
 
     printf("Generating point sequence...\n");
