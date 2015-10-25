@@ -8,8 +8,7 @@
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
-    F(U_EYEPOS, "u_eyepos")     \
-    F(U_EYEPOS_LOWPART, "u_eyepos_lowpart")
+    F(U_DENSITY, "u_density")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 

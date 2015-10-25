@@ -7,7 +7,6 @@
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
     F(A_POSITION, "a_position")           \
-    F(A_VERTEXID, "a_vertexid")           \
     F(U_MVP, "u_mvp")                     \
     F(U_EYEPOS, "u_eyepos")               \
     F(U_MAGNIFICATION, "u_magnification") \
@@ -51,7 +50,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Generating point sequence...\n");
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 20000000, 0, 0, 1, 1, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 20000000, -.5, -.5, .5, .5, &npts);
     par_bluenoise_sort_by_rank(cpupts, npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
@@ -96,7 +95,6 @@ int draw()
     par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
     par_uniform1f(U_DENSITY, 0.01f);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_varray_enable(vidvbo, A_VERTEXID, 1, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
     return 1;
 }

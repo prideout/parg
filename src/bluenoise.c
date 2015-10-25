@@ -73,7 +73,8 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
     float left, float bottom, float right, float top, int* npts);
 
-// Performs an in-place sort of 3-tuples, based on the 3rd component.
+// Performs an in-place sort of 3-tuples, based on the 3rd component, then
+// replaces the 3rd component with an index.
 void par_bluenoise_sort_by_rank(float* pts, int npts);
 
 #define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
@@ -363,4 +364,7 @@ void par_bluenoise_sort_by_rank(float* floats, int npts)
 {
     par_vec3* vecs = (par_vec3*) floats;
     qsort(vecs, npts, sizeof(vecs[0]), cmp);
+    for (int i = 0; i < npts; i++) {
+        vecs[i].rank = i;
+    }
 }

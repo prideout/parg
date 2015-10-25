@@ -10,18 +10,16 @@ varying float v_alpha;
 -- vertex
 
 attribute vec3 a_position;
-attribute float a_vertexid;
 
 const vec4 OUTSIDE_FRUSTUM = vec4(2, 2, 2, 1);
 const float FADE_DURATION = 0.25;
 
 void main()
 {
-    vec4 p = vec4(a_position.xy - 0.5, 0.0, 1.0);
-    p.y *= -1.0;
+    vec4 p = vec4(a_position.xy, 0.0, 1.0);
     gl_Position = u_mvp * p;
     gl_PointSize = 10.0;
-    float rank = a_vertexid * u_density;
+    float rank = a_position.z * u_density;
     float mag2 = u_magnification * u_magnification;
     float culled = rank - mag2;
     v_alpha = smoothstep(0.0, - (FADE_DURATION * mag2), culled);
