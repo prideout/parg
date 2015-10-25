@@ -256,8 +256,9 @@ GLint par_shader_uniform_get(par_token utoken)
     par_token ptoken = _current_program_token;
     par_token combined_token = ptoken ^ utoken;
     khiter_t iter = kh_get(imap, _unif_registry, combined_token);
-    par_verify(iter != kh_end(_unif_registry), "Inactive uniform",
-        par_token_to_string(utoken));
+    if (iter == kh_end(_unif_registry)) {
+        return -1;
+    }
     return kh_value(_unif_registry, iter);
 }
 
