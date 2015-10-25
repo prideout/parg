@@ -18,3 +18,10 @@ void par_state_depthtest(int enabled)
     (enabled ? glEnable : glDisable)(GL_DEPTH_TEST);
     _par_depthtest = enabled;
 }
+
+void par_state_blending(int enabled)
+{
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    (enabled ? glEnable : glDisable)(GL_BLEND);
+    _par_depthtest = enabled;
+}

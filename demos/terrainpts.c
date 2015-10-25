@@ -6,11 +6,13 @@
 
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
+    F(P_TEXTURED, "p_textured")           \
     F(A_POSITION, "a_position")           \
     F(U_MVP, "u_mvp")                     \
     F(U_EYEPOS, "u_eyepos")               \
     F(U_MAGNIFICATION, "u_magnification") \
-    F(U_DENSITY, "u_density")
+    F(U_DENSITY, "u_density")             \
+    F(U_POINTSIZE, "u_pointsize")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -22,10 +24,10 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_buffer* ptsvbo;
 par_buffer* vidvbo;
-const float gray = 0.8;
+par_texture* terraintex;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
-const int maxpts = 2 * 1024 * 1024;
+const int maxpts = 100 * 1024 * 1024;
 const unsigned int ocean_color = 0xFFB2B283;
 
 #define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
@@ -46,11 +48,12 @@ void init(float winwidth, float winheight, float pixratio)
     buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
     par_bluenoise_density_from_color(
         ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
-    par_buffer_free(buffer);
+    terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
 
     printf("Generating point sequence...\n");
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 20000000, -.5, -.5, .5, .5, &npts);
+    float* cpupts =
+        par_bluenoise_generate(ctx, 20000000, -.5, -.5, .5, .5, &npts);
     par_bluenoise_sort_by_rank(cpupts, npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
@@ -66,9 +69,10 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_unlock(vidvbo);
 
     printf("%d points.\n", npts);
-    par_state_clearcolor((Vector4){gray, gray, gray, 1});
+    par_state_clearcolor((Vector4){0.51, 0.7, 0.7, 1.0});
     par_state_depthtest(0);
     par_state_cullfaces(0);
+    par_state_blending(1);
     par_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
     par_zcam_init(worldwidth, worldheight, fovy);
@@ -89,13 +93,26 @@ int draw()
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
+    par_texture_bind(terraintex, 0);
+
+    par_shader_bind(P_TEXTURED);
+    par_uniform_matrix4f(U_MVP, &mvp);
+    par_uniform_point(U_EYEPOS, &eyepos);
+    par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
+    par_uniform1f(U_DENSITY, 0.01f);
+    par_uniform1f(U_POINTSIZE, 40.0f);
+    par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
+    par_draw_points(npts);
+
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_point(U_EYEPOS, &eyepos);
     par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
     par_uniform1f(U_DENSITY, 0.01f);
+    par_uniform1f(U_POINTSIZE, 10.0f);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
+
     return 1;
 }
 
@@ -107,8 +124,10 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 void dispose()
 {
     par_shader_free(P_SIMPLE);
+    par_shader_free(P_TEXTURED);
     par_buffer_free(ptsvbo);
     par_buffer_free(vidvbo);
+    par_texture_free(terraintex);
 }
 
 void input(par_event evt, float x, float y, float z)

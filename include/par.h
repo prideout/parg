@@ -107,6 +107,7 @@ void par_uniform_matrix3f(par_token, const Matrix3* val);
 void par_state_clearcolor(Vector4 color);
 void par_state_cullfaces(int enabled);
 void par_state_depthtest(int enabled);
+void par_state_blending(int enabled);
 
 // VARRAY
 

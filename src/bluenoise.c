@@ -118,6 +118,9 @@ struct par_bluenoise_context_s {
 static float sample_density(par_bluenoise_context* ctx, float x, float y)
 {
     float* density = ctx->density;
+    if (!density) {
+        return 1;
+    }
     int width = ctx->density_width;
     int height = ctx->density_height;
     y = 1 - y;
@@ -131,6 +134,9 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
     ty += height / 2;
     int ix = clamp((int) tx, 0, width - 2);
     int iy = clamp((int) ty, 0, height - 2);
+#if 1
+    return density[iy * width + ix];
+#else
     tx -= ix;
     ty -= iy;
     float sample = (density[iy * width + ix] * (1 - tx) * (1 - ty) +
@@ -138,6 +144,7 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
         density[(iy + 1) * width + ix] * (1 - tx) * ty +
         density[(iy + 1) * width + ix + 1] * tx * ty);
     return sample;
+#endif
 }
 
 static void recurse_tile(
