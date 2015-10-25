@@ -59,6 +59,12 @@ void par_bluenoise_free(par_bluenoise_context* ctx);
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp);
 
+// Create a binary mask to guide point density. The given bytes-per-pixel
+// value is the stride between pixels, which must be 4 or less.
+void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
+    const unsigned char* pixels, int width, int height, int bpp,
+    unsigned int background_color, int invert);
+
 // Generates samples using Recursive Wang Tiles.  This is really fast!
 // The returned pointer points to a list of two-tuples in the [0,1] range.
 // The caller should not free the returned pointer.  The xyz arguments
@@ -213,7 +219,7 @@ par_bluenoise_context* par_bluenoise_create(
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
     ctx->maxpoints = maxpts;
     ctx->points = malloc(maxpts * sizeof(par_vec2));
-    ctx->toneScale = 200000;  // 6000000;  // 200000;
+    ctx->toneScale = 5000000;  // 6000000;  // 200000;
     ctx->density = 0;
 
     char* buf = 0;
@@ -281,8 +287,9 @@ void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 
 void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,
-    unsigned int background_color)
+    unsigned int background_color, int invert)
 {
+    unsigned int bkgd = background_color;
     ctx->density_width = width;
     ctx->density_height = height;
     ctx->density = malloc(width * height * sizeof(float));
@@ -295,7 +302,7 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             unsigned int val = (*((unsigned int*) pixels)) & mask;
-            *dst++ = val != background_color;
+            *dst++ = invert ? (val == bkgd) : (val != bkgd);
             pixels += bpp;
         }
     }

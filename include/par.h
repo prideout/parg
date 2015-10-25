@@ -13,11 +13,11 @@ extern "C" {
 #define PAR_PI 3.14159265359
 #define PAR_TWOPI 6.28318530718
 #define PAR_BYTE 0x1400
-#define PAR_UNSIGNED_BYTE 0x1401
+#define PAR_UBYTE 0x1401
 #define PAR_SHORT 0x1402
-#define PAR_UNSIGNED_SHORT 0x1403
+#define PAR_USHORT 0x1403
 #define PAR_INT 0x1404
-#define PAR_UNSIGNED_INT 0x1405
+#define PAR_UINT 0x1405
 #define PAR_FLOAT 0x1406
 #define PAR_DOUBLE 0x140A
 
@@ -159,7 +159,7 @@ void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 	const unsigned char* pixels, int width, int height, int bpp);
 void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,
-    unsigned int background_color);
+    unsigned int background_color, int invert);
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float x, float y,
 	float z, int* npts);
 

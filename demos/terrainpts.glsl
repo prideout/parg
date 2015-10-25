@@ -6,6 +6,7 @@ uniform mat4 u_mvp;
 -- vertex
 
 attribute vec4 a_position;
+attribute float a_vertexid;
 
 void main()
 {
