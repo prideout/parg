@@ -66,7 +66,8 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     unsigned int background_color, int invert);
 
 // Generates samples using Recursive Wang Tiles.  This is really fast!
-// The returned pointer points to a list of two-tuples in the [0,1] range.
+// The returned pointer is a list of three-tuples, where XY are in [0,1],
+// and Z is a rank value that can be used to create a progressive ordering.
 // The caller should not free the returned pointer.  The xyz arguments
 // control a square region within the density function.
 float* par_bluenoise_generate(
