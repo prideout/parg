@@ -45,8 +45,10 @@ void main()
 
 void main()
 {
-    float L = 0.8 - v_alpha * 0.6;
-    gl_FragColor = vec4(L, L, L, 1.0);
+    vec2 pc = 2.0 * (gl_PointCoord - 0.5);
+    float r = dot(pc, pc);
+    gl_FragColor = vec4(0.2, 0.2, 0.2, v_alpha);
+    gl_FragColor.a *= smoothstep(1.0, 0.9, r);
 }
 
 -- textured
@@ -60,5 +62,4 @@ void main()
     vec2 uv = v_texcoord;
     gl_FragColor = texture2D(img, uv);
     gl_FragColor.a = smoothstep(1.0, 0.9, r);
-
 }

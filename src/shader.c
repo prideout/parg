@@ -44,6 +44,7 @@ void par_shader_load_from_buffer(par_buffer* buf)
     const sds ATTRIBUTE = sdsnew("attribute ");
     const sds PROGRAM = sdsnew("@program ");
     const sds PREFIX = sdsnew("_prefix");
+    const sds OSX_PREFIX = sdsnew("#version 120\n");
 
     if (!_vshader_registry) {
         _vshader_registry = kh_init(smap);
@@ -135,6 +136,11 @@ void par_shader_load_from_buffer(par_buffer* buf)
         fshader_body = sdscat(qualified_prefix, fshader_body);
 #else
         fshader_body = sdscat(sdsdup(prefix_body), fshader_body);
+#if defined(__APPLE__) && defined(__MACH__)
+        sds tmp = fshader_body;
+        fshader_body = sdscatsds(sdsdup(OSX_PREFIX), fshader_body);
+        sdsfree(tmp);
+#endif
 #endif
         par_token program_name = par_token_from_string(args[0]);
         sdsfreesplitres(args, nargs);
