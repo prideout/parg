@@ -46,7 +46,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Generating point sequence...\n");
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 0, 0, 1, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 150000, 0, 0, 1, &npts);
     printf("%d points.\n", npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);

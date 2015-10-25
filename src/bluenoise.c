@@ -70,8 +70,8 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
 // and Z is a rank value that can be used to create a progressive ordering.
 // The caller should not free the returned pointer.  The xyz arguments
 // control a square region within the density function.
-float* par_bluenoise_generate(
-    par_bluenoise_context* ctx, float x, float y, float z, int* npts);
+float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
+    float x, float y, float z, int* npts);
 
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
@@ -100,7 +100,7 @@ typedef struct {
 struct par_bluenoise_context_s {
     par_vec3* points;
     par_tile* tiles;
-    float toneScale;
+    float global_density;
     float clipMinX, clipMaxX, clipMinY, clipMaxY;
     int ntiles, nsubtiles, nsubdivs;
     float vpos[3];
@@ -146,11 +146,12 @@ static void recurse_tile(
         return;
     }
     float mag = powf(ctx->vpos[2], -2.f);
-    float threshold = mag / powf(ctx->nsubtiles, 2.f * level) * ctx->toneScale -
+    float threshold =
+        mag / powf(ctx->nsubtiles, 2.f * level) * ctx->global_density -
         tile->npoints;
     int ntests = mini(tile->nsubpts, threshold);
     float factor =
-        1.f / mag * powf(ctx->nsubtiles, 2.f * level) / ctx->toneScale;
+        1.f / mag * powf(ctx->nsubtiles, 2.f * level) / ctx->global_density;
     for (int i = 0; i < ntests; i++) {
         float px = x + tile->subpts[i].x * tileSize,
             py = y + tile->subpts[i].y * tileSize;
@@ -179,9 +180,10 @@ static void recurse_tile(
     }
 }
 
-float* par_bluenoise_generate(
-    par_bluenoise_context* ctx, float x, float y, float z, int* npts)
+float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
+    float x, float y, float z, int* npts)
 {
+    ctx->global_density = density;
     ctx->vpos[0] = x;
     ctx->vpos[1] = y;
     ctx->vpos[2] = z;
@@ -190,8 +192,9 @@ float* par_bluenoise_generate(
     ctx->clipMinY = y;
     ctx->clipMaxY = y + z;
     ctx->npoints = 0;
-    int ntests = mini(ctx->tiles[0].npoints, powf(z, -2.f) * ctx->toneScale);
-    float factor = 1.f / powf(z, -2) / ctx->toneScale;
+    int ntests =
+        mini(ctx->tiles[0].npoints, powf(z, -2.f) * ctx->global_density);
+    float factor = 1.f / powf(z, -2) / ctx->global_density;
     for (int i = 0; i < ntests; i++) {
         float px = ctx->tiles[0].points[i].x, py = ctx->tiles[0].points[i].y;
         if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
@@ -225,7 +228,6 @@ par_bluenoise_context* par_bluenoise_create(
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
     ctx->maxpoints = maxpts;
     ctx->points = malloc(maxpts * sizeof(par_vec3));
-    ctx->toneScale = 5000000;  // 6000000;  // 200000;
     ctx->density = 0;
 
     char* buf = 0;
