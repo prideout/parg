@@ -3,6 +3,7 @@
 
 uniform mat4 u_mvp;
 uniform vec3 u_eyepos;
+uniform float u_magnification;
 
 -- vertex
 
@@ -18,6 +19,9 @@ void main()
     p.y *= -1.0;
     gl_Position = u_mvp * p;
     gl_PointSize = 2.0;
+    if (rank > log(u_magnification) / log(2.0)) {
+        gl_Position = OUTSIDE_FRUSTUM;
+    }
 }
 
 -- fragment

@@ -128,6 +128,7 @@ void par_draw_points(int npoints);
 
 void par_zcam_init(float world_width, float world_height, float fovy);
 void par_zcam_tick(float window_aspect, float seconds);
+float par_zcam_magnification();
 void par_zcam_grab_begin(float winx, float winy);
 void par_zcam_grab_update(float winx, float winy, float scrolldelta);
 void par_zcam_grab_end();

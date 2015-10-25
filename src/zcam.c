@@ -47,6 +47,12 @@ void par_zcam_tick(float winaspect, float seconds)
     }
 }
 
+float par_zcam_magnification()
+{
+    double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
+    return _worldsize.y / vpheight;
+}
+
 void par_zcam_grab_begin(float winx, float winy)
 {
     _grabbing = 1;

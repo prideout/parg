@@ -10,7 +10,7 @@
     F(A_VERTEXID, "a_vertexid") \
     F(U_MVP, "u_mvp")           \
     F(U_EYEPOS, "u_eyepos")     \
-    F(U_EYEPOS_LOWPART, "u_eyepos_lowpart")
+    F(U_MAGNIFICATION, "u_magnification")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -50,7 +50,7 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Generating point sequence...\n");
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 200000, 0, 0, 1, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 5000000, 0, 0, 1, &npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
@@ -92,6 +92,7 @@ int draw()
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_point(U_EYEPOS, &eyepos);
+    par_uniform1f(U_MAGNIFICATION, par_zcam_magnification());
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_varray_enable(vidvbo, A_VERTEXID, 1, PAR_USHORT, 0, 0);
     par_draw_points(npts);
