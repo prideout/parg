@@ -73,6 +73,9 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
     float x, float y, float z, int* npts);
 
+// Performs an in-place sort of 3-tuples, based on the 3rd component.
+void par_bluenoise_sort_by_rank(float* pts, int npts);
+
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
 #define mini(a, b) ((a < b) ? a : b)
@@ -332,4 +335,23 @@ void par_bluenoise_free(par_bluenoise_context* ctx)
     }
     free(ctx->tiles);
     free(ctx->density);
+}
+
+int cmp(const void* a, const void* b)
+{
+    const par_vec3* v1 = a;
+    const par_vec3* v2 = b;
+    if (v1->rank < v2->rank) {
+        return -1;
+    }
+    if (v1->rank > v2->rank) {
+        return 1;
+    }
+    return 0;
+}
+
+void par_bluenoise_sort_by_rank(float* floats, int npts)
+{
+    par_vec3* vecs = (par_vec3*) floats;
+    qsort(vecs, npts, sizeof(vecs[0]), cmp);
 }

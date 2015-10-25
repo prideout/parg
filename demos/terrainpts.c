@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TOKEN_TABLE(F)          \
-    F(P_SIMPLE, "p_simple")     \
-    F(A_POSITION, "a_position") \
-    F(A_VERTEXID, "a_vertexid") \
-    F(U_MVP, "u_mvp")           \
-    F(U_EYEPOS, "u_eyepos")     \
-    F(U_MAGNIFICATION, "u_magnification")
+#define TOKEN_TABLE(F)                    \
+    F(P_SIMPLE, "p_simple")               \
+    F(A_POSITION, "a_position")           \
+    F(A_VERTEXID, "a_vertexid")           \
+    F(U_MVP, "u_mvp")                     \
+    F(U_EYEPOS, "u_eyepos")               \
+    F(U_MAGNIFICATION, "u_magnification") \
+    F(U_DENSITY, "u_density")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -25,7 +26,7 @@ par_buffer* vidvbo;
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
-const int maxpts = 1024 * 1024;
+const int maxpts = 2 * 1024 * 1024;
 const unsigned int ocean_color = 0xFFB2B283;
 
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
@@ -50,15 +51,16 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Generating point sequence...\n");
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 5000000, 0, 0, 1, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 20000000, 0, 0, 1, &npts);
+    par_bluenoise_sort_by_rank(cpupts, npts);
     ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
     par_buffer_unlock(ptsvbo);
 
     printf("Generating vertex ids...\n");
-    vidvbo = par_buffer_alloc(npts * sizeof(unsigned short), PAR_GPU_ARRAY);
-    unsigned short* gpuids = par_buffer_lock(vidvbo, PAR_WRITE);
+    vidvbo = par_buffer_alloc(npts * sizeof(float), PAR_GPU_ARRAY);
+    float* gpuids = par_buffer_lock(vidvbo, PAR_WRITE);
     for (int i = 0; i < npts; i++) {
         gpuids[i] = i;
     }
@@ -71,7 +73,6 @@ void init(float winwidth, float winheight, float pixratio)
     par_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
     par_zcam_init(worldwidth, worldheight, fovy);
-
     par_bluenoise_free(ctx);
 }
 
@@ -93,8 +94,9 @@ int draw()
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_point(U_EYEPOS, &eyepos);
     par_uniform1f(U_MAGNIFICATION, par_zcam_magnification());
+    par_uniform1f(U_DENSITY, 0.01f);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_varray_enable(vidvbo, A_VERTEXID, 1, PAR_USHORT, 0, 0);
+    par_varray_enable(vidvbo, A_VERTEXID, 1, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
     return 1;
 }
