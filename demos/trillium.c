@@ -48,7 +48,7 @@ void init(float winwidth, float winheight, float pixratio)
     int npts;
     float* cpupts = par_bluenoise_generate(ctx, 0, 0, 1, &npts);
     printf("%d points.\n", npts);
-    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 2, PAR_GPU_ARRAY);
+    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
     par_buffer_unlock(ptsvbo);
@@ -65,7 +65,7 @@ void init(float winwidth, float winheight, float pixratio)
 
 int draw()
 {
-    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 2);
+    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 3);
     Matrix4 view;
     Matrix4 projection;
     par_zcam_matrices(&projection, &view);
@@ -75,7 +75,7 @@ int draw()
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_varray_enable(ptsvbo, A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
     return 1;
 }

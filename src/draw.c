@@ -30,4 +30,12 @@ void par_draw_lines(int nsegments)
     glDrawArrays(GL_LINES, 0, nsegments * 2);
 }
 
-void par_draw_points(int npoints) { glDrawArrays(GL_POINTS, 0, npoints); }
+void par_draw_points(int npoints)
+{
+#if defined(GL_PROGRAM_POINT_SIZE)
+    glEnable(GL_PROGRAM_POINT_SIZE);
+#elif defined(GL_VERTEX_PROGRAM_POINT_SIZE)
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+#endif
+    glDrawArrays(GL_POINTS, 0, npoints);
+}

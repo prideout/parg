@@ -83,6 +83,12 @@ typedef struct {
 } par_vec2;
 
 typedef struct {
+    float x;
+    float y;
+    float rank;
+} par_vec3;
+
+typedef struct {
     int n, e, s, w;
     int nsubtiles, nsubdivs, npoints, nsubpts;
     int** subdivs;
@@ -91,7 +97,7 @@ typedef struct {
 } par_tile;
 
 struct par_bluenoise_context_s {
-    par_vec2* points;
+    par_vec3* points;
     par_tile* tiles;
     float toneScale;
     float clipMinX, clipMaxX, clipMinY, clipMaxY;
@@ -138,13 +144,13 @@ static void recurse_tile(
         (y + tileSize < ctx->clipMinY) || (y > ctx->clipMaxY)) {
         return;
     }
-    int numTests = mini(tile->nsubpts,
-            powf(ctx->vpos[2], -2.f) / powf(ctx->nsubtiles, 2.f * level) *
-            ctx->toneScale -
-            tile->npoints);
-    float factor = 1.f / powf(ctx->vpos[2], -2.f) *
-        powf(ctx->nsubtiles, 2.f * level) / ctx->toneScale;
-    for (int i = 0; i < numTests; i++) {
+    float mag = powf(ctx->vpos[2], -2.f);
+    float threshold = mag / powf(ctx->nsubtiles, 2.f * level) * ctx->toneScale -
+        tile->npoints;
+    int ntests = mini(tile->nsubpts, threshold);
+    float factor =
+        1.f / mag * powf(ctx->nsubtiles, 2.f * level) / ctx->toneScale;
+    for (int i = 0; i < ntests; i++) {
         float px = x + tile->subpts[i].x * tileSize,
             py = y + tile->subpts[i].y * tileSize;
         if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
@@ -156,13 +162,11 @@ static void recurse_tile(
         }
         ctx->points[ctx->npoints].x = px;
         ctx->points[ctx->npoints].y = py;
+        ctx->points[ctx->npoints].rank = (level + 1) + i * factor;
         ctx->npoints++;
     }
     const float scale = tileSize / ctx->nsubtiles;
-    if (powf(ctx->vpos[2], -2.f) / powf(ctx->nsubtiles, 2.f * level) *
-        ctx->toneScale -
-        tile->npoints >
-        tile->nsubpts) {
+    if (threshold > tile->nsubpts) {
         for (int ty = 0; ty < ctx->nsubtiles; ty++) {
             for (int tx = 0; tx < ctx->nsubtiles; tx++) {
                 int tileIndex = tile->subdivs[0][ty * ctx->nsubtiles + tx];
@@ -185,9 +189,9 @@ float* par_bluenoise_generate(
     ctx->clipMinY = y;
     ctx->clipMaxY = y + z;
     ctx->npoints = 0;
-    int numTests = mini(ctx->tiles[0].npoints, powf(z, -2.f) * ctx->toneScale);
+    int ntests = mini(ctx->tiles[0].npoints, powf(z, -2.f) * ctx->toneScale);
     float factor = 1.f / powf(z, -2) / ctx->toneScale;
-    for (int i = 0; i < numTests; i++) {
+    for (int i = 0; i < ntests; i++) {
         float px = ctx->tiles[0].points[i].x, py = ctx->tiles[0].points[i].y;
         if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
             (py < ctx->clipMinY) || (py > ctx->clipMaxY)) {
@@ -198,6 +202,7 @@ float* par_bluenoise_generate(
         }
         ctx->points[ctx->npoints].x = px;
         ctx->points[ctx->npoints].y = py;
+        ctx->points[ctx->npoints].rank = i * factor;
         ctx->npoints++;
     }
     recurse_tile(ctx, &ctx->tiles[0], 0, 0, 0);
@@ -218,7 +223,7 @@ par_bluenoise_context* par_bluenoise_create(
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
     ctx->maxpoints = maxpts;
-    ctx->points = malloc(maxpts * sizeof(par_vec2));
+    ctx->points = malloc(maxpts * sizeof(par_vec3));
     ctx->toneScale = 5000000;  // 6000000;  // 200000;
     ctx->density = 0;
 
@@ -294,10 +299,13 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     ctx->density_height = height;
     ctx->density = malloc(width * height * sizeof(float));
     float* dst = ctx->density;
-    unsigned int mask =  0x000000ffu;
-    if (bpp > 1) mask |= 0x0000ff00u;
-    if (bpp > 2) mask |= 0x00ff0000u;
-    if (bpp > 3) mask |= 0xff000000u;
+    unsigned int mask = 0x000000ffu;
+    if (bpp > 1)
+        mask |= 0x0000ff00u;
+    if (bpp > 2)
+        mask |= 0x00ff0000u;
+    if (bpp > 3)
+        mask |= 0xff000000u;
     assert(bpp <= 4);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {

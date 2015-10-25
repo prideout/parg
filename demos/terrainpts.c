@@ -44,14 +44,14 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Pushing density function...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
-    par_bluenoise_density_from_color(ctx, buffer_data + 12, 4096, 2048, 4,
-        ocean_color, 0);
+    par_bluenoise_density_from_color(
+        ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
     par_buffer_free(buffer);
 
     printf("Generating point sequence...\n");
     int npts;
     float* cpupts = par_bluenoise_generate(ctx, 0, 0, 1, &npts);
-    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 2, PAR_GPU_ARRAY);
+    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
     par_buffer_unlock(ptsvbo);
@@ -77,17 +77,22 @@ void init(float winwidth, float winheight, float pixratio)
 
 int draw()
 {
-    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 2);
+    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 3);
     Matrix4 view;
     Matrix4 projection;
     par_zcam_matrices(&projection, &view);
     Matrix4 model = M4MakeIdentity();
+
+    Point3 eyepos;
+    par_zcam_highprec(0, 0, &eyepos);
+
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_varray_enable(ptsvbo, A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_uniform_point(U_EYEPOS, &eyepos);
+    par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_varray_enable(vidvbo, A_VERTEXID, 1, PAR_USHORT, 0, 0);
     par_draw_points(npts);
     return 1;
