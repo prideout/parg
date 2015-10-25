@@ -20,52 +20,46 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_buffer* ptsvbo;
+par_bluenoise_context* ctx;
+
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
-const int maxpts = 1024 * 1024;
+const int maxpts = 10000;
 
 #define clampi(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqri(a) (a * a)
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    par_bluenoise_context* ctx;
     par_buffer* buffer;
     void* buffer_data;
 
-    printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
     ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), maxpts);
     par_buffer_free(buffer);
 
-    printf("Pushing density function...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
     par_bluenoise_density_from_gray(ctx, buffer_data + 12, 3500, 3500, 4);
     par_buffer_free(buffer);
 
-    printf("Generating point sequence...\n");
-    int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 150000, 0, 0, 1, &npts);
-    printf("%d points.\n", npts);
-    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
-    float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
-    memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
-    par_buffer_unlock(ptsvbo);
-
+    ptsvbo = par_buffer_alloc(maxpts * sizeof(float) * 3, PAR_GPU_ARRAY);
     par_state_clearcolor((Vector4){gray, gray, gray, 1});
     par_state_depthtest(0);
     par_state_cullfaces(0);
     par_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
     par_zcam_init(worldwidth, worldheight, fovy);
-
-    par_bluenoise_free(ctx);
 }
 
 int draw()
 {
-    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 3);
+    int npts;
+    float* cpupts = par_bluenoise_generate(ctx, 30000, 0, 0, 1, &npts);
+    float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
+    memcpy(gpupts, cpupts, npts * 3 * sizeof(float));
+    par_buffer_unlock(ptsvbo);
+
     Matrix4 view;
     Matrix4 projection;
     par_zcam_matrices(&projection, &view);

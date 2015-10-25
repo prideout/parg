@@ -119,7 +119,6 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
     float* density = ctx->density;
     int width = ctx->density_width;
     int height = ctx->density_height;
-
     x -= 0.5;
     y -= 0.5;
     float tx = x * maxi(width, height);
@@ -128,7 +127,6 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
     y += 0.5;
     tx += width / 2;
     ty += height / 2;
-
     int ix = clampi((int) tx, 0, width - 2);
     int iy = clampi((int) ty, 0, height - 2);
     tx -= ix;
@@ -156,8 +154,8 @@ static void recurse_tile(
     float factor =
         1.f / mag * powf(ctx->nsubtiles, 2.f * level) / ctx->global_density;
     for (int i = 0; i < ntests; i++) {
-        float px = x + tile->subpts[i].x * tileSize,
-            py = y + tile->subpts[i].y * tileSize;
+        float px = x + tile->subpts[i].x * tileSize;
+        float py = y + tile->subpts[i].y * tileSize;
         if ((px < ctx->clipMinX) || (px > ctx->clipMaxX) ||
             (py < ctx->clipMinY) || (py > ctx->clipMaxY)) {
             continue;

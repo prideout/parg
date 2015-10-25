@@ -161,8 +161,8 @@ void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,
     unsigned int background_color, int invert);
-float* par_bluenoise_generate(par_bluenoise_context* ctx, float density, float x, float y,
-	float z, int* npts);
+float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
+    float x, float y, float z, int* npts);
 void par_bluenoise_sort_by_rank(float* floats, int npts);
 
 #ifdef __cplusplus
