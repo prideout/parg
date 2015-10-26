@@ -1,6 +1,6 @@
 
 // @program p_simple, vertex, fragment
-// @program p_halo, vertex, halo
+// @program p_textured, vtexture, ftexture
 
 uniform mat4 u_mvp;
 uniform vec3 u_eyepos;
@@ -43,24 +43,60 @@ void main()
 
 -- fragment
 
-void main()
-{
-    vec2 pc = 2.0 * (gl_PointCoord - 0.5);
-    float r = dot(pc, pc);
-    gl_FragColor = vec4(0.2, 0.2, 0.2, v_alpha);
-    gl_FragColor.a *= smoothstep(1.0, 0.9, r);
-}
-
--- halo
-
 uniform sampler2D img;
 
 void main()
 {
     vec2 pc = 2.0 * (gl_PointCoord - 0.5);
     float r = dot(pc, pc);
-    // vec2 uv = v_texcoord;
-    // gl_FragColor = texture2D(img, uv);
-    gl_FragColor.rgb = vec3(1);
-    gl_FragColor.a = 0.2 * smoothstep(1.0, 0.9, r);
+    gl_FragColor.rgb = 0.3 + texture2D(img, v_texcoord).rgb;
+    gl_FragColor.rgb *= smoothstep(1.0, 0.0, r);
+    gl_FragColor.a = smoothstep(1.0, 0.9, r);
+}
+
+-- vtexture
+
+attribute vec4 a_position;
+attribute vec2 a_texcoord;
+
+void main()
+{
+    gl_Position = u_mvp * a_position;
+    v_texcoord = a_texcoord;
+}
+
+-- ftexture
+
+uniform sampler2D img;
+
+float sample(vec2 uv)
+{
+    vec4 c = texture2D(img, uv);
+    return c.r + c.g + c.b;
+}
+
+float computeSobelFilter(vec2 uv)
+{
+    float h = 0.5 / 2048.0;
+    float t00 = sample(uv + h * vec2(-1, -1));
+    float t10 = sample(uv + h * vec2( 0, -1));
+    float t20 = sample(uv + h * vec2( 1, -1));
+    float t01 = sample(uv + h * vec2(-1, 0));
+    float t21 = sample(uv + h * vec2( 1, 0));
+    float t02 = sample(uv + h * vec2(-1, 1));
+    float t12 = sample(uv + h * vec2( 0, 1));
+    float t22 = sample(uv + h * vec2( 1, 1));
+    vec2 grad;
+    grad.x = t00 + 2.0 * t01 + t02 - t20 - 2.0 * t21 - t22;
+    grad.y = t00 + 2.0 * t10 + t20 - t02 - 2.0 * t12 - t22;
+    return step(0.01, length(grad));
+}
+
+void main()
+{
+    gl_FragColor = texture2D(img, v_texcoord);
+    gl_FragColor.rgb *= 1.0 -
+        0.5 *
+        smoothstep(12.0, 8.0, u_magnification) *
+        computeSobelFilter(v_texcoord);
 }

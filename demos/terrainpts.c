@@ -6,8 +6,9 @@
 
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
-    F(P_HALO, "p_halo")                   \
+    F(P_TEXTURED, "p_textured")           \
     F(A_POSITION, "a_position")           \
+    F(A_TEXCOORD, "a_texcoord")           \
     F(U_MVP, "u_mvp")                     \
     F(U_EYEPOS, "u_eyepos")               \
     F(U_MAGNIFICATION, "u_magnification") \
@@ -25,6 +26,7 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 par_buffer* ptsvbo;
 par_buffer* vidvbo;
 par_texture* terraintex;
+par_mesh* backquad;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
 const int maxpts = 100 * 1024 * 1024;
@@ -38,6 +40,8 @@ void init(float winwidth, float winheight, float pixratio)
     par_bluenoise_context* ctx;
     par_buffer* buffer;
     void* buffer_data;
+
+    backquad = par_mesh_rectangle(1, 0.5);
 
     printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
@@ -95,21 +99,19 @@ int draw()
     par_draw_clear();
     par_texture_bind(terraintex, 0);
 
-    par_shader_bind(P_HALO);
-    par_uniform_matrix4f(U_MVP, &mvp);
-    par_uniform_point(U_EYEPOS, &eyepos);
+    par_shader_bind(P_TEXTURED);
+    par_varray_enable(par_mesh_coord(backquad), A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_varray_enable(par_mesh_uv(backquad), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
     par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
-    par_uniform1f(U_DENSITY, 0.01f);
-    par_uniform1f(U_POINTSIZE, 40.0f);
-    par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_draw_points(npts);
+    par_uniform_matrix4f(U_MVP, &mvp);
+    par_draw_one_quad();
 
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_point(U_EYEPOS, &eyepos);
     par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
-    par_uniform1f(U_DENSITY, 0.01f);
-    par_uniform1f(U_POINTSIZE, 10.0f);
+    par_uniform1f(U_DENSITY, 0.1f);
+    par_uniform1f(U_POINTSIZE, 40.0f);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
 
@@ -124,10 +126,11 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 void dispose()
 {
     par_shader_free(P_SIMPLE);
-    par_shader_free(P_HALO);
+    par_shader_free(P_TEXTURED);
     par_buffer_free(ptsvbo);
     par_buffer_free(vidvbo);
     par_texture_free(terraintex);
+    par_mesh_free(backquad);
 }
 
 void input(par_event evt, float x, float y, float z)
