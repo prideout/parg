@@ -62,6 +62,7 @@ void par_buffer_gpu_bind(par_buffer*);
 int par_buffer_gpu_check(par_buffer*);
 par_buffer* par_buffer_from_asset(par_token id);
 par_buffer* par_buffer_slurp_asset(par_token id, void** ptr);
+void par_buffer_to_file(par_buffer*, const char* filepath);
 
 // MESH
 

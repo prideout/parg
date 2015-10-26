@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DO_BAKE 0
+
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
     F(P_TEXTURED, "p_textured")           \
@@ -17,14 +19,21 @@
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
+#if DO_BAKE
 #define ASSET_TABLE(F)                   \
     F(SHADER_SIMPLE, "terrainpts.glsl")  \
     F(TEXTURE_TERRAIN, "terrainpts.png") \
     F(BUFFER_BLUENOISE, "bluenoise.bin")
+#else
+#define ASSET_TABLE(F)                   \
+    F(SHADER_SIMPLE, "terrainpts.glsl")  \
+    F(TEXTURE_TERRAIN, "terrainpts.png") \
+    F(BUFFER_TERRAIN, "terrainpts.bin")
+#endif
+
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_buffer* ptsvbo;
-par_buffer* vidvbo;
 par_texture* terraintex;
 par_mesh* backquad;
 const float fovy = 16 * PAR_TWOPI / 180;
@@ -37,11 +46,14 @@ const unsigned int ocean_color = 0xFFB2B283;
 
 void init(float winwidth, float winheight, float pixratio)
 {
+    backquad = par_mesh_rectangle(1, 0.5);
+    terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
+
+#if DO_BAKE
+
     par_bluenoise_context* ctx;
     par_buffer* buffer;
     void* buffer_data;
-
-    backquad = par_mesh_rectangle(1, 0.5);
 
     printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
@@ -52,25 +64,33 @@ void init(float winwidth, float winheight, float pixratio)
     buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
     par_bluenoise_density_from_color(
         ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
-    terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
 
     printf("Generating point sequence...\n");
     int npts;
     float* cpupts =
         par_bluenoise_generate(ctx, 20000000, -.5, -.5, .5, .5, &npts);
     par_bluenoise_sort_by_rank(cpupts, npts);
-    ptsvbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_GPU_ARRAY);
+    ptsvbo = par_buffer_alloc(npts * 12, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
     par_buffer_unlock(ptsvbo);
+    par_bluenoise_free(ctx);
 
-    printf("Generating vertex ids...\n");
-    vidvbo = par_buffer_alloc(npts * sizeof(float), PAR_GPU_ARRAY);
-    float* gpuids = par_buffer_lock(vidvbo, PAR_WRITE);
-    for (int i = 0; i < npts; i++) {
-        gpuids[i] = i;
-    }
-    par_buffer_unlock(vidvbo);
+    par_buffer* filevbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_CPU);
+    float* filepts = par_buffer_lock(filevbo, PAR_WRITE);
+    memcpy(filepts, cpupts, par_buffer_length(filevbo));
+    par_buffer_unlock(filevbo);
+    par_buffer_to_file(filevbo, "terrainpts.bin");
+    par_buffer_free(filevbo);
+
+#else
+
+    par_buffer* filevbo = par_buffer_from_asset(BUFFER_TERRAIN);
+    ptsvbo = par_buffer_dup(filevbo, PAR_GPU_ARRAY);
+    par_buffer_free(filevbo);
+    int npts = par_buffer_length(ptsvbo) / 12;
+
+#endif
 
     printf("%d points.\n", npts);
     par_state_clearcolor((Vector4){0.51, 0.7, 0.7, 1.0});
@@ -80,7 +100,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
     par_zcam_init(worldwidth, worldheight, fovy);
-    par_bluenoise_free(ctx);
+    par_zcam_grab_update(0.5, 0.5, 30.0);
 }
 
 int draw()
@@ -128,7 +148,6 @@ void dispose()
     par_shader_free(P_SIMPLE);
     par_shader_free(P_TEXTURED);
     par_buffer_free(ptsvbo);
-    par_buffer_free(vidvbo);
     par_texture_free(terraintex);
     par_mesh_free(backquad);
 }

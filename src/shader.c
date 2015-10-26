@@ -44,7 +44,9 @@ void par_shader_load_from_buffer(par_buffer* buf)
     const sds ATTRIBUTE = sdsnew("attribute ");
     const sds PROGRAM = sdsnew("@program ");
     const sds PREFIX = sdsnew("_prefix");
+#if defined(__APPLE__) && defined(__MACH__)
     const sds OSX_PREFIX = sdsnew("#version 120\n");
+#endif
 
     if (!_vshader_registry) {
         _vshader_registry = kh_init(smap);

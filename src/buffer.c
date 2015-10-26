@@ -2,6 +2,7 @@
 #include "internal.h"
 #include "pargl.h"
 #include <stdlib.h>
+#include <string.h>
 
 struct par_buffer_s {
     char* data;
@@ -30,6 +31,18 @@ par_buffer* par_buffer_alloc(int nbytes, par_buffer_type memtype)
         glGenBuffers(1, &retval->gpuhandle);
     }
     return retval;
+}
+
+par_buffer* par_buffer_dup(par_buffer* srcbuf, par_buffer_type memtype)
+{
+    int nbytes = par_buffer_length(srcbuf);
+    par_buffer* dstbuf = par_buffer_alloc(nbytes, memtype);
+    void* src = par_buffer_lock(srcbuf, PAR_READ);
+    void* dst = par_buffer_lock(dstbuf, PAR_WRITE);
+    memcpy(dst, src, nbytes);
+    par_buffer_unlock(dstbuf);
+    par_buffer_unlock(srcbuf);
+    return dstbuf;
 }
 
 void par_buffer_free(par_buffer* buf)
@@ -80,12 +93,22 @@ par_buffer* par_buffer_from_file(const char* filepath)
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
     par_buffer* retval = par_buffer_alloc(fsize + 1, PAR_CPU);
-    char* contents = par_buffer_lock(retval, PAR_READ);
+    char* contents = par_buffer_lock(retval, PAR_WRITE);
     fread(contents, fsize, 1, f);
     fclose(f);
     contents[fsize] = 0;
     par_buffer_unlock(retval);
     return retval;
+}
+
+void par_buffer_to_file(par_buffer* buf, const char* filepath)
+{
+    FILE* f = fopen(filepath, "wb");
+    par_verify(f, "Unable to open file", filepath);
+    char* contents = par_buffer_lock(buf, PAR_READ);
+    fwrite(contents, 1, par_buffer_length(buf), f);
+    fclose(f);
+    par_buffer_unlock(buf);
 }
 
 par_buffer* par_buffer_from_asset(par_token id)
