@@ -1,12 +1,15 @@
 // BLUENOISE :: https://github.com/prideout/parg
-// Generator for 2D point sample sequences using Recursive Wang Tiles.
+// Generator for infinite 2D point sequences using Recursive Wang Tiles.
 //
 // In addition to this source code, you'll need to download the following
-// dataset, which is about 2 MB:
+// tileset, which is about 2 MB.  This might seem onerous, but keep in mind
+// that it enables the creation of an _infinite_ progressive sequence.
+// For example, you could create 7.3 billion point samples if you'd like.
+// And it's fast.
 //
 //     http://github.prideout.net/assets/bluenoise.bin
 //
-// This is an implementation of the algorithm described in:
+// The code herein is an implementation of the algorithm described in:
 //
 //     Recursive Wang Tiles for Real-Time Blue Noise
 //     Johannes Kopf, Daniel Cohen-Or, Oliver Deussen, Dani Lischinski
@@ -15,31 +18,31 @@
 // If you use this software for research purposes, please cite the above paper
 // in any resulting publication.
 //
-// The MIT License
-// Copyright (c) 2015 Philip Rideout and Johannes Kopf
+// EXAMPLE
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Generate point samples whose density is guided by a 512x512 grayscale image:
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+//     int npoints;
+//     float* points;
+//     int maxpoints = 1e6;
+//     float density = 30000;
+//     float vp[] = {-0.5, -0.5, 0.5, 0.5}; // viewport: left, bottom, right, top
+//     par_bluenoise_context* ctx;
+//     ctx = par_bluenoise_create("bluenoise.bin", 0, maxpoints);
+//     par_bluenoise_density_from_gray(ctx, source_pixels, 512, 512, 1);
+//     points = par_bluenoise_generate(ctx, density, vp[0], vp[1], vp[2], vp[3], &npoints);
+//     ... Draw points here.  Each point is a three-tuple of (X Y RANK).
+//     par_bluenoise_free(ctx);
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+
+// -----------------------------------------------------------------------------
+// BEGIN PUBLIC API
+// -----------------------------------------------------------------------------
 
 // Encapsulates a tile set and an optional density function.
 typedef struct par_bluenoise_context_s par_bluenoise_context;
@@ -76,6 +79,10 @@ float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
 // Performs an in-place sort of 3-tuples, based on the 3rd component, then
 // replaces the 3rd component with an index.
 void par_bluenoise_sort_by_rank(float* pts, int npts);
+
+// -----------------------------------------------------------------------------
+// END PUBLIC API
+// -----------------------------------------------------------------------------
 
 #define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
 #define sqr(a) (a * a)
