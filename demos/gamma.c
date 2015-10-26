@@ -36,13 +36,15 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_clearcolor(bgcolor);
 }
 
-int draw()
+void draw()
 {
     par_draw_clear();
-    return 1;
 }
 
-void tick(float seconds, float winwidth, float winheight, float pixratio) {}
+int tick(float seconds, float winwidth, float winheight, float pixratio)
+{
+    return 1;
+}
 
 void dispose() {}
 

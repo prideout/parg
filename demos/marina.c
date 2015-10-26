@@ -86,7 +86,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_unlock(lines_buffer);
 }
 
-int draw()
+void draw()
 {
     double scale;
     DMatrix4 view, projection, model;
@@ -141,12 +141,12 @@ int draw()
     par_texture_bind(doggies_texture, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_one_quad();
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     par_zcam_tick(winwidth / winheight, seconds);
+    return par_zcam_has_moved();
 }
 
 void dispose()

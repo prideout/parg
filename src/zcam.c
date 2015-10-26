@@ -10,6 +10,7 @@ static double _winaspect = 0;
 static double _zplanes[2];
 static DPoint3 _grabpt;
 static int _grabbing = 0;
+static int _dirty = 1;
 
 #define MIN(a, b) (a > b ? b : a)
 #define MAX(a, b) (a > b ? a : b)
@@ -89,6 +90,7 @@ void par_zcam_grab_update(float winx, float winy, float scrolldelta)
         _camerapos.y = -vpheight * (winy - 0.5) + focalpt.y;
         _camerapos.x = -vpwidth * (winx - 0.5) + focalpt.x;
     }
+    _dirty = 1;
 }
 
 void par_zcam_grab_end() { _grabbing = 0; }
@@ -127,4 +129,11 @@ void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi)
         *eyepos_lo = P3MakeFromV3(V3MakeFromDV3(difference));
     }
     *eyepos_hi = eyepos;
+}
+
+int par_zcam_has_moved()
+{
+    int retval = _dirty;
+    _dirty = 0;
+    return retval;
 }

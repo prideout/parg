@@ -147,13 +147,15 @@ int par_window_exec(float winwidth, float winheight, int vsync)
         glfwGetFramebufferSize(window, &width, &height);
         glfwGetWindowSize(window, &_winwidth, &_winheight);
         _pixscale = (float) width / _winwidth;
+        int needs_draw = 1;
         if (_tick) {
-            _tick(_winwidth, _winheight, _pixscale, milliseconds / 1000.0);
+            needs_draw =_tick(_winwidth, _winheight, _pixscale, milliseconds / 1000.0);
         }
 
         // Perform all OpenGL work.
         glfwMakeContextCurrent(window);
-        if (_draw && _draw()) {
+        if (needs_draw && _draw) {
+            _draw();
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
                 puts("OpenGL Error\n");

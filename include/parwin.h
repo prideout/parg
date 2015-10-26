@@ -7,9 +7,9 @@ typedef enum {
 } par_event;
 
 typedef void (*par_window_fn_init)(float, float, float);
-typedef void (*par_window_fn_tick)(float, float, float, float);
+typedef int (*par_window_fn_tick)(float, float, float, float);
 typedef void (*par_window_fn_input)(par_event, float, float, float);
-typedef int (*par_window_fn_draw)();
+typedef void (*par_window_fn_draw)();
 typedef void (*par_window_fn_exit)(void);
 typedef void (*par_window_fn_message)(const char*);
 

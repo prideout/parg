@@ -35,7 +35,7 @@ void init(float winwidth, float winheight, float pixratio)
     knot = par_mesh_knot(400, 100, 8, 2);
 }
 
-int draw()
+void draw()
 {
     Matrix4 modelview = M4Mul(view, model);
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
@@ -48,14 +48,14 @@ int draw()
     par_varray_enable(par_mesh_norml(knot), A_NORMAL, 3, PAR_FLOAT, 0, 0);
     par_varray_bind(par_mesh_index(knot));
     par_draw_triangles_u16(0, par_mesh_ntriangles(knot));
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     const float RADIANS_PER_SECOND = 1.57;
     float theta = seconds * RADIANS_PER_SECOND;
     model = M4MakeRotationY(theta);
+    return 1;
 }
 
 void dispose()

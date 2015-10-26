@@ -37,7 +37,7 @@ void init(float winwidth, float winheight, float pixratio)
     torus = par_mesh_torus(400, 100, 8, 2);
 }
 
-int draw()
+void draw()
 {
     Matrix4 modelview = M4Mul(view, model);
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
@@ -51,12 +51,12 @@ int draw()
     par_varray_enable(par_mesh_norml(torus), A_NORMAL, 3, PAR_FLOAT, 0, 0);
     par_varray_bind(par_mesh_index(torus));
     par_draw_triangles_u16(0, par_mesh_ntriangles(torus));
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     clipz = 0.4 + 0.05 * sin(seconds * 3);
+    return 1;
 }
 
 void dispose()

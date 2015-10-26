@@ -51,7 +51,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_zcam_init(worldwidth, worldheight, fovy);
 }
 
-int draw()
+void draw()
 {
     float lbrt[4];
     par_zcam_get_viewport(lbrt);
@@ -78,12 +78,12 @@ int draw()
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     par_zcam_tick(winwidth / winheight, seconds);
+    return par_zcam_has_moved();
 }
 
 void dispose()

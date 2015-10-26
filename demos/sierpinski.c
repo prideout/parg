@@ -27,7 +27,7 @@ void init(float winwidth, float winheight, float pixratio)
     printf("%d triangles\n", par_mesh_ntriangles(trimesh));
 }
 
-int draw()
+void draw()
 {
     Matrix4 view;
     Matrix4 projection;
@@ -40,12 +40,12 @@ int draw()
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(par_mesh_coord(trimesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_draw_triangles(0, par_mesh_ntriangles(trimesh));
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     par_zcam_tick(winwidth / winheight, seconds);
+    return 1;
 }
 
 void dispose()

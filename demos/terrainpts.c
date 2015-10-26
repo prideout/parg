@@ -103,7 +103,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_zcam_grab_update(0.5, 0.5, 30.0);
 }
 
-int draw()
+void draw()
 {
     int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 3);
     Matrix4 view;
@@ -134,13 +134,12 @@ int draw()
     par_uniform1f(U_POINTSIZE, 40.0f);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
-
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     par_zcam_tick(winwidth / winheight, seconds);
+    return par_zcam_has_moved();
 }
 
 void dispose()

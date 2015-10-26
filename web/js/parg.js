@@ -168,8 +168,10 @@ PargApp.prototype.start = function() {
 
     var raf = function() {
         var milliseconds = window.performance.now();
-        this.module.Window.tick(milliseconds / 1000.0);
-        this.module.Window.draw();
+        var needs_draw = this.module.Window.tick(milliseconds / 1000.0);
+        if (needs_draw) {
+            this.module.Window.draw();
+        }
         window.requestAnimationFrame(raf);
     }.bind(this);
 

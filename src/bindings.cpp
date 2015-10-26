@@ -12,8 +12,8 @@ extern "C" {
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
-static void null_tick(float, float, float, float) {}
-static int null_draw() { return 0; }
+static int null_tick(float, float, float, float) { return 0; }
+static void null_draw() {}
 static void null_dispose() { }
 static void null_init(float, float, float) {}
 static void null_input(par_event, float, float, float) {}
@@ -75,17 +75,16 @@ static void init(emscripten::val args)
 
 static void draw()
 {
-    if (_draw()) {
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR) {
-            puts("OpenGL Error\n");
-        }
+    _draw();
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        puts("OpenGL Error\n");
     }
 }
 
-static void tick(float seconds)
+static int tick(float seconds)
 {
-    _tick(_winwidth, _winheight, _pixscale, seconds);
+    return _tick(_winwidth, _winheight, _pixscale, seconds);
 }
 
 static void input(int evt, float x, float y, float z)

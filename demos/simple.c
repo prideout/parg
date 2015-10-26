@@ -38,7 +38,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_unlock(tricoords);
 }
 
-int draw()
+void draw()
 {
     const Vector4 fgcolor = V4ScalarDiv((Vector4){198, 226, 233, 255}, 255);
     Matrix4 mvp = M4Mul(projection, M4Mul(view, model));
@@ -48,14 +48,14 @@ int draw()
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(tricoords, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_triangles(0, 1);
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     const float RADIANS_PER_SECOND = 3.14;
     float theta = seconds * RADIANS_PER_SECOND;
     model = M4MakeRotationZ(theta);
+    return 1;
 }
 
 void dispose()

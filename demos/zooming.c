@@ -35,7 +35,7 @@ void init(float winwidth, float winheight, float pixratio)
     rectmesh = par_mesh_rectangle(worldwidth, worldheight);
 }
 
-int draw()
+void draw()
 {
     Matrix4 view;
     Matrix4 projection;
@@ -50,12 +50,12 @@ int draw()
     par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_varray_enable(par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
     par_draw_one_quad();
-    return 1;
 }
 
-void tick(float winwidth, float winheight, float pixratio, float seconds)
+int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     par_zcam_tick(winwidth / winheight, seconds);
+    return par_zcam_has_moved();
 }
 
 void dispose()
