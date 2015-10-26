@@ -218,7 +218,7 @@ float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
         if (px < left || px > right || py < bottom || py > top) {
             continue;
         }
-        if (sample_density(ctx, px, py) < i * factor) {
+        if (sample_density(ctx, px, py) < (i + 1) * factor) {
             continue;
         }
         ctx->points[ctx->npoints].x = px - 0.5;

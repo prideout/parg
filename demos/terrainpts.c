@@ -6,7 +6,7 @@
 
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
-    F(P_TEXTURED, "p_textured")           \
+    F(P_HALO, "p_halo")                   \
     F(A_POSITION, "a_position")           \
     F(U_MVP, "u_mvp")                     \
     F(U_EYEPOS, "u_eyepos")               \
@@ -95,7 +95,7 @@ int draw()
     par_draw_clear();
     par_texture_bind(terraintex, 0);
 
-    par_shader_bind(P_TEXTURED);
+    par_shader_bind(P_HALO);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform_point(U_EYEPOS, &eyepos);
     par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
@@ -124,7 +124,7 @@ void tick(float winwidth, float winheight, float pixratio, float seconds)
 void dispose()
 {
     par_shader_free(P_SIMPLE);
-    par_shader_free(P_TEXTURED);
+    par_shader_free(P_HALO);
     par_buffer_free(ptsvbo);
     par_buffer_free(vidvbo);
     par_texture_free(terraintex);

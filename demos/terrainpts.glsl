@@ -1,6 +1,6 @@
 
 // @program p_simple, vertex, fragment
-// @program p_textured, vertex, textured
+// @program p_halo, vertex, halo
 
 uniform mat4 u_mvp;
 uniform vec3 u_eyepos;
@@ -51,7 +51,7 @@ void main()
     gl_FragColor.a *= smoothstep(1.0, 0.9, r);
 }
 
--- textured
+-- halo
 
 uniform sampler2D img;
 
@@ -59,7 +59,8 @@ void main()
 {
     vec2 pc = 2.0 * (gl_PointCoord - 0.5);
     float r = dot(pc, pc);
-    vec2 uv = v_texcoord;
-    gl_FragColor = texture2D(img, uv);
-    gl_FragColor.a = smoothstep(1.0, 0.9, r);
+    // vec2 uv = v_texcoord;
+    // gl_FragColor = texture2D(img, uv);
+    gl_FragColor.rgb = vec3(1);
+    gl_FragColor.a = 0.2 * smoothstep(1.0, 0.9, r);
 }
