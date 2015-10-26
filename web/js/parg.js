@@ -140,7 +140,7 @@ PargApp.prototype.start = function() {
             this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "DOMMouseScroll") {
             event.preventDefault();
-            delta = -event.detail / 2.0;
+            delta = -event.detail * 2.0;
             this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "wheel") {
             event.preventDefault();
@@ -168,7 +168,7 @@ PargApp.prototype.start = function() {
 
     var raf = function() {
         var milliseconds = window.performance.now();
-        var needs_draw = this.module.Window.tick(milliseconds / 1000.0);
+        var needs_draw = this.module.Window.tick(milliseconds / 1000.0, window.devicePixelRatio);
         if (needs_draw) {
             this.module.Window.draw();
         }

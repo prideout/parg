@@ -36,6 +36,7 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 par_buffer* ptsvbo;
 par_texture* terraintex;
 par_mesh* backquad;
+float pointscale = 1;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
 const int maxpts = 100 * 1024 * 1024;
@@ -131,13 +132,14 @@ void draw()
     par_uniform_point(U_EYEPOS, &eyepos);
     par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
     par_uniform1f(U_DENSITY, 0.1f);
-    par_uniform1f(U_POINTSIZE, 40.0f);
+    par_uniform1f(U_POINTSIZE, 20.0f * pointscale);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
+    pointscale = pixratio;
     par_zcam_tick(winwidth / winheight, seconds);
     return par_zcam_has_moved();
 }

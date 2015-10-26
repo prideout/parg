@@ -149,7 +149,8 @@ int par_window_exec(float winwidth, float winheight, int vsync)
         _pixscale = (float) width / _winwidth;
         int needs_draw = 1;
         if (_tick) {
-            needs_draw =_tick(_winwidth, _winheight, _pixscale, milliseconds / 1000.0);
+            needs_draw =
+                _tick(_winwidth, _winheight, _pixscale, milliseconds / 1000.0);
         }
 
         // Perform all OpenGL work.

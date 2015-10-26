@@ -82,8 +82,9 @@ static void draw()
     }
 }
 
-static int tick(float seconds)
+static int tick(float seconds, float pixscale)
 {
+    _pixscale = pixscale;
     return _tick(_winwidth, _winheight, _pixscale, seconds);
 }
 

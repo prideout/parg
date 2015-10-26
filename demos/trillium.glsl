@@ -3,6 +3,7 @@
 
 uniform mat4 u_mvp;
 uniform float u_magnification;
+uniform float u_pointsize;
 varying float v_alpha;
 
 -- vertex
@@ -14,7 +15,7 @@ void main()
     vec4 p = vec4(a_position.xy, 0.0, 1.0);
     gl_Position = u_mvp * p;
     v_alpha = 1.0;
-    gl_PointSize = 5.0 * v_alpha;
+    gl_PointSize = u_pointsize * v_alpha;
 }
 
 -- fragment

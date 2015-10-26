@@ -36,10 +36,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_clearcolor(bgcolor);
 }
 
-void draw()
-{
-    par_draw_clear();
-}
+void draw() { par_draw_clear(); }
 
 int tick(float seconds, float winwidth, float winheight, float pixratio)
 {

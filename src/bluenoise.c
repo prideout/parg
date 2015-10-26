@@ -26,11 +26,12 @@
 //     float* points;
 //     int maxpoints = 1e6;
 //     float density = 30000;
-//     float vp[] = {-0.5, -0.5, 0.5, 0.5}; // viewport: left, bottom, right, top
+//     float vp[] = {-0.5, -0.5, 0.5, 0.5}; // left, bottom, right, top
 //     par_bluenoise_context* ctx;
 //     ctx = par_bluenoise_create("bluenoise.bin", 0, maxpoints);
 //     par_bluenoise_density_from_gray(ctx, source_pixels, 512, 512, 1);
-//     points = par_bluenoise_generate(ctx, density, vp[0], vp[1], vp[2], vp[3], &npoints);
+//     points = par_bluenoise_generate(ctx, density, vp[0], vp[1], vp[2], vp[3],
+//                                     &npts);
 //     ... Draw points here.  Each point is a three-tuple of (X Y RANK).
 //     par_bluenoise_free(ctx);
 //
@@ -62,7 +63,7 @@ void par_bluenoise_free(par_bluenoise_context* ctx);
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp);
 
-// Create a binary mask to guide point density. The given bytes-per-pixel
+// Creates a binary mask to guide point density. The given bytes-per-pixel
 // value is the stride between pixels, which must be 4 or less.
 void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,

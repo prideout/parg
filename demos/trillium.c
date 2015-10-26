@@ -8,7 +8,8 @@
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
-    F(U_DENSITY, "u_density")
+    F(U_DENSITY, "u_density")   \
+    F(U_POINTSIZE, "u_pointsize")
 
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -20,7 +21,7 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_buffer* ptsvbo;
 par_bluenoise_context* ctx;
-
+float pointscale = 1;
 const float gray = 0.8;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
@@ -76,12 +77,14 @@ void draw()
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
     par_uniform_matrix4f(U_MVP, &mvp);
+    par_uniform1f(U_POINTSIZE, 2.5f * pointscale);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_points(npts);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
+    pointscale = pixratio;
     par_zcam_tick(winwidth / winheight, seconds);
     return par_zcam_has_moved();
 }
