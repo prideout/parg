@@ -15,24 +15,6 @@
 //
 // The MIT License
 // Copyright (c) 2015 Philip Rideout
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
 #include <limits.h>
 #include <string.h>
@@ -43,9 +25,17 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Set this to zero if you with to avoid LZ4 compression.  I recommend using
+// it though, because it's very fast and it's a two-file library.
+#define ENABLE_LZ4 1
+
 #if ENABLE_LZ4
 #include "lz4.h"
 #endif
+
+// -----------------------------------------------------------------------------
+// BEGIN PUBLIC API
+// -----------------------------------------------------------------------------
 
 typedef unsigned char par_byte;
 
@@ -68,7 +58,15 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
 int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     par_byte* header, int headersize);
 
+// Remove all items from the cache.
+void par_filecache_evict_all();
+
+// -----------------------------------------------------------------------------
+// END PUBLIC API
+// -----------------------------------------------------------------------------
+
 #define MAX_ENTRIES 64
+#define MIN(a, b) (a < b ? a : b)
 
 typedef struct {
     time_t last_used_timestamp;
@@ -156,6 +154,7 @@ int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     free(cbuff);
 #else
     char* dbuff = cbuff;
+    dnbytes = (int32_t) cnbytes;
 #endif
     fclose(cachefile);
     *payload = (par_byte*) dbuff;
@@ -194,11 +193,36 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
         free(dst);
 #else
         csize = payloadsize;
-        fwrite(payload, 1, csize, cachefile);
+        size_t actual = fwrite(payload, 1, csize, cachefile);
+        if (actual < csize) {
+            fclose(cachefile);
+            remove(qualified);
+            printf("Unable to save %s to cache (%d bytes)\n", name, csize);
+            return;
+        }
 #endif
     }
     fclose(cachefile);
     _append_table(name, csize + headersize);
+}
+
+void par_filecache_evict_all()
+{
+    printf("Evicting all.\n");
+    char qualified[PATH_MAX];
+    if (!_table) {
+        _read_or_create_tablefile();
+    }
+    filecache_entry_t* entry = _table->entries;
+    for (int i = 0; i < _table->nentries; i++, entry++) {
+        strcpy(qualified, _fileprefix);
+        strcat(qualified, entry->name);
+        printf("Evicting %s\n", qualified);
+        remove(qualified);
+    }
+    _table->nentries = 0;
+    _table->totalbytes = 0;
+    remove(_tablepath);
 }
 
 // Adds the given item to the table and evicts the LRU items if the total cache
@@ -287,10 +311,14 @@ static void _save_tablefile()
 
 static void _evict_lru()
 {
+    const int64_t never_evict = _hash("version");
     int oldest_index = -1;
     time_t oldest_time = LONG_MAX;
     filecache_entry_t* entry = _table->entries;
     for (int i = 0; i < _table->nentries; i++, entry++) {
+        if (entry->hashed_name == never_evict) {
+            continue;
+        }
         if (entry->last_used_timestamp < oldest_time) {
             oldest_time = entry->last_used_timestamp;
             oldest_index = i;

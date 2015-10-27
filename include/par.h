@@ -153,6 +153,7 @@ int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     par_byte* header, int headersize);
 void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
     par_byte* header, int headersize);
+void par_filecache_evict_all();
 
 // BLUENOISE
 
