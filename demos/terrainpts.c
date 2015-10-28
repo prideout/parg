@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
-#define DO_BAKE 0
+#define DO_BAKE 1
 
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
@@ -48,7 +49,6 @@ const unsigned int ocean_color = 0xFFB2B283;
 void init(float winwidth, float winheight, float pixratio)
 {
     backquad = par_mesh_rectangle(1, 0.5);
-    terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
 
 #if DO_BAKE
 
@@ -58,11 +58,13 @@ void init(float winwidth, float winheight, float pixratio)
 
     printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
+    assert(buffer_data);
     ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), maxpts);
     par_buffer_free(buffer);
 
     printf("Pushing density function...\n");
     buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
+    assert(buffer_data);
     par_bluenoise_density_from_color(
         ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
 
@@ -75,7 +77,6 @@ void init(float winwidth, float winheight, float pixratio)
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
     par_buffer_unlock(ptsvbo);
-    par_bluenoise_free(ctx);
 
     par_buffer* filevbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_CPU);
     float* filepts = par_buffer_lock(filevbo, PAR_WRITE);
@@ -83,6 +84,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_unlock(filevbo);
     par_buffer_to_file(filevbo, "terrainpts.bin");
     par_buffer_free(filevbo);
+    par_bluenoise_free(ctx);
 
 #else
 
@@ -93,6 +95,7 @@ void init(float winwidth, float winheight, float pixratio)
 
 #endif
 
+    terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
     printf("%d points.\n", npts);
     par_state_clearcolor((Vector4){0.51, 0.7, 0.7, 1.0});
     par_state_depthtest(0);
