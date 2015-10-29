@@ -5,7 +5,7 @@
 #include <string.h>
 #include <assert.h>
 
-#define DO_BAKE 1
+#define DO_BAKE 0
 
 #define TOKEN_TABLE(F)                    \
     F(P_SIMPLE, "p_simple")               \
@@ -40,7 +40,7 @@ par_mesh* backquad;
 float pointscale = 1;
 const float fovy = 16 * PAR_TWOPI / 180;
 const float worldwidth = 1;
-const int maxpts = 100 * 1024 * 1024;
+const int maxpts = 1400000;
 const unsigned int ocean_color = 0xFFB2B283;
 
 #define clamp(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
@@ -59,7 +59,7 @@ void init(float winwidth, float winheight, float pixratio)
     printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
     assert(buffer_data);
-    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), maxpts);
+    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), 0);
     par_buffer_free(buffer);
 
     printf("Pushing density function...\n");
@@ -69,16 +69,14 @@ void init(float winwidth, float winheight, float pixratio)
         ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
 
     printf("Generating point sequence...\n");
-    int npts;
     float* cpupts =
-        par_bluenoise_generate(ctx, 20000000, -.5, -.5, .5, .5, &npts);
-    par_bluenoise_sort_by_rank(cpupts, npts);
-    ptsvbo = par_buffer_alloc(npts * 12, PAR_GPU_ARRAY);
+        par_bluenoise_generate_exact(ctx, maxpts, 3, -.5, -.5, .5, .5);
+    ptsvbo = par_buffer_alloc(maxpts * 12, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
     par_buffer_unlock(ptsvbo);
 
-    par_buffer* filevbo = par_buffer_alloc(npts * sizeof(float) * 3, PAR_CPU);
+    par_buffer* filevbo = par_buffer_alloc(maxpts * sizeof(float) * 3, PAR_CPU);
     float* filepts = par_buffer_lock(filevbo, PAR_WRITE);
     memcpy(filepts, cpupts, par_buffer_length(filevbo));
     par_buffer_unlock(filevbo);
@@ -91,12 +89,11 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer* filevbo = par_buffer_from_asset(BUFFER_TERRAIN);
     ptsvbo = par_buffer_dup(filevbo, PAR_GPU_ARRAY);
     par_buffer_free(filevbo);
-    int npts = par_buffer_length(ptsvbo) / 12;
 
 #endif
 
     terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
-    printf("%d points.\n", npts);
+    printf("%d points.\n", maxpts);
     par_state_clearcolor((Vector4){0.51, 0.7, 0.7, 1.0});
     par_state_depthtest(0);
     par_state_cullfaces(0);
@@ -109,7 +106,6 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
-    int npts = par_buffer_length(ptsvbo) / (sizeof(float) * 3);
     Matrix4 view;
     Matrix4 projection;
     par_zcam_matrices(&projection, &view);
@@ -137,7 +133,7 @@ void draw()
     par_uniform1f(U_DENSITY, 0.1f);
     par_uniform1f(U_POINTSIZE, 20.0f * pointscale);
     par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_draw_points(npts);
+    par_draw_points(maxpts);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)

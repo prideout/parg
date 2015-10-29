@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 // -----------------------------------------------------------------------------
 // BEGIN PUBLIC API
@@ -76,6 +77,14 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
 // define a bounding box in [-0.5, +0.5].
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
     float left, float bottom, float right, float top, int* npts);
+
+// Generates an ordered sequence of tuples with the specified sequence length.
+// This is slower than the other "generate" method because it uses a dumb
+// backtracking method to determine a reasonable density value.  The dims
+// argument must be 2 or more; it represents the desired stride (in floats)
+// between consecutive verts in the returned data.
+float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
+    int dims, float left, float bottom, float right, float top);
 
 // Performs an in-place sort of 3-tuples, based on the 3rd component, then
 // replaces the 3rd component with an index.
@@ -378,4 +387,56 @@ void par_bluenoise_sort_by_rank(float* floats, int npts)
     for (int i = 0; i < npts; i++) {
         vecs[i].rank = i;
     }
+}
+
+float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
+    int stride, float left, float bottom, float right, float top)
+{
+    assert(stride >= 2);
+    int maxpoints = npts * 2;
+    if (ctx->maxpoints < maxpoints) {
+        free(ctx->points);
+        ctx->maxpoints = maxpoints;
+        ctx->points = malloc(maxpoints * sizeof(par_vec3));
+    }
+    int ngenerated = 0;
+    int nprevious = 0;
+    int ndesired = npts;
+    float density = 2048;
+    while (ngenerated < ndesired) {
+        par_bluenoise_generate(ctx, density, left, bottom, right, top,
+            &ngenerated);
+
+        // Might be paranoid, but break if something fishy is going on:
+        if (ngenerated == nprevious) {
+            return 0;
+        }
+
+        // Perform crazy heuristic to approach a nice density:
+        if (ndesired / ngenerated >= 2) {
+            density *= 2;
+        } else {
+            density += density / 10;
+        }
+
+        nprevious = ngenerated;
+    }
+    par_bluenoise_sort_by_rank(&ctx->points->x, ngenerated);
+    if (stride != 3) {
+        int nbytes = sizeof(float) * stride * ndesired;
+        float* pts = malloc(nbytes);
+        float* dst = pts;
+        const float* src = &ctx->points->x;
+        for (int i = 0; i < ndesired; i++, src++) {
+            *dst++ = *src++;
+            *dst++ = *src++;
+            if (stride > 3) {
+                *dst++ = *src;
+                dst += stride - 3;
+            }
+        }
+        memcpy(ctx->points, pts, nbytes);
+        free(pts);
+    }
+    return &ctx->points->x;
 }
