@@ -172,6 +172,9 @@ static void recurse_tile(
         ctx->points[ctx->npoints].y = py - 0.5;
         ctx->points[ctx->npoints].rank = (level + 1) + i * factor;
         ctx->npoints++;
+        if (ctx->npoints >= ctx->maxpoints) {
+            return;
+        }
     }
     const float scale = tileSize / ctx->nsubtiles;
     if (threshold <= tile->nsubpts) {
@@ -223,6 +226,9 @@ float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
         ctx->points[ctx->npoints].y = py - 0.5;
         ctx->points[ctx->npoints].rank = i * factor;
         ctx->npoints++;
+        if (ctx->npoints >= ctx->maxpoints) {
+            break;
+        }
     }
     recurse_tile(ctx, &ctx->tiles[0], 0, 0, 0);
     *npts = ctx->npoints;
