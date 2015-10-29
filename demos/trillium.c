@@ -61,10 +61,10 @@ void draw()
     float bottom = lbrt[1];
     float right = lbrt[2];
     float top = lbrt[3];
+    par_bluenoise_set_viewport(ctx, left, bottom, right, top);
 
     int npts;
-    float* cpupts =
-        par_bluenoise_generate(ctx, 30000, left, bottom, right, top, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 30000, &npts);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, npts * 3 * sizeof(float));
     par_buffer_unlock(ptsvbo);

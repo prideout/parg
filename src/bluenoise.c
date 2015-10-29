@@ -26,12 +26,10 @@
 //     float* points;
 //     int maxpoints = 1e6;
 //     float density = 30000;
-//     float vp[] = {-0.5, -0.5, 0.5, 0.5}; // left, bottom, right, top
 //     par_bluenoise_context* ctx;
 //     ctx = par_bluenoise_create("bluenoise.bin", 0, maxpoints);
 //     par_bluenoise_density_from_gray(ctx, source_pixels, 512, 512, 1);
-//     points = par_bluenoise_generate(ctx, density, vp[0], vp[1], vp[2], vp[3],
-//                                     &npts);
+//     points = par_bluenoise_generate(ctx, density, &npoints);
 //     ... Draw points here.  Each point is a three-tuple of (X Y RANK).
 //     par_bluenoise_free(ctx);
 //
@@ -61,6 +59,12 @@ par_bluenoise_context* par_bluenoise_from_file(const char* path, int maxpts);
 par_bluenoise_context* par_bluenoise_from_buffer(
     const char* buffer, int nbytes, int maxpts);
 
+// Sets up a scissoring rectangle using the given lower-left and upper-right
+// coordinates.  By default the scissor encompasses [-0.5, -0.5] - [0.5, 0.5],
+// which is the entire sampling domain for the two "generate" methods.
+void par_bluenoise_set_viewport(
+    par_bluenoise_context*, float left, float bottom, float right, float top);
+
 // Frees all memory associated with the given bluenoise context.
 void par_bluenoise_free(par_bluenoise_context* ctx);
 
@@ -79,18 +83,18 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
 // Generates samples using Recursive Wang Tiles.  This is really fast!
 // The returned pointer is a list of three-tuples, where XY are in [-0.5, +0.5]
 // and Z is a rank value that can be used to create a progressive ordering.
-// The caller should not free the returned pointer.  The LBRT arguments
-// define a bounding box in [-0.5, +0.5].
-float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    float left, float bottom, float right, float top, int* npts);
+// The caller should not free the returned pointer.
+float* par_bluenoise_generate(
+    par_bluenoise_context* ctx, float density, int* npts);
 
 // Generates an ordered sequence of tuples with the specified sequence length.
 // This is slower than the other "generate" method because it uses a dumb
-// backtracking method to determine a reasonable density value.  The dims
-// argument must be 2 or more; it represents the desired stride (in floats)
-// between consecutive verts in the returned data.
-float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
-    int dims, float left, float bottom, float right, float top);
+// backtracking method to determine a reasonable density value, and it
+// automatically sorts the output by rank.  The dims argument must be 2 or more;
+// it represents the desired stride (in floats) between consecutive verts in the
+// returned data buffer.
+float* par_bluenoise_generate_exact(
+    par_bluenoise_context* ctx, int npts, int dims);
 
 // Performs an in-place sort of 3-tuples, based on the 3rd component, then
 // replaces the 3rd component with an index.
@@ -205,26 +209,35 @@ static void recurse_tile(
     }
 }
 
-float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    float left, float bottom, float right, float top, int* npts)
+void par_bluenoise_set_viewport(par_bluenoise_context* ctx, float left,
+    float bottom, float right, float top)
+{
+    // Transform [-.5, +.5] to [0, 1]
+    left = ctx->left = left + 0.5;
+    right = ctx->right = right + 0.5;
+    bottom = ctx->bottom = bottom + 0.5;
+    top = ctx->top = top + 0.5;
+
+    // Determine magnification factor BEFORE clamping.
+    ctx->mag = powf(top - bottom, -2);
+
+    // The density function is only sampled in [0, +1].
+    ctx->left = clamp(left, 0, 1);
+    ctx->right = clamp(right, 0, 1);
+    ctx->bottom = clamp(bottom, 0, 1);
+    ctx->top = clamp(top, 0, 1);
+}
+
+float* par_bluenoise_generate(
+    par_bluenoise_context* ctx, float density, int* npts)
 {
     ctx->global_density = density;
     ctx->npoints = 0;
-
-    // Transform [-.5, +.5]  to [0, 1]
-    ctx->left = left = left + 0.5;
-    ctx->right = right = right + 0.5;
-    ctx->bottom = bottom = bottom + 0.5;
-    ctx->top = top = top + 0.5;
-
-    // Determine magnification factor BEFORE clamping.
-    float mag = ctx->mag = powf(top - bottom, -2);
-
-    // The density function is only sampled in [0, +1].
-    ctx->left = left = clamp(left, 0, 1);
-    ctx->right = right = clamp(right, 0, 1);
-    ctx->bottom = bottom = clamp(bottom, 0, 1);
-    ctx->top = top = clamp(top, 0, 1);
+    float left = ctx->left;
+    float right = ctx->right;
+    float bottom = ctx->bottom;
+    float top = ctx->top;
+    float mag = ctx->mag;
 
     int ntests = mini(ctx->tiles[0].npoints, mag * ctx->global_density);
     float factor = 1.f / mag / ctx->global_density;
@@ -265,6 +278,7 @@ static par_bluenoise_context* par_bluenoise_create(
     ctx->maxpoints = maxpts;
     ctx->points = malloc(maxpts * sizeof(par_vec3));
     ctx->density = 0;
+    par_bluenoise_set_viewport(ctx, -.5, -.5, .5, .5);
 
     char* buf = 0;
     if (nbytes == 0) {
@@ -406,8 +420,8 @@ void par_bluenoise_sort_by_rank(float* floats, int npts)
     }
 }
 
-float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
-    int stride, float left, float bottom, float right, float top)
+float* par_bluenoise_generate_exact(
+    par_bluenoise_context* ctx, int npts, int stride)
 {
     assert(stride >= 2);
     int maxpoints = npts * 2;
@@ -421,8 +435,7 @@ float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
     int ndesired = npts;
     float density = 2048;
     while (ngenerated < ndesired) {
-        par_bluenoise_generate(
-            ctx, density, left, bottom, right, top, &ngenerated);
+        par_bluenoise_generate(ctx, density, &ngenerated);
 
         // Might be paranoid, but break if something fishy is going on:
         if (ngenerated == nprevious) {

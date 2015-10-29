@@ -161,6 +161,8 @@ typedef struct par_bluenoise_context_s par_bluenoise_context;
 par_bluenoise_context* par_bluenoise_from_file(const char* path, int maxpts);
 par_bluenoise_context* par_bluenoise_from_buffer(
     const char* buffer, int nbytes, int maxpts);
+void par_bluenoise_set_viewport(
+    par_bluenoise_context*, float left, float bottom, float right, float top);
 void par_bluenoise_free(par_bluenoise_context* ctx);
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 	const unsigned char* pixels, int width, int height, int bpp);
@@ -168,9 +170,9 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,
     unsigned int background_color, int invert);
 float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    float left, float bottom, float right, float top, int* npts);
+    int* npts);
 float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
-    int stride, float left, float bottom, float right, float top);
+    int stride);
 void par_bluenoise_sort_by_rank(float* floats, int npts);
 
 #ifdef __cplusplus

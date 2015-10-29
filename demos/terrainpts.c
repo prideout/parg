@@ -69,8 +69,7 @@ void init(float winwidth, float winheight, float pixratio)
         ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
 
     printf("Generating point sequence...\n");
-    float* cpupts =
-        par_bluenoise_generate_exact(ctx, maxpts, 3, -.5, -.5, .5, .5);
+    float* cpupts = par_bluenoise_generate_exact(ctx, maxpts, 3);
     ptsvbo = par_buffer_alloc(maxpts * 12, PAR_GPU_ARRAY);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
