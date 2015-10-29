@@ -158,8 +158,9 @@ void par_filecache_evict_all();
 // BLUENOISE
 
 typedef struct par_bluenoise_context_s par_bluenoise_context;
-par_bluenoise_context* par_bluenoise_create(const char* file_or_data,
-	int data_length, int maxpoints);
+par_bluenoise_context* par_bluenoise_from_file(const char* path, int maxpts);
+par_bluenoise_context* par_bluenoise_from_buffer(
+    const char* buffer, int nbytes, int maxpts);
 void par_bluenoise_free(par_bluenoise_context* ctx);
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 	const unsigned char* pixels, int width, int height, int bpp);

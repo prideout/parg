@@ -59,7 +59,7 @@ void init(float winwidth, float winheight, float pixratio)
     printf("Reading tiles...\n");
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
     assert(buffer_data);
-    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), 0);
+    ctx = par_bluenoise_from_buffer(buffer_data, par_buffer_length(buffer), 0);
     par_buffer_free(buffer);
 
     printf("Pushing density function...\n");

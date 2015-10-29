@@ -50,10 +50,16 @@
 typedef struct par_bluenoise_context_s par_bluenoise_context;
 
 // Creates a bluenoise context using the given tileset.  The first argument is
-// either a filepath to the tileset, or the contents of the tileset.  For the
-// latter option, the caller should specify a non-zero buffer length (bytes).
-par_bluenoise_context* par_bluenoise_create(
-    const char* filepath_or_buffer, int buffer_length, int maxpts);
+// the file path the bin file.  The second argument is the maximum number of
+// points that you expect to ever be generated.
+par_bluenoise_context* par_bluenoise_from_file(const char* path, int maxpts);
+
+// Creates a bluenoise context using the given tileset.  The first and second
+// arguments describe a memory buffer containing the contents of the bin file.
+// The third argument is the maximum number of points that you expect to ever
+// be generated.
+par_bluenoise_context* par_bluenoise_from_buffer(
+    const char* buffer, int nbytes, int maxpts);
 
 // Frees all memory associated with the given bluenoise context.
 void par_bluenoise_free(par_bluenoise_context* ctx);
@@ -252,7 +258,7 @@ float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
     *((float*) ptr); \
     ptr += sizeof(float)
 
-par_bluenoise_context* par_bluenoise_create(
+static par_bluenoise_context* par_bluenoise_create(
     const char* filepath, int nbytes, int maxpts)
 {
     par_bluenoise_context* ctx = malloc(sizeof(par_bluenoise_context));
@@ -305,6 +311,17 @@ par_bluenoise_context* par_bluenoise_create(
     }
     free(buf);
     return ctx;
+}
+
+par_bluenoise_context* par_bluenoise_from_file(const char* path, int maxpts)
+{
+    return par_bluenoise_create(path, 0, maxpts);
+}
+
+par_bluenoise_context* par_bluenoise_from_buffer(
+    const char* buffer, int nbytes, int maxpts)
+{
+    return par_bluenoise_create(buffer, nbytes, maxpts);
 }
 
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
@@ -404,8 +421,8 @@ float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
     int ndesired = npts;
     float density = 2048;
     while (ngenerated < ndesired) {
-        par_bluenoise_generate(ctx, density, left, bottom, right, top,
-            &ngenerated);
+        par_bluenoise_generate(
+            ctx, density, left, bottom, right, top, &ngenerated);
 
         // Might be paranoid, but break if something fishy is going on:
         if (ngenerated == nprevious) {

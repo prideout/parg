@@ -36,7 +36,8 @@ void init(float winwidth, float winheight, float pixratio)
     void* buffer_data;
 
     buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
-    ctx = par_bluenoise_create(buffer_data, par_buffer_length(buffer), maxpts);
+    ctx = par_bluenoise_from_buffer(
+        buffer_data, par_buffer_length(buffer), maxpts);
     par_buffer_free(buffer);
 
     buffer = par_buffer_slurp_asset(TEXTURE_TRILLIUM, &buffer_data);
