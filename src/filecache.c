@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>

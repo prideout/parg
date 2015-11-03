@@ -60,7 +60,7 @@ void par_buffer_free(par_buffer* buf)
 
 int par_buffer_length(par_buffer* buf)
 {
-    par_verify(buf, "Null buffer", 0);
+    par_assert(buf, "Null buffer");
     return buf->nbytes;
 }
 
@@ -145,7 +145,7 @@ par_buffer* par_buffer_from_path(const char* filename)
 
 void par_buffer_gpu_bind(par_buffer* buf)
 {
-    par_verify(par_buffer_gpu_check(buf), "GPU buffer required", 0)
+    par_assert(par_buffer_gpu_check(buf), "GPU buffer required")
     GLenum target = buf->memtype == PAR_GPU_ARRAY ? GL_ARRAY_BUFFER
         : GL_ELEMENT_ARRAY_BUFFER;
     glBindBuffer(target, par_buffer_gpu_handle(buf));

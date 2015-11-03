@@ -122,7 +122,7 @@ void par_shader_load_from_buffer(par_buffer* buf)
         for (int a = 0; a < nargs; a++) {
             sdstrim(args[a], " \t");
         }
-        par_verify(nargs == 3, "@program should have 3 args", 0);
+        par_assert(nargs == 3, "@program should have 3 args");
 
         // Build the vshader and fshader strings.
         int vshader_index = kv_find(chunk_names, args[1]);

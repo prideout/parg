@@ -16,7 +16,7 @@ static sds _baseurl = 0;
 void par_asset_onload(const char* name, par_buffer* buf)
 {
     par_token id = par_token_from_string(name);
-    par_verify(buf, "Unable to load asset", 0);
+    par_assert(buf, "Unable to load asset");
     if (!_asset_registry) {
         _asset_registry = kh_init(assmap);
     }
@@ -36,7 +36,7 @@ void par_asset_preload(par_token id)
     }
     sds filename = par_token_to_sds(id);
     par_buffer* buf = par_buffer_from_path(filename);
-    par_verify(buf, "Unable to load asset", 0);
+    par_assert(buf, "Unable to load asset");
     if (sdslen(filename) > 4) {
         sds suffix = sdsdup(filename);
         sdsrange(suffix, -4, -1);
@@ -46,7 +46,7 @@ void par_asset_preload(par_token id)
             unsigned char* filedata = par_buffer_lock(buf, PAR_READ);
             unsigned err = lodepng_decode_memory(&decoded, &dims[0], &dims[1],
                     filedata, par_buffer_length(buf), LCT_RGBA, 8);
-            par_verify(err == 0, "PNG decoding error", 0);
+            par_assert(err == 0, "PNG decoding error");
             par_buffer_free(buf);
             int nbytes = dims[0] * dims[1] * dims[2];
             buf = par_buffer_alloc(nbytes + 12, PAR_CPU);
@@ -72,9 +72,9 @@ void par_asset_preload(par_token id)
 
 par_buffer* par_asset_to_buffer(par_token id)
 {
-    par_verify(_asset_registry, "Uninitialized asset registry", 0);
+    par_assert(_asset_registry, "Uninitialized asset registry");
     khiter_t iter = kh_get(assmap, _asset_registry, id);
-    par_verify(iter != kh_end(_asset_registry), "Unknown token", 0);
+    par_assert(iter != kh_end(_asset_registry), "Unknown token");
     return kh_value(_asset_registry, iter);
 }
 

@@ -10,9 +10,9 @@ static khash_t(parstr)* _token_registry = 0;
 
 sds par_token_to_sds(par_token token)
 {
-    par_verify(_token_registry, "Uninitialized token registry", 0);
+    par_assert(_token_registry, "Uninitialized token registry");
     khiter_t iter = kh_get(parstr, _token_registry, token);
-    par_verify(iter != kh_end(_token_registry), "Unknown token", 0);
+    par_assert(iter != kh_end(_token_registry), "Unknown token");
     return kh_value(_token_registry, iter);
 }
 

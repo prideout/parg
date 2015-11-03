@@ -1,3 +1,5 @@
+#include <GL/glcorearb.h>
+
 #include <par.h>
 #include "pargl.h"
 

@@ -33,6 +33,31 @@ include_directories(
     ${CURL_INCLUDE_DIRS}
 )
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  find_package (X11 REQUIRED)
+  add_definitions(
+    -std=gnu99
+    -O3
+    -Wall
+    -I../include
+    -I../src/vendor
+    -DGLFW_INCLUDE_GLCOREARB
+    )
+  set(PLATFORM_LIBS
+    ${X11_LIBRARIES}
+    Xinerama
+    pthread
+    dl
+    Xrandr
+    Xinerama
+    Xcursor
+    Xi
+    Xxf86vm
+    GL
+    m
+    )
+endif()
+
 add_library(parg STATIC ${SRCFILES})
 
 set(EMCCARGS
@@ -108,6 +133,7 @@ foreach(DEMONAME ${DEMOS})
         ${OPENGL_LIB}
         ${GLFW_LIBRARIES}
         ${CURL_LIBRARIES}
+        ${PLATFORM_LIBS}
     )
     add_custom_command(
         OUTPUT ${DEMONAME}.js.o
