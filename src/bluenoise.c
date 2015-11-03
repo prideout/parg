@@ -302,7 +302,7 @@ static par_bluenoise_context* par_bluenoise_create(
         tiles[i].e = freadi();
         tiles[i].s = freadi();
         tiles[i].w = freadi();
-        tiles[i].subdivs = malloc(sizeof(int) * nsubdivs);
+        tiles[i].subdivs = malloc(sizeof(int*) * nsubdivs);
         for (int j = 0; j < nsubdivs; j++) {
             int* subdiv = malloc(sizeof(int) * sqr(nsubtiles));
             for (int k = 0; k < sqr(nsubtiles); k++) {
