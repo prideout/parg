@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <time.h>
 
 // Set this to zero if you with to avoid LZ4 compression.  I recommend using

@@ -23,7 +23,9 @@
 // SOFTWARE.
 
 #include <strings.h>
+#include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <curl/curl.h>
 
 typedef unsigned char par_byte;
