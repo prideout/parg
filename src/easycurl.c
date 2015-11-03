@@ -22,10 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <string.h>
 #include <strings.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <curl/curl.h>
 
 typedef unsigned char par_byte;
