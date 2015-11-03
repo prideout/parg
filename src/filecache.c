@@ -28,7 +28,7 @@
 #include <time.h>
 #include <sys/stat.h>
 
-// Set this to zero if you with to avoid LZ4 compression.  I recommend using
+// Set this to zero if you wish to avoid LZ4 compression.  I recommend using
 // it though, because it's very fast and it's a two-file library.
 #define ENABLE_LZ4 1
 
