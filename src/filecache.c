@@ -24,7 +24,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <libgen.h>
 #include <time.h>
+#include <sys/stat.h>
 
 // Set this to zero if you with to avoid LZ4 compression.  I recommend using
 // it though, because it's very fast and it's a two-file library.
@@ -204,7 +206,7 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
 #endif
     }
     fclose(cachefile);
-    _append_table(name, csize + headersize);
+    _update_table(name, csize + headersize);
 }
 
 void par_filecache_evict_all()
@@ -279,6 +281,10 @@ static void _read_or_create_tablefile()
     FILE* fhandle = fopen(_tablepath, "r");
     if (!fhandle) {
         fhandle = fopen(_tablepath, "w");
+        if (!fhandle) {
+            mkdir(dirname(_tablepath), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            fhandle = fopen(_tablepath, "w");
+        }
         assert(fhandle && "Unable to create filecache info file.");
     } else {
         filecache_entry_t entry;

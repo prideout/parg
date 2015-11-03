@@ -124,6 +124,7 @@ bool curlToMemory(const char* url, uint8_t** data, int* nbytes)
 
 int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes)
 {
+    char errbuf[CURL_ERROR_SIZE] = {0};
     par_easycurl_buffer buffer = {malloc(1), 0};
     long code = 0;
     long status = 0;
@@ -141,7 +142,13 @@ int par_easycurl_to_memory(const char* url, par_byte** data, int* nbytes)
     curl_easy_setopt(handle, CURLOPT_TIMEVALUE, 0);
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, 0);
     curl_easy_setopt(handle, CURLOPT_TIMEOUT, 15);
-    curl_easy_perform(handle);
+    curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errbuf);
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0);
+    CURLcode res = curl_easy_perform(handle);
+    if (res != CURLE_OK) {
+        printf("CURL Error: %s\n", errbuf);
+        return 0;
+    }
     curl_easy_getinfo(handle, CURLINFO_CONDITION_UNMET, &code);
     curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &status);
     if (status == 304 || status >= 400) {
