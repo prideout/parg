@@ -55,9 +55,8 @@ void par_filecache_save(const char* name, par_byte* payload, int payloadsize,
     par_byte* header, int headersize);
 
 // Check if the given blob is in the cache; if not, return 0.  If so, return 1
-// and returns newly-allocated memory for payload.  The caller should free the
-// payload.  The header is preallocated and the caller need to know its size
-// ahead of time.
+// and allocate new memory for payload.  The caller should free the payload.
+// The header is preallocated so the caller needs to know its size beforehand.
 int par_filecache_load(const char* name, par_byte** payload, int* payloadsize,
     par_byte* header, int headersize);
 
