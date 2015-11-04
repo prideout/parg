@@ -175,6 +175,12 @@ float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
     int stride);
 void par_bluenoise_sort_by_rank(float* floats, int npts);
 
+// FRAMEBUFFER
+
+typedef struct par_framebuffer_s par_framebuffer;
+par_framebuffer* par_framebuffer_create(int width, int height);
+void par_framebuffer_free(par_framebuffer*);
+
 #ifdef __cplusplus
 }
 #endif

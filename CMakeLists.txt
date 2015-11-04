@@ -34,27 +34,26 @@ include_directories(
 )
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  find_package (X11 REQUIRED)
-  add_definitions(
-    -std=gnu99
-    -O3
-    -Wall
-    -I../include
-    -I../src/vendor
-    -DGLFW_INCLUDE_GLCOREARB
+    find_package (X11 REQUIRED)
+        add_definitions(
+        -std=gnu99
+        -O3
+        -Wall
+        -I../include
+        -I../src/vendor
     )
-  set(PLATFORM_LIBS
-    ${X11_LIBRARIES}
-    Xinerama
-    pthread
-    dl
-    Xrandr
-    Xinerama
-    Xcursor
-    Xi
-    Xxf86vm
-    GL
-    m
+    set(PLATFORM_LIBS
+        ${X11_LIBRARIES}
+        Xinerama
+        pthread
+        dl
+        Xrandr
+        Xinerama
+        Xcursor
+        Xi
+        Xxf86vm
+        GL
+        m
     )
 endif()
 

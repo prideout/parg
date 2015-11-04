@@ -157,6 +157,9 @@ int par_window_exec(float winwidth, float winheight, int vsync)
         // Perform all OpenGL work.
         glfwMakeContextCurrent(window);
         if (needs_draw && _draw) {
+            if (capture) {
+                par_framebuffer_create(width, height);
+            }
             _draw();
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
