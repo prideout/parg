@@ -100,6 +100,14 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
+    char* capture = 0;
+    for (int i = 1; i < _argc - 1; i++) {
+        if (0 == strcmp(_argv[i], "-capture")) {
+            capture = _argv[i + 1];
+            glfwWindowHint(GLFW_VISIBLE, 0);
+        }
+    }
+
     // 1.85 is the "Letterbox" aspect ratio, popular in the film industry.
     // Also, the window is small enough to fit just fine on my 13" Pro.
 
@@ -126,13 +134,6 @@ int par_window_exec(float winwidth, float winheight, int vsync)
 
     struct timeval tm1;
     gettimeofday(&tm1, NULL);
-
-    char* capture = 0;
-    for (int i = 1; i < _argc - 1; i++) {
-        if (0 == strcmp(_argv[i], "-capture")) {
-            capture = _argv[i + 1];
-        }
-    }
 
     while (!glfwWindowShouldClose(window)) {
         int width, height;
