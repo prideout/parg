@@ -7,7 +7,7 @@ set(DEMOS
     clipping
     gamma
     marina
-    picking
+    trefoil
     sierpinski
     simple
     zooming

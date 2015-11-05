@@ -7,7 +7,7 @@
     F(A_NORMAL, "a_normal")     \
     F(U_MVP, "u_mvp")           \
     F(U_IMV, "u_imv")           \
-    F(SHADER_PICKING, "picking.glsl")
+    F(SHADER_SIMPLE, "trefoil.glsl")
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 Matrix4 projection;
@@ -21,7 +21,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_clearcolor(bgcolor);
     par_state_depthtest(1);
     par_state_cullfaces(1);
-    par_shader_load_from_asset(SHADER_PICKING);
+    par_shader_load_from_asset(SHADER_SIMPLE);
     const float fovy = 16 * PAR_TWOPI / 180;
     const float aspect = (float) winwidth / winheight;
     const float znear = 0.1;
@@ -67,7 +67,7 @@ void dispose()
 int main(int argc, char* argv[])
 {
     TOKEN_TABLE(PAR_TOKEN_DEFINE);
-    par_asset_preload(SHADER_PICKING);
+    par_asset_preload(SHADER_SIMPLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
     par_window_ontick(tick);
