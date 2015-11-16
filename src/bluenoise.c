@@ -27,7 +27,7 @@
 //     int maxpoints = 1e6;
 //     float density = 30000;
 //     par_bluenoise_context* ctx;
-//     ctx = par_bluenoise_create("bluenoise.bin", 0, maxpoints);
+//     ctx = par_bluenoise_from_file("bluenoise.bin", maxpoints);
 //     par_bluenoise_density_from_gray(ctx, source_pixels, 512, 512, 1);
 //     points = par_bluenoise_generate(ctx, density, &npoints);
 //     ... Draw points here.  Each point is a three-tuple of (X Y RANK).
