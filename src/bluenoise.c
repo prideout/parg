@@ -138,13 +138,13 @@ struct par_bluenoise_context_s {
     int maxpoints;
     int density_width;
     int density_height;
-    float* density;
+    unsigned char* density;
     float mag;
 };
 
 static float sample_density(par_bluenoise_context* ctx, float x, float y)
 {
-    float* density = ctx->density;
+    unsigned char* density = ctx->density;
     if (!density) {
         return 1;
     }
@@ -161,7 +161,7 @@ static float sample_density(par_bluenoise_context* ctx, float x, float y)
     ty += height / 2;
     int ix = clamp((int) tx, 0, width - 2);
     int iy = clamp((int) ty, 0, height - 2);
-    return density[iy * width + ix];
+    return density[iy * width + ix] / 255.0f;
 }
 
 static void recurse_tile(
@@ -343,12 +343,11 @@ void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 {
     ctx->density_width = width;
     ctx->density_height = height;
-    ctx->density = malloc(width * height * sizeof(float));
-    float scale = 1.0f / 255.0f;
-    float* dst = ctx->density;
+    ctx->density = malloc(width * height);
+    unsigned char* dst = ctx->density;
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            *dst++ = 1 - (*pixels) * scale;
+            *dst++ = 255 - (*pixels);
             pixels += bpp;
         }
     }
@@ -361,8 +360,8 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     unsigned int bkgd = background_color;
     ctx->density_width = width;
     ctx->density_height = height;
-    ctx->density = malloc(width * height * sizeof(float));
-    float* dst = ctx->density;
+    ctx->density = malloc(width * height);
+    unsigned char* dst = ctx->density;
     unsigned int mask = 0x000000ffu;
     if (bpp > 1) {
         mask |= 0x0000ff00u;
@@ -377,7 +376,8 @@ void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             unsigned int val = (*((unsigned int*) pixels)) & mask;
-            *dst++ = invert ? (val == bkgd) : (val != bkgd);
+            val = invert ? (val == bkgd) : (val != bkgd);
+            *dst++ = val ? 255 : 0;
             pixels += bpp;
         }
     }
