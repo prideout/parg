@@ -163,6 +163,7 @@ par_bluenoise_context* par_bluenoise_from_buffer(
     const char* buffer, int nbytes, int maxpts);
 void par_bluenoise_set_viewport(
     par_bluenoise_context*, float left, float bottom, float right, float top);
+void par_bluenoise_set_window(par_bluenoise_context*, int width, int height);
 void par_bluenoise_free(par_bluenoise_context* ctx);
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
 	const unsigned char* pixels, int width, int height, int bpp);

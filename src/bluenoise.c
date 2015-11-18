@@ -65,6 +65,11 @@ par_bluenoise_context* par_bluenoise_from_buffer(
 void par_bluenoise_set_viewport(
     par_bluenoise_context*, float left, float bottom, float right, float top);
 
+// Sets up a reference window size.  The only purpose of this is to ensure
+// that apparent density remains constant when the window gets resized.
+// Clients should call this *before* calling par_bluenoise_set_viewport.
+void par_bluenoise_set_window(par_bluenoise_context*, int width, int height);
+
 // Frees all memory associated with the given bluenoise context.
 void par_bluenoise_free(par_bluenoise_context* ctx);
 
@@ -140,6 +145,8 @@ struct par_bluenoise_context_s {
     int density_height;
     unsigned char* density;
     float mag;
+    int window_width;
+    int window_height;
 };
 
 static float sample_density(par_bluenoise_context* ctx, float x, float y)
@@ -209,6 +216,12 @@ static void recurse_tile(
     }
 }
 
+void par_bluenoise_set_window(par_bluenoise_context* ctx, int width, int height)
+{
+    ctx->window_width = width;
+    ctx->window_height = height;
+}
+
 void par_bluenoise_set_viewport(par_bluenoise_context* ctx, float left,
     float bottom, float right, float top)
 {
@@ -219,7 +232,8 @@ void par_bluenoise_set_viewport(par_bluenoise_context* ctx, float left,
     top = ctx->top = top + 0.5;
 
     // Determine magnification factor BEFORE clamping.
-    ctx->mag = powf(top - bottom, -2);
+    float scale = 1000 * (top - bottom) / ctx->window_height;
+    ctx->mag = powf(scale, -2);
 
     // The density function is only sampled in [0, +1].
     ctx->left = clamp(left, 0, 1);
@@ -278,6 +292,7 @@ static par_bluenoise_context* par_bluenoise_create(
     ctx->maxpoints = maxpts;
     ctx->points = malloc(maxpts * sizeof(par_vec3));
     ctx->density = 0;
+    par_bluenoise_set_window(ctx, 1024, 768);
     par_bluenoise_set_viewport(ctx, -.5, -.5, .5, .5);
 
     char* buf = 0;
