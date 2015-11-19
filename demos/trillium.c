@@ -16,7 +16,7 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
 #define ASSET_TABLE(F)                  \
     F(SHADER_SIMPLE, "trillium.glsl")   \
     F(TEXTURE_TRILLIUM, "trillium.png") \
-    F(BUFFER_BLUENOISE, "bluenoise.bin")
+    F(BUFFER_BLUENOISE, "bluenoise.trimmed.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 par_buffer* ptsvbo;
@@ -64,7 +64,7 @@ void draw()
     par_bluenoise_set_viewport(ctx, left, bottom, right, top);
 
     int npts;
-    float* cpupts = par_bluenoise_generate(ctx, 30000, &npts);
+    float* cpupts = par_bluenoise_generate(ctx, 40000, &npts);
     float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
     memcpy(gpupts, cpupts, npts * 3 * sizeof(float));
     par_buffer_unlock(ptsvbo);
