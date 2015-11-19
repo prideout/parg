@@ -281,6 +281,9 @@ float* par_bluenoise_generate(
     *((int*) ptr); \
     ptr += sizeof(int)
 
+#define fwritei(I) fwrite(&I, 4, 1, fout)
+#define fwritef(I) fwrite(&I, 4, 1, fout)
+
 #define freadf()     \
     *((float*) ptr); \
     ptr += sizeof(float)
@@ -307,37 +310,47 @@ static par_bluenoise_context* par_bluenoise_create(
         fclose(fin);
     }
 
+    FILE* fout = fopen("bluenoise.trimmed.bin", "wb");
+
     const char* ptr = buf ? buf : filepath;
-    int ntiles = ctx->ntiles = freadi();
-    int nsubtiles = ctx->nsubtiles = freadi();
-    int nsubdivs = ctx->nsubdivs = freadi();
+    int ntiles = ctx->ntiles = freadi(); fwritei(ntiles);
+    int nsubtiles = ctx->nsubtiles = freadi(); fwritei(nsubtiles);
+    int nsubdivs = ctx->nsubdivs = freadi(); fwritei(nsubdivs);
     par_tile* tiles = ctx->tiles = malloc(sizeof(par_tile) * ntiles);
     for (int i = 0; i < ntiles; i++) {
-        tiles[i].n = freadi();
-        tiles[i].e = freadi();
-        tiles[i].s = freadi();
-        tiles[i].w = freadi();
+        tiles[i].n = freadi(); fwritei(tiles[i].n);
+        tiles[i].e = freadi(); fwritei(tiles[i].e);
+        tiles[i].s = freadi(); fwritei(tiles[i].s);
+        tiles[i].w = freadi(); fwritei(tiles[i].w);
         tiles[i].subdivs = malloc(sizeof(int*) * nsubdivs);
         for (int j = 0; j < nsubdivs; j++) {
             int* subdiv = malloc(sizeof(int) * sqr(nsubtiles));
             for (int k = 0; k < sqr(nsubtiles); k++) {
                 subdiv[k] = freadi();
+                fwritei(subdiv[k]);
             }
             tiles[i].subdivs[j] = subdiv;
         }
         tiles[i].npoints = freadi();
+        int npts = (i == 0) ? tiles[i].npoints : 0;
+        fwritei(npts);
         tiles[i].points = malloc(sizeof(par_vec2) * tiles[i].npoints);
         for (int j = 0; j < tiles[i].npoints; j++) {
-            tiles[i].points[j].x = freadf();
-            tiles[i].points[j].y = freadf();
+            tiles[i].points[j].x = freadf(); if (i == 0) fwritef(tiles[i].points[j].x);
+            tiles[i].points[j].y = freadf(); if (i == 0) fwritef(tiles[i].points[j].y);
         }
         tiles[i].nsubpts = freadi();
+        int nsubpts = (i == 0) ? tiles[i].nsubpts : 0;
+        fwritei(nsubpts);
         tiles[i].subpts = malloc(sizeof(par_vec2) * tiles[i].nsubpts);
         for (int j = 0; j < tiles[i].nsubpts; j++) {
-            tiles[i].subpts[j].x = freadf();
-            tiles[i].subpts[j].y = freadf();
+            tiles[i].subpts[j].x = freadf(); if (i == 0) fwritef(tiles[i].subpts[j].x);
+            tiles[i].subpts[j].y = freadf(); if (i == 0) fwritef(tiles[i].subpts[j].y);
         }
     }
+
+    fclose(fout);
+
     free(buf);
     return ctx;
 }
