@@ -19,13 +19,16 @@
 
 typedef uint8_t par_byte;
 
+typedef struct par_msquares_meshlist_s par_msquares_meshlist;
+
+// Encapsulates the results of a marching squares operation.
 typedef struct {
-    float* points;
-    int npoints;
-    int dim;
-    uint16_t* triangles;
-    int ntriangles;
-} par_trimesh;
+    float* points;       // pointer to XY (or XYZ) vertex coordinates
+    int npoints;         // number of vertex coordinates
+    uint16_t* triangles; // pointer to 3-tuples of vertex indices
+    int ntriangles;      // number of 3-tuples
+    int dim;             // number of floats per point (either 2 or 3)
+} par_msquares_mesh;
 
 #define PAR_MSQUARES_INVERT   (1 << 0)
 #define PAR_MSQUARES_DUAL     (1 << 1)
@@ -50,7 +53,7 @@ par_msquares_meshlist* par_msquares_from_colors(
     par_byte const* data, int width, int height, int cellsize,
     par_byte const* colors, int ncolors, int bpp, int flags);
 
-par_trimesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
+par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
 
 int par_msquares_get_count(par_msquares_meshlist* );
 
