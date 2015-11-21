@@ -4,10 +4,8 @@
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
-    F(A_NORMAL, "a_normal")     \
-    F(U_MVP, "u_mvp")           \
-    F(U_IMV, "u_imv")           \
-    F(U_CLIPZ, "u_clipz")
+    F(A_TEXCOORD, "a_texcoord") \
+    F(U_MVP, "u_mvp")
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                     \
@@ -19,8 +17,9 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
-par_mesh* torus;
-float clipz = 0;
+par_mesh* rectmesh;
+par_texture* colortex;
+par_texture* graytex;
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -30,9 +29,12 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_cullfaces(0);
     par_shader_load_from_asset(SHADER_SIMPLE);
 
-    par_buffer* grayscale = par_buffer_from_asset(BIN_ISLAND);
-    // TODO
-    par_buffer_free(grayscale);
+    colortex = par_texture_from_asset(TEXTURE_COLOR);
+
+    par_buffer* graybuf = par_buffer_from_asset(BIN_ISLAND);
+    graytex = par_texture_from_fp32(graybuf, 1024, 1024, 1);
+    // do stuff
+    par_buffer_free(graybuf);
 
     const float h = 5.0f;
     const float w = h * winwidth / winheight;
@@ -44,7 +46,7 @@ void init(float winwidth, float winheight, float pixratio)
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
-    torus = par_mesh_torus(400, 100, 8, 2);
+    rectmesh = par_mesh_rectangle(8, 8);
 }
 
 void draw()
@@ -54,25 +56,19 @@ void draw()
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
     par_shader_bind(P_SIMPLE);
-    par_uniform1f(U_CLIPZ, clipz);
+    par_texture_bind(colortex, 0);
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_uniform_matrix3f(U_IMV, &invmodelview);
-    par_varray_enable(par_mesh_coord(torus), A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_varray_enable(par_mesh_norml(torus), A_NORMAL, 3, PAR_FLOAT, 0, 0);
-    par_varray_bind(par_mesh_index(torus));
-    par_draw_triangles_u16(0, par_mesh_ntriangles(torus));
-}
-
-int tick(float winwidth, float winheight, float pixratio, float seconds)
-{
-    clipz = 0.4 + 0.05 * sin(seconds * 3);
-    return 1;
+    par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
+    par_varray_enable(par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
+    par_draw_one_quad();
 }
 
 void dispose()
 {
     par_shader_free(P_SIMPLE);
-    par_mesh_free(torus);
+    par_mesh_free(rectmesh);
+    par_texture_free(colortex);
+    par_texture_free(graytex);
 }
 
 int main(int argc, char* argv[])
@@ -81,7 +77,6 @@ int main(int argc, char* argv[])
     ASSET_TABLE(PAR_ASSET_TABLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
-    par_window_ontick(tick);
     par_window_ondraw(draw);
     par_window_onexit(dispose);
     return par_window_exec(185 * 5, 100 * 5, 1);

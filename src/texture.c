@@ -64,3 +64,24 @@ void par_texture_fliprows(void* data, int rowsize, int nrows)
     }
     free(tmp);
 }
+
+par_texture* par_texture_from_fp32(
+    par_buffer* buf, int width, int height, int ncomps)
+{
+    assert(ncomps == 1);
+    par_texture* tex = malloc(sizeof(struct par_texture_s));
+    tex->width = width;
+    tex->height = height;
+    float* rawdata = par_buffer_lock(buf, PAR_READ);
+    glGenTextures(1, &tex->handle);
+    glBindTexture(GL_TEXTURE_2D, tex->handle);
+    // par_texture_fliprows(rawdata, tex->width * ncomps * 4, tex->height);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, tex->width, tex->height, 0, GL_ALPHA,
+        GL_FLOAT, rawdata);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(
+        GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    par_buffer_unlock(buf);
+    return tex;
+}
