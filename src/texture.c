@@ -76,8 +76,8 @@ par_texture* par_texture_from_fp32(
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
     // par_texture_fliprows(rawdata, tex->width * ncomps * 4, tex->height);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, tex->width, tex->height, 0, GL_ALPHA,
-        GL_FLOAT, rawdata);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, tex->width, tex->height, 0,
+        GL_ALPHA, GL_FLOAT, rawdata);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

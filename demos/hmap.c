@@ -2,8 +2,8 @@
 #include <parwin.h>
 
 #define TOKEN_TABLE(F)          \
-    F(P_COLOR, "p_color")     \
-    F(P_GRAY, "p_gray")     \
+    F(P_COLOR, "p_color")       \
+    F(P_GRAY, "p_gray")         \
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")
@@ -15,11 +15,7 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
     F(BIN_ISLAND, "msquares_island.1024.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
-enum {
-    STATE_GRAY_SOURCE,
-    STATE_COLOR_SOURCE,
-    STATE_COUNT
-};
+enum { STATE_GRAY_SOURCE, STATE_COLOR_SOURCE, STATE_COUNT };
 
 #define CELLSIZE 64
 #define IMGWIDTH 1024
@@ -29,6 +25,7 @@ int state = STATE_GRAY_SOURCE;
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
+par_mesh* trimesh;
 par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
@@ -53,8 +50,9 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_unlock(graybuf);
     par_buffer_free(graybuf);
 
-    // Create VBOS her
-
+    par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, 0);
+    trimesh = par_mesh_create(
+        mesh->points, mesh->npoints, mesh->triangles, mesh->ntriangles);
     par_msquares_free(mlist);
 
     const float h = 7.0f;
@@ -94,6 +92,7 @@ void dispose()
     par_shader_free(P_GRAY);
     par_shader_free(P_COLOR);
     par_mesh_free(rectmesh);
+    par_mesh_free(trimesh);
     par_texture_free(colortex);
     par_texture_free(graytex);
 }

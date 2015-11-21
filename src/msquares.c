@@ -84,9 +84,15 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
     mesh->triangles = malloc(mesh->ntriangles * sizeof(uint16_t) * 3);
 
     float* pts = mesh->points;
-    *pts++ = 0; *pts++ = 0; *pts++ = 0;
-    *pts++ = 1; *pts++ = 0; *pts++ = 0;
-    *pts++ = 1; *pts++ = 1; *pts++ = 0;
+    *pts++ = 0;
+    *pts++ = 0;
+    *pts++ = 0;
+    *pts++ = 1;
+    *pts++ = 0;
+    *pts++ = 0;
+    *pts++ = 1;
+    *pts++ = 1;
+    *pts++ = 0;
 
     uint16_t* tris = mesh->triangles;
     *tris++ = 0;
@@ -96,7 +102,8 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
     return mlist;
 }
 
-par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist* mlist, int mindex)
+par_msquares_mesh* par_msquares_get_mesh(
+    par_msquares_meshlist* mlist, int mindex)
 {
     assert(mlist && mindex < mlist->nmeshes);
     return mlist->meshes[mindex];

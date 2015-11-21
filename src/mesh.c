@@ -11,6 +11,17 @@ struct par_mesh_s {
     int ntriangles;
 };
 
+par_mesh* par_mesh_create(float* pts, int npts, uint16_t* tris, int ntris)
+{
+    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    surf->coords = par_buffer_create(pts, npts * sizeof(float) * 3);
+    surf->uvs = 0;
+    surf->normals = 0;
+    surf->indices = par_buffer_create(tris, ntris * sizeof(uint16_t) * 3);
+    surf->ntriangles = ntris;
+    return surf;
+}
+
 static Point3 torus_fn(float major, float minor, float phi, float theta)
 {
     float beta = major + minor * cos(phi);

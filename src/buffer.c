@@ -12,6 +12,18 @@ struct par_buffer_s {
     char* gpumapped;
 };
 
+par_buffer* par_buffer_create(void* src, int nbytes)
+{
+    par_buffer* retval = malloc(sizeof(struct par_buffer_s));
+    retval->data = malloc(nbytes);
+    retval->nbytes = nbytes;
+    retval->memtype = PAR_CPU;
+    retval->gpuhandle = 0;
+    retval->gpumapped = 0;
+    memcpy(retval->data, src, nbytes);
+    return retval;
+}
+
 int par_buffer_gpu_check(par_buffer* buf)
 {
     return buf->memtype == PAR_GPU_ARRAY || buf->memtype == PAR_GPU_ELEMENTS;
