@@ -41,7 +41,7 @@ void init(float winwidth, float winheight, float pixratio)
     const float znear = 65;
     const float zfar = 90;
     projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
-    Point3 eye = {0, -75, 25};
+    Point3 eye = {0, -25, 75};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
