@@ -2,7 +2,8 @@
 #include <parwin.h>
 
 #define TOKEN_TABLE(F)          \
-    F(P_SIMPLE, "p_simple")     \
+    F(P_COLOR, "p_color")     \
+    F(P_GRAY, "p_gray")     \
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")
@@ -14,6 +15,17 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
     F(BIN_ISLAND, "msquares_island.1024.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
+enum {
+    STATE_GRAY_SOURCE,
+    STATE_COLOR_SOURCE,
+    STATE_COUNT
+};
+
+#define CELLSIZE 64
+#define IMGWIDTH 1024
+#define IMGHEIGHT 1024
+
+int state = STATE_GRAY_SOURCE;
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
@@ -23,30 +35,39 @@ par_texture* graytex;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    const Vector4 bgcolor = {0.5, 0.6, 0.7, 1.0};
+    const Vector4 bgcolor = {0.937, 0.937, 0.93, 1.00};
     par_state_clearcolor(bgcolor);
+    par_state_cullfaces(1);
     par_state_depthtest(1);
-    par_state_cullfaces(0);
     par_shader_load_from_asset(SHADER_SIMPLE);
 
     colortex = par_texture_from_asset(TEXTURE_COLOR);
 
     par_buffer* graybuf = par_buffer_from_asset(BIN_ISLAND);
-    graytex = par_texture_from_fp32(graybuf, 1024, 1024, 1);
-    // do stuff
+    graytex = par_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1);
+    float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+    float threshold = 0;
+    int flags = 0;
+    par_msquares_meshlist* mlist = par_msquares_from_grayscale(
+        graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+    par_buffer_unlock(graybuf);
     par_buffer_free(graybuf);
 
-    const float h = 5.0f;
+    // Create VBOS her
+
+    par_msquares_free(mlist);
+
+    const float h = 7.0f;
     const float w = h * winwidth / winheight;
-    const float znear = 65;
+    const float znear = 50;
     const float zfar = 90;
     projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
-    Point3 eye = {0, -25, 75};
+    Point3 eye = {0, -50, 50};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
     model = M4MakeIdentity();
-    rectmesh = par_mesh_rectangle(8, 8);
+    rectmesh = par_mesh_rectangle(20, 20);
 }
 
 void draw()
@@ -55,8 +76,13 @@ void draw()
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
-    par_shader_bind(P_SIMPLE);
-    par_texture_bind(colortex, 0);
+    if (state == STATE_GRAY_SOURCE) {
+        par_shader_bind(P_GRAY);
+        par_texture_bind(graytex, 0);
+    } else {
+        par_shader_bind(P_COLOR);
+        par_texture_bind(colortex, 0);
+    }
     par_uniform_matrix4f(U_MVP, &mvp);
     par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
     par_varray_enable(par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
@@ -65,10 +91,19 @@ void draw()
 
 void dispose()
 {
-    par_shader_free(P_SIMPLE);
+    par_shader_free(P_GRAY);
+    par_shader_free(P_COLOR);
     par_mesh_free(rectmesh);
     par_texture_free(colortex);
     par_texture_free(graytex);
+}
+
+void input(par_event evt, float code, float unused0, float unused1)
+{
+    int key = (char) code;
+    if (evt == PAR_EVENT_KEYPRESS && key == ' ') {
+        state = (state + 1) % STATE_COUNT;
+    }
 }
 
 int main(int argc, char* argv[])
@@ -77,6 +112,7 @@ int main(int argc, char* argv[])
     ASSET_TABLE(PAR_ASSET_TABLE);
     par_window_setargs(argc, argv);
     par_window_oninit(init);
+    par_window_oninput(input);
     par_window_ondraw(draw);
     par_window_onexit(dispose);
     return par_window_exec(185 * 5, 100 * 5, 1);

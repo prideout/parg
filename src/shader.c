@@ -295,9 +295,9 @@ void par_shader_bind(par_token tok)
 void par_shader_free(par_token tok)
 {
     khiter_t iter = kh_get(glmap, _program_registry, tok);
-    par_verify(iter != kh_end(_program_registry), "Unknown program",
-        par_token_to_string(tok));
-    GLuint program = kh_value(_program_registry, iter);
-    glDeleteProgram(program);
-    kh_del(glmap, _program_registry, iter);
+    if (iter != kh_end(_program_registry)) {
+        GLuint program = kh_value(_program_registry, iter);
+        glDeleteProgram(program);
+        kh_del(glmap, _program_registry, iter);
+    }
 }

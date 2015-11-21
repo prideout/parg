@@ -50,7 +50,7 @@ static void onkey(GLFWwindow* window, int key, int scancode, int action, int m)
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
     if (_input && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        // ...
+        _input(PAR_EVENT_KEYPRESS, key, 0, 0);
     }
 }
 
@@ -99,6 +99,13 @@ int par_window_exec(float winwidth, float winheight, int vsync)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_DECORATED, GL_FALSE);
+
+    // This GLFW feature doesn't exist yet but it's on the way:
+
+    #if GLFW_VERSION_MAJOR > 3 && GLFW_VERSION_MINOR > 1000
+    glfwWindowHint(GLFW_ALPHA_MASK, GL_TRUE);
+    #endif
 
     char* capture = 0;
     for (int i = 1; i < _argc - 1; i++) {

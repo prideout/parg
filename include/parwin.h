@@ -3,7 +3,8 @@
 typedef enum {
     PAR_EVENT_DOWN,
     PAR_EVENT_UP,
-    PAR_EVENT_MOVE
+    PAR_EVENT_MOVE,
+    PAR_EVENT_KEYPRESS
 } par_event;
 
 typedef void (*par_window_fn_init)(float, float, float);

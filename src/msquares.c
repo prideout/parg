@@ -12,6 +12,8 @@
 // Copyright (c) 2015 Philip Rideout
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <assert.h>
 
 // -----------------------------------------------------------------------------
 // BEGIN PUBLIC API
@@ -60,3 +62,40 @@ void par_msquares_free(par_msquares_meshlist*);
 // -----------------------------------------------------------------------------
 // END PUBLIC API
 // -----------------------------------------------------------------------------
+
+struct par_msquares_meshlist_s {
+    int nmeshes;
+    par_msquares_mesh** meshes;
+};
+
+par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
+    int height, int cellsize, float threshold, int flags)
+{
+    par_msquares_meshlist* mlist = malloc(sizeof(par_msquares_meshlist));
+    mlist->nmeshes = 1;
+    mlist->meshes = malloc(sizeof(par_msquares_mesh*));
+    mlist->meshes[0] = calloc(sizeof(par_msquares_mesh), 1);
+    return mlist;
+}
+
+par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist* mlist, int mindex)
+{
+    assert(mlist && mindex < mlist->nmeshes);
+    return mlist->meshes[mindex];
+}
+
+int par_msquares_get_count(par_msquares_meshlist* mlist)
+{
+    assert(mlist);
+    return mlist->nmeshes;
+}
+
+void par_msquares_free(par_msquares_meshlist* mlist)
+{
+    par_msquares_mesh** meshes = mlist->meshes;
+    for (int i = 0; i < mlist->nmeshes; i++) {
+        free(meshes[i]);
+    }
+    free(meshes);
+    free(mlist);
+}

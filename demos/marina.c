@@ -174,6 +174,8 @@ void input(par_event evt, float x, float y, float z)
     case PAR_EVENT_MOVE:
         par_zcam_grab_update(x, y, z);
         break;
+    default:
+        break;
     }
 }
 
