@@ -15,15 +15,14 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
     F(BIN_ISLAND, "msquares_island.1024.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
-enum { STATE_GRAY_SOURCE, STATE_COLOR_SOURCE, STATE_COUNT };
+enum { STATE_GRAY_SOURCE, STATE_COLOR_SOURCE, STATE_GRAY_MESH, STATE_COUNT };
 
 #define CELLSIZE 64
 #define IMGWIDTH 1024
 #define IMGHEIGHT 1024
 
-int state = STATE_GRAY_SOURCE;
+int state = STATE_GRAY_SOURCE;  // STATE_GRAY_MESH;
 Matrix4 projection;
-Matrix4 model;
 Matrix4 view;
 par_mesh* trimesh;
 par_mesh* rectmesh;
@@ -64,27 +63,53 @@ void init(float winwidth, float winheight, float pixratio)
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
-    model = M4MakeIdentity();
     rectmesh = par_mesh_rectangle(20, 20);
 }
 
 void draw()
 {
-    Matrix4 modelview = M4Mul(view, model);
-    Matrix3 invmodelview = M4GetUpper3x3(modelview);
-    Matrix4 mvp = M4Mul(projection, modelview);
     par_draw_clear();
+
+    Matrix4 model;
+    int mesh = 0;
+
     if (state == STATE_GRAY_SOURCE) {
+        par_shader_bind(P_GRAY);
+        par_texture_bind(graytex, 0);
+    } else if (state == STATE_GRAY_MESH) {
+        mesh = 1;
         par_shader_bind(P_GRAY);
         par_texture_bind(graytex, 0);
     } else {
         par_shader_bind(P_COLOR);
         par_texture_bind(colortex, 0);
     }
+
+    if (mesh) {
+        model = M4MakeScale(V3MakeFromElems(20, 20, 0));
+        model = M4Mul(M4MakeTranslation(V3MakeFromElems(-10, -10, 0)), model);
+    } else {
+        model = M4MakeIdentity();
+    }
+
+    Matrix4 modelview = M4Mul(view, model);
+    Matrix3 invmodelview = M4GetUpper3x3(modelview);
+    Matrix4 mvp = M4Mul(projection, modelview);
     par_uniform_matrix4f(U_MVP, &mvp);
-    par_varray_enable(par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
-    par_varray_enable(par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
-    par_draw_one_quad();
+
+    if (mesh) {
+        par_varray_enable(
+            par_mesh_coord(trimesh), A_POSITION, 3, PAR_FLOAT, 0, 0);
+        par_varray_bind(par_mesh_index(trimesh));
+        par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh));
+    } else {
+        par_varray_enable(
+            par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
+        par_varray_enable(
+            par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
+        par_draw_one_quad();
+        par_varray_disable(A_TEXCOORD);
+    }
 }
 
 void dispose()
@@ -100,7 +125,7 @@ void dispose()
 void input(par_event evt, float code, float unused0, float unused1)
 {
     int key = (char) code;
-    if (evt == PAR_EVENT_KEYPRESS && key == ' ') {
+    if ((evt == PAR_EVENT_KEYPRESS && key == ' ') || evt == PAR_EVENT_UP) {
         state = (state + 1) % STATE_COUNT;
     }
 }

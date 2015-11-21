@@ -12,15 +12,23 @@ struct par_buffer_s {
     char* gpumapped;
 };
 
-par_buffer* par_buffer_create(void* src, int nbytes)
+par_buffer* par_buffer_create(void* src, int nbytes, par_buffer_type memtype)
 {
     par_buffer* retval = malloc(sizeof(struct par_buffer_s));
-    retval->data = malloc(nbytes);
     retval->nbytes = nbytes;
-    retval->memtype = PAR_CPU;
+    retval->memtype = memtype;
     retval->gpuhandle = 0;
     retval->gpumapped = 0;
-    memcpy(retval->data, src, nbytes);
+    if (par_buffer_gpu_check(retval)) {
+        glGenBuffers(1, &retval->gpuhandle);
+        GLenum target = memtype == PAR_GPU_ARRAY ? GL_ARRAY_BUFFER
+            : GL_ELEMENT_ARRAY_BUFFER;
+        glBindBuffer(target, retval->gpuhandle);
+        glBufferData(target, nbytes, src, GL_STATIC_DRAW);
+    } else {
+        retval->data = malloc(nbytes);
+        memcpy(retval->data, src, nbytes);
+    }
     return retval;
 }
 

@@ -14,10 +14,12 @@ struct par_mesh_s {
 par_mesh* par_mesh_create(float* pts, int npts, uint16_t* tris, int ntris)
 {
     par_mesh* surf = malloc(sizeof(struct par_mesh_s));
-    surf->coords = par_buffer_create(pts, npts * sizeof(float) * 3);
+    surf->coords =
+        par_buffer_create(pts, npts * sizeof(float) * 3, PAR_GPU_ARRAY);
     surf->uvs = 0;
     surf->normals = 0;
-    surf->indices = par_buffer_create(tris, ntris * sizeof(uint16_t) * 3);
+    surf->indices =
+        par_buffer_create(tris, ntris * sizeof(uint16_t) * 3, PAR_GPU_ELEMENTS);
     surf->ntriangles = ntris;
     return surf;
 }

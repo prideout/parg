@@ -52,7 +52,7 @@ void par_asset_preload(par_token id);
 // BUFFER
 
 typedef struct par_buffer_s par_buffer;
-par_buffer* par_buffer_create(void* src, int nbytes);
+par_buffer* par_buffer_create(void* src, int nbytes, par_buffer_type memtype);
 par_buffer* par_buffer_alloc(int nbytes, par_buffer_type);
 par_buffer* par_buffer_dup(par_buffer*, par_buffer_type);
 void par_buffer_free(par_buffer*);
