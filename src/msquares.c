@@ -23,41 +23,39 @@ typedef struct par_msquares_meshlist_s par_msquares_meshlist;
 
 // Encapsulates the results of a marching squares operation.
 typedef struct {
-    float* points;       // pointer to XY (or XYZ) vertex coordinates
-    int npoints;         // number of vertex coordinates
-    uint16_t* triangles; // pointer to 3-tuples of vertex indices
-    int ntriangles;      // number of 3-tuples
-    int dim;             // number of floats per point (either 2 or 3)
+    float* points;        // pointer to XY (or XYZ) vertex coordinates
+    int npoints;          // number of vertex coordinates
+    uint16_t* triangles;  // pointer to 3-tuples of vertex indices
+    int ntriangles;       // number of 3-tuples
+    int dim;              // number of floats per point (either 2 or 3)
 } par_msquares_mesh;
 
-#define PAR_MSQUARES_INVERT   (1 << 0)
-#define PAR_MSQUARES_DUAL     (1 << 1)
-#define PAR_MSQUARES_WELD     (1 << 2)
-#define PAR_MSQUARES_CONNECT  (1 << 3)
+#define PAR_MSQUARES_INVERT (1 << 0)
+#define PAR_MSQUARES_DUAL (1 << 1)
+#define PAR_MSQUARES_WELD (1 << 2)
+#define PAR_MSQUARES_CONNECT (1 << 3)
 #define PAR_MSQUARES_SIMPLIFY (1 << 4)
-#define PAR_MSQUARES_HEIGHTS  (1 << 5)
+#define PAR_MSQUARES_HEIGHTS (1 << 5)
 
-par_msquares_meshlist* par_msquares_from_grayscale(
-    float const* data, int width, int height, int cellsize,
-    float threshold, int flags);
+par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
+    int height, int cellsize, float threshold, int flags);
 
-par_msquares_meshlist* par_msquares_from_levels(
-    float const* data, int width, int height, int cellsize,
-    float const* thresholds, int nthresholds, int flags);
+par_msquares_meshlist* par_msquares_from_levels(float const* data, int width,
+    int height, int cellsize, float const* thresholds, int nthresholds,
+    int flags);
 
-par_msquares_meshlist* par_msquares_from_color(
-    par_byte const* data, int width, int height, int cellsize,
-    par_byte color, int bpp, int flags);
+par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
+    int height, int cellsize, par_byte color, int bpp, int flags);
 
-par_msquares_meshlist* par_msquares_from_colors(
-    par_byte const* data, int width, int height, int cellsize,
-    par_byte const* colors, int ncolors, int bpp, int flags);
+par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
+    int height, int cellsize, par_byte const* colors, int ncolors, int bpp,
+    int flags);
 
 par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
 
-int par_msquares_get_count(par_msquares_meshlist* );
+int par_msquares_get_count(par_msquares_meshlist*);
 
-void par_msquares_free(par_msquares_meshlist* );
+void par_msquares_free(par_msquares_meshlist*);
 
 // -----------------------------------------------------------------------------
 // END PUBLIC API

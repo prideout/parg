@@ -89,6 +89,10 @@ void par_shader_free(par_token);
 
 typedef struct par_texture_s par_texture;
 par_texture* par_texture_from_asset(par_token id);
+par_texture* par_texture_from_fp32(
+    par_buffer* buf, int width, int height, int fpp);
+par_texture* par_texture_from_u8(
+    par_buffer* buf, int width, int height, int bpp);
 void par_texture_bind(par_texture*, int stage);
 void par_texture_info(par_texture*, int* width, int* height);
 void par_texture_free(par_texture*);
@@ -166,14 +170,14 @@ void par_bluenoise_set_viewport(
 void par_bluenoise_set_window(par_bluenoise_context*, int width, int height);
 void par_bluenoise_free(par_bluenoise_context* ctx);
 void par_bluenoise_density_from_gray(par_bluenoise_context* ctx,
-	const unsigned char* pixels, int width, int height, int bpp);
+    const unsigned char* pixels, int width, int height, int bpp);
 void par_bluenoise_density_from_color(par_bluenoise_context* ctx,
     const unsigned char* pixels, int width, int height, int bpp,
     unsigned int background_color, int invert);
-float* par_bluenoise_generate(par_bluenoise_context* ctx, float density,
-    int* npts);
-float* par_bluenoise_generate_exact(par_bluenoise_context* ctx, int npts,
-    int stride);
+float* par_bluenoise_generate(
+    par_bluenoise_context* ctx, float density, int* npts);
+float* par_bluenoise_generate_exact(
+    par_bluenoise_context* ctx, int npts, int stride);
 void par_bluenoise_sort_by_rank(float* floats, int npts);
 
 // FRAMEBUFFER
@@ -181,6 +185,39 @@ void par_bluenoise_sort_by_rank(float* floats, int npts);
 typedef struct par_framebuffer_s par_framebuffer;
 par_framebuffer* par_framebuffer_create(int width, int height);
 void par_framebuffer_free(par_framebuffer*);
+
+// MSQUARES
+
+typedef struct par_msquares_meshlist_s par_msquares_meshlist;
+
+typedef struct {
+    float* points;        // pointer to XY (or XYZ) vertex coordinates
+    int npoints;          // number of vertex coordinates
+    uint16_t* triangles;  // pointer to 3-tuples of vertex indices
+    int ntriangles;       // number of 3-tuples
+    int dim;              // number of floats per point (either 2 or 3)
+} par_msquares_mesh;
+
+#define PAR_MSQUARES_INVERT (1 << 0)
+#define PAR_MSQUARES_DUAL (1 << 1)
+#define PAR_MSQUARES_WELD (1 << 2)
+#define PAR_MSQUARES_CONNECT (1 << 3)
+#define PAR_MSQUARES_SIMPLIFY (1 << 4)
+#define PAR_MSQUARES_HEIGHTS (1 << 5)
+
+par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
+    int height, int cellsize, float threshold, int flags);
+par_msquares_meshlist* par_msquares_from_levels(float const* data, int width,
+    int height, int cellsize, float const* thresholds, int nthresholds,
+    int flags);
+par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
+    int height, int cellsize, par_byte color, int bpp, int flags);
+par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
+    int height, int cellsize, par_byte const* colors, int ncolors, int bpp,
+    int flags);
+par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
+int par_msquares_get_count(par_msquares_meshlist*);
+void par_msquares_free(par_msquares_meshlist*);
 
 #ifdef __cplusplus
 }

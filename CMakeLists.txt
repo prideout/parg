@@ -13,6 +13,7 @@ set(DEMOS
     zooming
     trillium
     terrainpts
+    hmap
 )
 
 find_package(PkgConfig REQUIRED)

@@ -4,5 +4,5 @@ alias initjs="cmake -DEMSCRIPTEN=ON -H. -Bbuild"
 alias build="cmake --build build"
 alias clean="rm -rf build"
 alias format="
-    clang-format -i src/*.c demos/*.c;
-    uncrustify -l C -c uncrustify.cfg --no-backup demos/*.c src/*.c"
+    clang-format -i src/*.c demos/*.c include/par.h;
+    uncrustify -l C -c uncrustify.cfg --no-backup demos/*.c src/*.c include/par.h"
