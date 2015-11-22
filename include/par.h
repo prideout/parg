@@ -90,9 +90,12 @@ void par_shader_free(par_token);
 // TEXTURE
 
 typedef struct par_texture_s par_texture;
+par_texture* par_texture_from_buffer(par_buffer* rgba);
 par_texture* par_texture_from_asset(par_token id);
 par_texture* par_texture_from_fp32(
-    par_buffer* buf, int width, int height, int ncomps);
+    par_buffer* buf, int width, int height, int ncomps, int bytoffset);
+par_texture* par_texture_from_u8(
+    par_buffer* buf, int width, int height, int ncomps, int byteoffset);
 void par_texture_bind(par_texture*, int stage);
 void par_texture_info(par_texture*, int* width, int* height);
 void par_texture_free(par_texture*);

@@ -37,6 +37,7 @@ par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
 par_buffer* graybuf;
+par_buffer* colorbuf;
 
 par_mesh* create_mesh()
 {
@@ -61,9 +62,17 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_cullfaces(1);
     par_state_depthtest(1);
     par_shader_load_from_asset(SHADER_SIMPLE);
-    colortex = par_texture_from_asset(TEXTURE_COLOR);
+
+    int* rawdata;
+    colorbuf = par_buffer_slurp_asset(TEXTURE_COLOR, (void*) &rawdata);
+    int width = *rawdata++;
+    int height = *rawdata++;
+    int ncomps = *rawdata++;
+    par_buffer_unlock(colorbuf);
+
+    colortex = par_texture_from_u8(colorbuf, width, height, ncomps, 3 * sizeof(int));
     graybuf = par_buffer_from_asset(BIN_ISLAND);
-    graytex = par_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1);
+    graytex = par_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1, 0);
     const float h = 7.0f;
     const float w = h * winwidth / winheight;
     const float znear = 50;
