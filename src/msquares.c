@@ -72,11 +72,13 @@ struct par_msquares_meshlist_s {
     par_msquares_mesh** meshes;
 };
 
-par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
-    int height, int cellsize, float threshold, int flags)
+static int** point_table = 0;
+static int** triangle_table = 0;
+
+void init_tables()
 {
-    assert(width > 0 && width % cellsize == 0);
-    assert(height > 0 && height % cellsize == 0);
+    point_table = malloc(16 * sizeof(int*));
+    triangle_table = malloc(16 * sizeof(int*));
 
     char const* CODE_TABLE =
         "0 0\n"
@@ -96,8 +98,6 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
         "e 3 1 2 4 1 4 6 1 6 7\n"
         "f 2 0 2 4 4 6 0\n";
 
-    int* point_table[16];
-    int* triangle_table[16];
     char const* table_token = CODE_TABLE;
     for (int i = 0; i < 16; i++) {
         char code = *table_token;
@@ -120,6 +120,21 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
             }
             sqrtris[j + 1] = midp;
         }
+    }
+}
+
+par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
+    int height, int cellsize, float threshold, int flags)
+{
+    assert(width > 0 && width % cellsize == 0);
+    assert(height > 0 && height % cellsize == 0);
+
+    // Create the two code tables if we haven't already.  These are tables of
+    // fixed constants, so it's embarassing that we use dynamic memory
+    // allocation for them.  However it's easy and it's one-time-only.
+
+    if (!point_table) {
+        init_tables();
     }
 
     // Allocate the meshlist and the first mesh.
@@ -173,6 +188,10 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
         int southi = MIN(northi + cellsize * width, maxrow);
         int northwest = data[northi] > threshold;
         int southwest = data[southi] > threshold;
+
+        int previnds[8] = {-1};
+        int prevmask = 0;
+
         for (int col = 0; col < ncols; col++) {
             northi += cellsize;
             southi += cellsize;
@@ -189,8 +208,10 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
             int const* pointspec = point_table[code];
             int ptspeclength = *pointspec++;
             int weldmap[8] = {-1};
+            int mask = 0;
             while (ptspeclength--) {
                 int midp = *pointspec++;
+                mask |= 1 << midp;
                 *ppts++ = vertsx[midp];
                 *ppts++ = vertsy[midp];
                 if (mesh->dim == 3) {
@@ -211,9 +232,11 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
                 ntris++;
             }
 
+            prevmask = mask;
             northwest = northeast;
             southwest = southeast;
             for (int i = 0; i < 8; i++) {
+                previnds[i] = weldmap[i];
                 vertsx[i] += normalized_cellsize;
             }
         }
