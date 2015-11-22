@@ -188,8 +188,7 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
         int southi = MIN(northi + cellsize * width, maxrow);
         int northwest = data[northi] > threshold;
         int southwest = data[southi] > threshold;
-
-        int previnds[8] = {-1};
+        int previnds[8] = {0};
         int prevmask = 0;
 
         for (int col = 0; col < ncols; col++) {
@@ -207,17 +206,30 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
 
             int const* pointspec = point_table[code];
             int ptspeclength = *pointspec++;
-            int weldmap[8] = {-1};
+            int currinds[8] = {0};
             int mask = 0;
             while (ptspeclength--) {
                 int midp = *pointspec++;
-                mask |= 1 << midp;
+                int bit = 1 << midp;
+                mask |= bit;
+                if (bit == 1 && (prevmask & 4)) {
+                    currinds[midp] = previnds[2];
+                    continue;
+                }
+                if (bit == 128 && (prevmask & 8)) {
+                    currinds[midp] = previnds[3];
+                    continue;
+                }
+                if (bit == 64 && (prevmask & 16)) {
+                    currinds[midp] = previnds[4];
+                    continue;
+                }
                 *ppts++ = vertsx[midp];
                 *ppts++ = vertsy[midp];
                 if (mesh->dim == 3) {
                     *ppts++ = vertsz[midp];
                 }
-                weldmap[midp] = npts++;
+                currinds[midp] = npts++;
             }
 
             int const* trianglespec = triangle_table[code];
@@ -226,9 +238,9 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
                 int a = *trianglespec++;
                 int b = *trianglespec++;
                 int c = *trianglespec++;
-                *ptris++ = weldmap[c];
-                *ptris++ = weldmap[b];
-                *ptris++ = weldmap[a];
+                *ptris++ = currinds[c];
+                *ptris++ = currinds[b];
+                *ptris++ = currinds[a];
                 ntris++;
             }
 
@@ -236,7 +248,7 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
             northwest = northeast;
             southwest = southeast;
             for (int i = 0; i < 8; i++) {
-                previnds[i] = weldmap[i];
+                previnds[i] = currinds[i];
                 vertsx[i] += normalized_cellsize;
             }
         }
