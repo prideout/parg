@@ -17,19 +17,42 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
     F(BIN_ISLAND, "msquares_island.1024.bin")
 ASSET_TABLE(PAR_TOKEN_DECLARE);
 
-enum { STATE_GRAY_SOURCE, STATE_COLOR_SOURCE, STATE_GRAY_MESH, STATE_COUNT };
+enum {
+    STATE_GRAY_SOURCE,
+    STATE_GRAY_MESH,
+    STATE_COLOR_SOURCE,
+    STATE_COLOR_MESH,
+    STATE_COUNT
+};
 
 #define CELLSIZE 32
 #define IMGWIDTH 1024
 #define IMGHEIGHT 1024
 
-int state = STATE_GRAY_MESH;
+int state = STATE_GRAY_SOURCE;
 Matrix4 projection;
 Matrix4 view;
-par_mesh* trimesh;
+par_mesh* trimesh = 0;
 par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
+par_buffer* graybuf;
+
+par_mesh* create_mesh()
+{
+    float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+    float threshold = 0;
+    int flags = 0;
+    par_msquares_meshlist* mlist = par_msquares_from_grayscale(
+        graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+    par_buffer_unlock(graybuf);
+    par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, 0);
+    printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
+    par_mesh* trimesh = par_mesh_create(
+        mesh->points, mesh->npoints, mesh->triangles, mesh->ntriangles);
+    par_msquares_free(mlist);
+    return trimesh;
+}
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -38,25 +61,9 @@ void init(float winwidth, float winheight, float pixratio)
     par_state_cullfaces(1);
     par_state_depthtest(1);
     par_shader_load_from_asset(SHADER_SIMPLE);
-
     colortex = par_texture_from_asset(TEXTURE_COLOR);
-
-    par_buffer* graybuf = par_buffer_from_asset(BIN_ISLAND);
+    graybuf = par_buffer_from_asset(BIN_ISLAND);
     graytex = par_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1);
-    float const* graydata = par_buffer_lock(graybuf, PAR_READ);
-    float threshold = 0;
-    int flags = 0;
-    par_msquares_meshlist* mlist = par_msquares_from_grayscale(
-        graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-    par_buffer_unlock(graybuf);
-    par_buffer_free(graybuf);
-
-    par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, 0);
-    printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
-    trimesh = par_mesh_create(
-        mesh->points, mesh->npoints, mesh->triangles, mesh->ntriangles);
-    par_msquares_free(mlist);
-
     const float h = 7.0f;
     const float w = h * winwidth / winheight;
     const float znear = 50;
@@ -71,22 +78,36 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
-    par_draw_clear();
-
-    Matrix4 model;
     int mesh = 0;
-
-    if (state == STATE_GRAY_SOURCE) {
+    switch (state) {
+    case STATE_GRAY_SOURCE:
         par_shader_bind(P_GRAY);
         par_texture_bind(graytex, 0);
-    } else if (state == STATE_GRAY_MESH) {
+        break;
+    case STATE_GRAY_MESH:
         mesh = 1;
         par_shader_bind(P_BLACK);
-    } else {
+        break;
+    case STATE_COLOR_SOURCE:
         par_shader_bind(P_COLOR);
         par_texture_bind(colortex, 0);
+        break;
+    case STATE_COLOR_MESH:
+        mesh = 1;
+        par_shader_bind(P_BLACK);
+        break;
+    default:
+        break;
     }
 
+    if (mesh && !trimesh) {
+        trimesh = create_mesh();
+    } else if (!mesh && trimesh) {
+        par_mesh_free(trimesh);
+        trimesh = 0;
+    }
+
+    Matrix4 model;
     if (mesh) {
         model = M4MakeScale(V3MakeFromElems(20, 20, 0));
         model = M4Mul(M4MakeTranslation(V3MakeFromElems(-10, -10, 0)), model);
@@ -98,7 +119,7 @@ void draw()
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_uniform_matrix4f(U_MVP, &mvp);
-
+    par_draw_clear();
     if (mesh) {
         par_varray_enable(
             par_mesh_coord(trimesh), A_POSITION, 3, PAR_FLOAT, 0, 0);
@@ -119,9 +140,12 @@ void dispose()
     par_shader_free(P_GRAY);
     par_shader_free(P_COLOR);
     par_mesh_free(rectmesh);
-    par_mesh_free(trimesh);
     par_texture_free(colortex);
     par_texture_free(graytex);
+    par_buffer_free(graybuf);
+    if (trimesh) {
+        par_mesh_free(trimesh);
+    }
 }
 
 void input(par_event evt, float code, float unused0, float unused1)

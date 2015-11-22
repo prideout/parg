@@ -283,17 +283,12 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
 
     free(prevrowmasks);
     free(prevrowinds);
-
     assert(npts <= maxpts);
     assert(ntris <= maxtris);
     mesh->npoints = npts;
     mesh->points = pts;
     mesh->ntriangles = ntris;
     mesh->triangles = tris;
-    for (int i = 0; i < 16; i++) {
-        free(point_table[i]);
-        free(triangle_table[i]);
-    }
     return mlist;
 }
 
