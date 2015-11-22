@@ -80,37 +80,21 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
 
     char const* CODE_TABLE =
         "0 0\n"
-        "- 0\n"
-        "1 3 0 1 7\n"
-        "- 1 0 1 7\n"
-        "2 3 1 2 3\n"
-        "- 1 1 2 3\n"
-        "3 4 0 2 3 7\n"
-        "- 2 0 2 3 3 7 0\n"
-        "4 3 5 6 7\n"
-        "- 1 7 5 6\n"
-        "5 4 0 1 5 6\n"
-        "- 2 0 1 5 5 6 0\n"
-        "6 6 1 2 3 5 6 7\n"
-        "- 2 1 2 3 7 5 6\n"
-        "7 5 0 2 3 5 6\n"
-        "- 3 0 2 3 0 3 5 0 5 6\n"
-        "8 3 3 4 5\n"
-        "- 1 3 4 5\n"
-        "9 6 0 1 7 3 4 5\n"
-        "- 2 0 1 7 3 4 5\n"
-        "a 4 1 2 4 5\n"
-        "- 2 1 2 4 4 5 1\n"
-        "b 5 0 2 4 5 7\n"
-        "- 3 0 2 4 0 4 5 0 5 7\n"
-        "c 4 3 4 6 7\n"
-        "- 2 7 3 4 4 6 7\n"
-        "d 5 0 1 3 4 6\n"
-        "- 3 0 1 3 0 3 4 0 4 6\n"
-        "e 6 1 2 3 4 6 7\n"
-        "- 3 1 2 4 1 4 6 1 6 7\n"
-        "f 4 0 2 4 6\n"
-        "- 2 0 2 4 4 6 0\n";
+        "1 1 0 1 7\n"
+        "2 1 1 2 3\n"
+        "3 2 0 2 3 3 7 0\n"
+        "4 1 7 5 6\n"
+        "5 2 0 1 5 5 6 0\n"
+        "6 2 1 2 3 7 5 6\n"
+        "7 3 0 2 3 0 3 5 0 5 6\n"
+        "8 1 3 4 5\n"
+        "9 2 0 1 7 3 4 5\n"
+        "a 2 1 2 4 4 5 1\n"
+        "b 3 0 2 4 0 4 5 0 5 7\n"
+        "c 2 7 3 4 4 6 7\n"
+        "d 3 0 1 3 0 3 4 0 4 6\n"
+        "e 3 1 2 4 1 4 6 1 6 7\n"
+        "f 2 0 2 4 4 6 0\n";
 
     int* point_table[16];
     int* triangle_table[16];
@@ -119,22 +103,22 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
         char code = *table_token;
         assert(i == code - (code >= 'a' ? ('a' - 0xa) : '0'));
         table_token += 2;
-        int npts = *table_token - '0';
-        table_token += 2;
-        int* sqrpts = point_table[i] = malloc((npts + 1) * sizeof(int));
-        sqrpts[0] = npts;
-        for (int j = 0; j < npts; j++, table_token += 2) {
-            sqrpts[j + 1] = *table_token - '0';
-        }
-        assert('-' == *table_token);
-        table_token += 2;
         int ntris = *table_token - '0';
         table_token += 2;
         int* sqrtris = triangle_table[i] =
                 malloc((ntris + 1) * 3 * sizeof(int));
         sqrtris[0] = ntris;
+        int mask = 0;
+        int* sqrpts = point_table[i] = malloc(7 * sizeof(int));
+        sqrpts[0] = 0;
         for (int j = 0; j < ntris * 3; j++, table_token += 2) {
-            sqrtris[j + 1] = *table_token - '0';
+            int midp = *table_token - '0';
+            int bit = 1 << midp;
+            if (!(mask & bit)) {
+                mask |= bit;
+                sqrpts[++sqrpts[0]] = midp;
+            }
+            sqrtris[j + 1] = midp;
         }
     }
 
