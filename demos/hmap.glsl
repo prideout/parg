@@ -1,6 +1,7 @@
 
 // @program p_color, vertex, color
 // @program p_gray, vertex, gray
+// @program p_black, vertex, black
 
 uniform mat4 u_mvp;
 varying vec2 v_texcoord;
@@ -35,6 +36,17 @@ uniform sampler2D img;
 void main()
 {
     vec4 texel = texture2D(img, v_texcoord);
+    #ifdef GRAY
     gl_FragColor.rgb = 0.5 * vec3(texel.a + 1.0);
+    #else
+    gl_FragColor.rgb = vec3(step(texel.a, 0.0));
+    #endif
     gl_FragColor.a = 1.0;
+}
+
+-- black
+
+void main()
+{
+    gl_FragColor = vec4(0, 0, 0, 1);
 }

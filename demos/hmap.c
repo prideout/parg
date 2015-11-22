@@ -1,9 +1,11 @@
 #include <par.h>
 #include <parwin.h>
+#include <stdio.h>
 
 #define TOKEN_TABLE(F)          \
     F(P_COLOR, "p_color")       \
     F(P_GRAY, "p_gray")         \
+    F(P_BLACK, "p_black")       \
     F(A_POSITION, "a_position") \
     F(A_TEXCOORD, "a_texcoord") \
     F(U_MVP, "u_mvp")
@@ -21,7 +23,7 @@ enum { STATE_GRAY_SOURCE, STATE_COLOR_SOURCE, STATE_GRAY_MESH, STATE_COUNT };
 #define IMGWIDTH 1024
 #define IMGHEIGHT 1024
 
-int state = STATE_GRAY_SOURCE;  // STATE_GRAY_MESH;
+int state = STATE_GRAY_MESH;
 Matrix4 projection;
 Matrix4 view;
 par_mesh* trimesh;
@@ -50,6 +52,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_buffer_free(graybuf);
 
     par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, 0);
+    printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
     trimesh = par_mesh_create(
         mesh->points, mesh->npoints, mesh->triangles, mesh->ntriangles);
     par_msquares_free(mlist);
@@ -78,8 +81,7 @@ void draw()
         par_texture_bind(graytex, 0);
     } else if (state == STATE_GRAY_MESH) {
         mesh = 1;
-        par_shader_bind(P_GRAY);
-        par_texture_bind(graytex, 0);
+        par_shader_bind(P_BLACK);
     } else {
         par_shader_bind(P_COLOR);
         par_texture_bind(colortex, 0);
