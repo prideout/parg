@@ -173,6 +173,8 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
     for (int i = 0; i < 8; i++) {
         vertsz[0] = 0;
     }
+    int* prevrowmasks = calloc(sizeof(int) * ncols, 1);
+    int* prevrowinds = calloc(sizeof(int) * ncols * 3, 1);
 
     // Do the march!
 
@@ -208,10 +210,17 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
             int ptspeclength = *pointspec++;
             int currinds[8] = {0};
             int mask = 0;
+            int prevrowmask = prevrowmasks[col];
             while (ptspeclength--) {
                 int midp = *pointspec++;
                 int bit = 1 << midp;
                 mask |= bit;
+
+                // The following six conditionals perform welding to reduce the
+                // number of vertices.  The first three perform welding with the
+                // cell to the west; the latter three perform welding with the
+                // cell to the north.
+
                 if (bit == 1 && (prevmask & 4)) {
                     currinds[midp] = previnds[2];
                     continue;
@@ -224,6 +233,18 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
                     currinds[midp] = previnds[4];
                     continue;
                 }
+                if (bit == 16 && (prevrowmask & 4)) {
+                    currinds[midp] = prevrowinds[col * 3 + 2];
+                    continue;
+                }
+                if (bit == 32 && (prevrowmask & 2)) {
+                    currinds[midp] = prevrowinds[col * 3 + 1];
+                    continue;
+                }
+                if (bit == 64 && (prevrowmask & 1)) {
+                    currinds[midp] = prevrowinds[col * 3 + 0];
+                    continue;
+                }
                 *ppts++ = vertsx[midp];
                 *ppts++ = vertsy[midp];
                 if (mesh->dim == 3) {
@@ -232,6 +253,7 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
                 currinds[midp] = npts++;
             }
 
+            // Add triangles.
             int const* trianglespec = triangle_table[code];
             int trispeclength = *trianglespec++;
             while (trispeclength--) {
@@ -244,6 +266,11 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
                 ntris++;
             }
 
+            // Prepare for the next cell.
+            prevrowmasks[col] = mask;
+            prevrowinds[col * 3 + 0] = currinds[0];
+            prevrowinds[col * 3 + 1] = currinds[1];
+            prevrowinds[col * 3 + 2] = currinds[2];
             prevmask = mask;
             northwest = northeast;
             southwest = southeast;
@@ -253,6 +280,9 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
             }
         }
     }
+
+    free(prevrowmasks);
+    free(prevrowinds);
 
     assert(npts <= maxpts);
     assert(ntris <= maxtris);
