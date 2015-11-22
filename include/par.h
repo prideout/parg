@@ -189,6 +189,7 @@ void par_framebuffer_free(par_framebuffer*);
 // MSQUARES
 
 typedef struct par_msquares_meshlist_s par_msquares_meshlist;
+typedef int (*par_msquares_fn)(int, void*);
 
 typedef struct {
     float* points;        // pointer to XY (or XYZ) vertex coordinates
@@ -215,6 +216,8 @@ par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
 par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
     int height, int cellsize, par_byte const* colors, int ncolors, int bpp,
     int flags);
+par_msquares_meshlist* par_msquares_from_function(int width,
+    int height, int cellsize, int flags, void* context, par_msquares_fn callback);
 par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
 int par_msquares_get_count(par_msquares_meshlist*);
 void par_msquares_free(par_msquares_meshlist*);
