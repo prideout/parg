@@ -215,12 +215,12 @@ par_msquares_meshlist* par_msquares_from_levels(float const* data, int width,
     int height, int cellsize, float const* thresholds, int nthresholds,
     int flags);
 par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
-    int height, int cellsize, par_byte color, int bpp, int flags);
+    int height, int cellsize, uint32_t color, int bpp, int flags);
 par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
-    int height, int cellsize, par_byte const* colors, int ncolors, int bpp,
+    int height, int cellsize, uint32_t const* colors, int ncolors, int bpp,
     int flags);
-par_msquares_meshlist* par_msquares_from_function(int width,
-    int height, int cellsize, int flags, void* context, par_msquares_fn callback);
+par_msquares_meshlist* par_msquares_from_function(int width, int height,
+    int cellsize, int flags, void* context, par_msquares_fn callback);
 par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
 int par_msquares_get_count(par_msquares_meshlist*);
 void par_msquares_free(par_msquares_meshlist*);

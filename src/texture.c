@@ -75,8 +75,8 @@ par_texture* par_texture_from_u8(
     char* rawdata = par_buffer_lock(buf, PAR_READ);
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, rawdata + byteoffset);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, rawdata + byteoffset);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

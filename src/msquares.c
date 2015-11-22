@@ -47,16 +47,16 @@ par_msquares_meshlist* par_msquares_from_levels(float const* data, int width,
     int flags);
 
 par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
-    int height, int cellsize, par_byte color, int bpp, int flags);
+    int height, int cellsize, uint32_t color, int bpp, int flags);
 
 par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
-    int height, int cellsize, par_byte const* colors, int ncolors, int bpp,
+    int height, int cellsize, uint32_t const* colors, int ncolors, int bpp,
     int flags);
 
 typedef int (*par_msquares_fn)(int, void*);
 
-par_msquares_meshlist* par_msquares_from_function(int width,
-    int height, int cellsize, int flags, void* context, par_msquares_fn callback);
+par_msquares_meshlist* par_msquares_from_function(int width, int height,
+    int cellsize, int flags, void* context, par_msquares_fn callback);
 
 par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
 
@@ -139,250 +139,37 @@ static int density_callback(int location, void* contextptr)
     return context->data[location] > context->threshold;
 }
 
-par_msquares_meshlist* par_msquares_from_function(int width,
-    int height, int cellsize, int flags, void* context, par_msquares_fn callback)
+typedef struct {
+    par_byte const* data;
+    par_byte color[4];
+    int bpp;
+} color_context;
+
+static int color_callback(int location, void* contextptr)
 {
-    assert(width > 0 && width % cellsize == 0);
-    assert(height > 0 && height % cellsize == 0);
-
-    // Create the two code tables if we haven't already.  These are tables of
-    // fixed constants, so it's embarassing that we use dynamic memory
-    // allocation for them.  However it's easy and it's one-time-only.
-
-    if (!point_table) {
-        init_tables();
-    }
-
-    // Allocate the meshlist and the first mesh.
-
-    par_msquares_meshlist* mlist = malloc(sizeof(par_msquares_meshlist));
-    mlist->nmeshes = 1;
-    mlist->meshes = malloc(sizeof(par_msquares_mesh*));
-    mlist->meshes[0] = malloc(sizeof(par_msquares_mesh));
-    par_msquares_mesh* mesh = mlist->meshes[0];
-    mesh->dim = 3;
-    int ncols = width / cellsize;
-    int nrows = height / cellsize;
-    int ncorners = (ncols + 1) * (nrows + 1);
-
-    // Worst case is three triangles and six verts per cell, so allocate that
-    // much.
-
-    int maxtris = ncols * nrows * 3;
-    uint16_t* tris = malloc(maxtris * 3 * sizeof(uint16_t));
-    int ntris = 0;
-    int maxpts = ncols * nrows * 6;
-    float* pts = malloc(maxpts * mesh->dim * sizeof(float));
-    int npts = 0;
-
-    // The "verts" x/y/z arrays are the 4 corners and 4 midpoints around the
-    // square,
-    // in counter-clockwise order.  The origin of "triangle space" is at the
-    // lower-left, although we expect the image data to be in raster order
-    // (starts at top-left).
-
-    float normalization = 1.0f / MAX(width, height);
-    float normalized_cellsize = cellsize * normalization;
-    int maxrow = (height - 1) * width;
-    uint16_t* ptris = tris;
-    float* ppts = pts;
-    float vertsx[8], vertsy[8], vertsz[8];
-    for (int i = 0; i < 8; i++) {
-        vertsz[0] = 0;
-    }
-    int* prevrowmasks = calloc(sizeof(int) * ncols, 1);
-    int* prevrowinds = calloc(sizeof(int) * ncols * 3, 1);
-
-    // Do the march!
-
-    for (int row = 0; row < nrows; row++) {
-        vertsx[0] = vertsx[6] = vertsx[7] = 0;
-        vertsx[1] = vertsx[5] = 0.5 * normalized_cellsize;
-        vertsx[2] = vertsx[3] = vertsx[4] = normalized_cellsize;
-        vertsy[0] = vertsy[1] = vertsy[2] = normalized_cellsize * (row + 1);
-        vertsy[4] = vertsy[5] = vertsy[6] = normalized_cellsize * row;
-        vertsy[3] = vertsy[7] = normalized_cellsize * (row + 0.5);
-
-        int northi = row * cellsize * width;
-        int southi = MIN(northi + cellsize * width, maxrow);
-        int northwest = callback(northi, context);
-        int southwest = callback(southi, context);
-        int previnds[8] = {0};
-        int prevmask = 0;
-
-        for (int col = 0; col < ncols; col++) {
-            northi += cellsize;
-            southi += cellsize;
-            if (col == ncols - 1) {
-                northi--;
-                southi--;
-            }
-
-            int northeast = callback(northi, context);
-            int southeast = callback(southi, context);
-            int code = southwest | (southeast << 1) | (northwest << 2) |
-                (northeast << 3);
-
-            int const* pointspec = point_table[code];
-            int ptspeclength = *pointspec++;
-            int currinds[8] = {0};
-            int mask = 0;
-            int prevrowmask = prevrowmasks[col];
-            while (ptspeclength--) {
-                int midp = *pointspec++;
-                int bit = 1 << midp;
-                mask |= bit;
-
-                // The following six conditionals perform welding to reduce the
-                // number of vertices.  The first three perform welding with the
-                // cell to the west; the latter three perform welding with the
-                // cell to the north.
-
-                if (bit == 1 && (prevmask & 4)) {
-                    currinds[midp] = previnds[2];
-                    continue;
-                }
-                if (bit == 128 && (prevmask & 8)) {
-                    currinds[midp] = previnds[3];
-                    continue;
-                }
-                if (bit == 64 && (prevmask & 16)) {
-                    currinds[midp] = previnds[4];
-                    continue;
-                }
-                if (bit == 16 && (prevrowmask & 4)) {
-                    currinds[midp] = prevrowinds[col * 3 + 2];
-                    continue;
-                }
-                if (bit == 32 && (prevrowmask & 2)) {
-                    currinds[midp] = prevrowinds[col * 3 + 1];
-                    continue;
-                }
-                if (bit == 64 && (prevrowmask & 1)) {
-                    currinds[midp] = prevrowinds[col * 3 + 0];
-                    continue;
-                }
-
-                ppts[0] = vertsx[midp];
-                ppts[1] = vertsy[midp];
-                if (mesh->dim == 3) {
-                    ppts[2] = vertsz[midp];
-                }
-
-                // Adjust the midpoints to a more exact crossing point.
-
-                int begin, end, inc;
-                if (midp == 1) {
-                    if (southeast) {
-                        begin = southi - 1;
-                        end = southi - cellsize;
-                        inc = -1;
-                    } else {
-                        begin = southi - cellsize + 1;
-                        end = southi;
-                        inc = 1;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = callback(i, context);
-                        if (!inside) {
-                            ppts[0] = normalization * (col * cellsize + i - southi + cellsize);
-                            break;
-                        }
-                    }
-                } else if (midp == 5) {
-                    if (northeast) {
-                        begin = northi - 1;
-                        end = northi - cellsize;
-                        inc = -1;
-                    } else {
-                        begin = northi - cellsize + 1;
-                        end = northi;
-                        inc = 1;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = callback(i, context);
-                        if (!inside) {
-                            ppts[0] = normalization * (col * cellsize + i - northi + cellsize);
-                            break;
-                        }
-                    }
-                } else if (midp == 3) {
-                    if (northeast) {
-                        begin = northi + width;
-                        end = southi - width;
-                        inc = width;
-                    } else {
-                        begin = southi - width;
-                        end = northi + width;
-                        inc = -width;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = callback(i, context);
-                        if (!inside) {
-                            ppts[1] = normalization * (row * cellsize + (i - northi) / (float) width);
-                            break;
-                        }
-                    }
-                } else if (midp == 7) {
-                    if (northwest) {
-                        begin = northi + width - cellsize;
-                        end = southi - width - cellsize;
-                        inc = width;
-                    } else {
-                        begin = southi - width - cellsize;
-                        end = northi + width - cellsize;
-                        inc = -width;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = callback(i, context);
-                        if (!inside) {
-                            ppts[1] = normalization * (row * cellsize + (i - northi - cellsize) / (float) width);
-                            break;
-                        }
-                    }
-                }
-
-                ppts += mesh->dim;
-                currinds[midp] = npts++;
-            }
-
-            // Add triangles.
-            int const* trianglespec = triangle_table[code];
-            int trispeclength = *trianglespec++;
-            while (trispeclength--) {
-                int a = *trianglespec++;
-                int b = *trianglespec++;
-                int c = *trianglespec++;
-                *ptris++ = currinds[c];
-                *ptris++ = currinds[b];
-                *ptris++ = currinds[a];
-                ntris++;
-            }
-
-            // Prepare for the next cell.
-            prevrowmasks[col] = mask;
-            prevrowinds[col * 3 + 0] = currinds[0];
-            prevrowinds[col * 3 + 1] = currinds[1];
-            prevrowinds[col * 3 + 2] = currinds[2];
-            prevmask = mask;
-            northwest = northeast;
-            southwest = southeast;
-            for (int i = 0; i < 8; i++) {
-                previnds[i] = currinds[i];
-                vertsx[i] += normalized_cellsize;
-            }
+    color_context* context = (color_context*) contextptr;
+    int bpp = context->bpp;
+    par_byte const* data = context->data + location * context->bpp;
+    for (int i = 0; i < context->bpp; i++) {
+        if (data[i] != context->color[i]) {
+            return 0;
         }
     }
+    return 1;
+}
 
-    free(prevrowmasks);
-    free(prevrowinds);
-    assert(npts <= maxpts);
-    assert(ntris <= maxtris);
-    mesh->npoints = npts;
-    mesh->points = pts;
-    mesh->ntriangles = ntris;
-    mesh->triangles = tris;
-    return mlist;
+par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
+    int height, int cellsize, uint32_t color, int bpp, int flags)
+{
+    color_context context;
+    context.bpp = bpp;
+    context.color[0] = (color >> 16) & 0xff;
+    context.color[1] = (color >> 8) & 0xff;
+    context.color[2] = (color & 0xff);
+    context.color[3] = (color >> 24) & 0xff;
+    context.data = data;
+    return par_msquares_from_function(
+        width, height, cellsize, flags, &context, color_callback);
 }
 
 par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
@@ -391,253 +178,8 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
     density_context context;
     context.data = data;
     context.threshold = threshold;
-    return par_msquares_from_function(width, height, cellsize, flags, &context,
-        density_callback);
-
-#if 0
-
-    assert(width > 0 && width % cellsize == 0);
-    assert(height > 0 && height % cellsize == 0);
-
-    // Create the two code tables if we haven't already.  These are tables of
-    // fixed constants, so it's embarassing that we use dynamic memory
-    // allocation for them.  However it's easy and it's one-time-only.
-
-    if (!point_table) {
-        init_tables();
-    }
-
-    // Allocate the meshlist and the first mesh.
-
-    par_msquares_meshlist* mlist = malloc(sizeof(par_msquares_meshlist));
-    mlist->nmeshes = 1;
-    mlist->meshes = malloc(sizeof(par_msquares_mesh*));
-    mlist->meshes[0] = malloc(sizeof(par_msquares_mesh));
-    par_msquares_mesh* mesh = mlist->meshes[0];
-    mesh->dim = 3;
-    int ncols = width / cellsize;
-    int nrows = height / cellsize;
-    int ncorners = (ncols + 1) * (nrows + 1);
-
-    // Worst case is three triangles and six verts per cell, so allocate that
-    // much.
-
-    int maxtris = ncols * nrows * 3;
-    uint16_t* tris = malloc(maxtris * 3 * sizeof(uint16_t));
-    int ntris = 0;
-    int maxpts = ncols * nrows * 6;
-    float* pts = malloc(maxpts * mesh->dim * sizeof(float));
-    int npts = 0;
-
-    // The "verts" x/y/z arrays are the 4 corners and 4 midpoints around the
-    // square,
-    // in counter-clockwise order.  The origin of "triangle space" is at the
-    // lower-left, although we expect the image data to be in raster order
-    // (starts at top-left).
-
-    float normalization = 1.0f / MAX(width, height);
-    float normalized_cellsize = cellsize * normalization;
-    int maxrow = (height - 1) * width;
-    uint16_t* ptris = tris;
-    float* ppts = pts;
-    float vertsx[8], vertsy[8], vertsz[8];
-    for (int i = 0; i < 8; i++) {
-        vertsz[0] = 0;
-    }
-    int* prevrowmasks = calloc(sizeof(int) * ncols, 1);
-    int* prevrowinds = calloc(sizeof(int) * ncols * 3, 1);
-
-    // Do the march!
-
-    for (int row = 0; row < nrows; row++) {
-        vertsx[0] = vertsx[6] = vertsx[7] = 0;
-        vertsx[1] = vertsx[5] = 0.5 * normalized_cellsize;
-        vertsx[2] = vertsx[3] = vertsx[4] = normalized_cellsize;
-        vertsy[0] = vertsy[1] = vertsy[2] = normalized_cellsize * (row + 1);
-        vertsy[4] = vertsy[5] = vertsy[6] = normalized_cellsize * row;
-        vertsy[3] = vertsy[7] = normalized_cellsize * (row + 0.5);
-
-        int northi = row * cellsize * width;
-        int southi = MIN(northi + cellsize * width, maxrow);
-        int northwest = data[northi] > threshold;
-        int southwest = data[southi] > threshold;
-        int previnds[8] = {0};
-        int prevmask = 0;
-
-        for (int col = 0; col < ncols; col++) {
-            northi += cellsize;
-            southi += cellsize;
-            if (col == ncols - 1) {
-                northi--;
-                southi--;
-            }
-
-            int northeast = data[northi] > threshold;
-            int southeast = data[southi] > threshold;
-            int code = southwest | (southeast << 1) | (northwest << 2) |
-                (northeast << 3);
-
-            int const* pointspec = point_table[code];
-            int ptspeclength = *pointspec++;
-            int currinds[8] = {0};
-            int mask = 0;
-            int prevrowmask = prevrowmasks[col];
-            while (ptspeclength--) {
-                int midp = *pointspec++;
-                int bit = 1 << midp;
-                mask |= bit;
-
-                // The following six conditionals perform welding to reduce the
-                // number of vertices.  The first three perform welding with the
-                // cell to the west; the latter three perform welding with the
-                // cell to the north.
-
-                if (bit == 1 && (prevmask & 4)) {
-                    currinds[midp] = previnds[2];
-                    continue;
-                }
-                if (bit == 128 && (prevmask & 8)) {
-                    currinds[midp] = previnds[3];
-                    continue;
-                }
-                if (bit == 64 && (prevmask & 16)) {
-                    currinds[midp] = previnds[4];
-                    continue;
-                }
-                if (bit == 16 && (prevrowmask & 4)) {
-                    currinds[midp] = prevrowinds[col * 3 + 2];
-                    continue;
-                }
-                if (bit == 32 && (prevrowmask & 2)) {
-                    currinds[midp] = prevrowinds[col * 3 + 1];
-                    continue;
-                }
-                if (bit == 64 && (prevrowmask & 1)) {
-                    currinds[midp] = prevrowinds[col * 3 + 0];
-                    continue;
-                }
-
-                ppts[0] = vertsx[midp];
-                ppts[1] = vertsy[midp];
-                if (mesh->dim == 3) {
-                    ppts[2] = vertsz[midp];
-                }
-
-                // Adjust the midpoints to a more exact crossing point.
-
-                int begin, end, inc;
-                if (midp == 1) {
-                    if (southeast) {
-                        begin = southi - 1;
-                        end = southi - cellsize;
-                        inc = -1;
-                    } else {
-                        begin = southi - cellsize + 1;
-                        end = southi;
-                        inc = 1;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = data[i] > threshold;
-                        if (!inside) {
-                            ppts[0] = normalization * (col * cellsize + i - southi + cellsize);
-                            break;
-                        }
-                    }
-                } else if (midp == 5) {
-                    if (northeast) {
-                        begin = northi - 1;
-                        end = northi - cellsize;
-                        inc = -1;
-                    } else {
-                        begin = northi - cellsize + 1;
-                        end = northi;
-                        inc = 1;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = data[i] > threshold;
-                        if (!inside) {
-                            ppts[0] = normalization * (col * cellsize + i - northi + cellsize);
-                            break;
-                        }
-                    }
-                } else if (midp == 3) {
-                    if (northeast) {
-                        begin = northi + width;
-                        end = southi - width;
-                        inc = width;
-                    } else {
-                        begin = southi - width;
-                        end = northi + width;
-                        inc = -width;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = data[i] > threshold;
-                        if (!inside) {
-                            ppts[1] = normalization * (row * cellsize + (i - northi) / (float) width);
-                            break;
-                        }
-                    }
-                } else if (midp == 7) {
-                    if (northwest) {
-                        begin = northi + width - cellsize;
-                        end = southi - width - cellsize;
-                        inc = width;
-                    } else {
-                        begin = southi - width - cellsize;
-                        end = northi + width - cellsize;
-                        inc = -width;
-                    }
-                    for (int i = begin; i != end; i += inc) {
-                        int inside = data[i] > threshold;
-                        if (!inside) {
-                            ppts[1] = normalization * (row * cellsize + (i - northi - cellsize) / (float) width);
-                            break;
-                        }
-                    }
-                }
-
-                ppts += mesh->dim;
-                currinds[midp] = npts++;
-            }
-
-            // Add triangles.
-            int const* trianglespec = triangle_table[code];
-            int trispeclength = *trianglespec++;
-            while (trispeclength--) {
-                int a = *trianglespec++;
-                int b = *trianglespec++;
-                int c = *trianglespec++;
-                *ptris++ = currinds[c];
-                *ptris++ = currinds[b];
-                *ptris++ = currinds[a];
-                ntris++;
-            }
-
-            // Prepare for the next cell.
-            prevrowmasks[col] = mask;
-            prevrowinds[col * 3 + 0] = currinds[0];
-            prevrowinds[col * 3 + 1] = currinds[1];
-            prevrowinds[col * 3 + 2] = currinds[2];
-            prevmask = mask;
-            northwest = northeast;
-            southwest = southeast;
-            for (int i = 0; i < 8; i++) {
-                previnds[i] = currinds[i];
-                vertsx[i] += normalized_cellsize;
-            }
-        }
-    }
-
-    free(prevrowmasks);
-    free(prevrowinds);
-    assert(npts <= maxpts);
-    assert(ntris <= maxtris);
-    mesh->npoints = npts;
-    mesh->points = pts;
-    mesh->ntriangles = ntris;
-    mesh->triangles = tris;
-    return mlist;
-    #endif
+    return par_msquares_from_function(
+        width, height, cellsize, flags, &context, density_callback);
 }
 
 par_msquares_mesh* par_msquares_get_mesh(
@@ -663,4 +205,258 @@ void par_msquares_free(par_msquares_meshlist* mlist)
     }
     free(meshes);
     free(mlist);
+}
+
+par_msquares_meshlist* par_msquares_from_function(int width, int height,
+    int cellsize, int flags, void* context, par_msquares_fn callback)
+{
+    assert(width > 0 && width % cellsize == 0);
+    assert(height > 0 && height % cellsize == 0);
+    int invert = flags & PAR_MSQUARES_INVERT;
+
+    // Create the two code tables if we haven't already.  These are tables of
+    // fixed constants, so it's embarassing that we use dynamic memory
+    // allocation for them.  However it's easy and it's one-time-only.
+
+    if (!point_table) {
+        init_tables();
+    }
+
+    // Allocate the meshlist and the first mesh.
+
+    par_msquares_meshlist* mlist = malloc(sizeof(par_msquares_meshlist));
+    mlist->nmeshes = 1;
+    mlist->meshes = malloc(sizeof(par_msquares_mesh*));
+    mlist->meshes[0] = malloc(sizeof(par_msquares_mesh));
+    par_msquares_mesh* mesh = mlist->meshes[0];
+    mesh->dim = 3;
+    int ncols = width / cellsize;
+    int nrows = height / cellsize;
+    int ncorners = (ncols + 1) * (nrows + 1);
+
+    // Worst case is three triangles and six verts per cell, so allocate that
+    // much.
+
+    int maxtris = ncols * nrows * 3;
+    uint16_t* tris = malloc(maxtris * 3 * sizeof(uint16_t));
+    int ntris = 0;
+    int maxpts = ncols * nrows * 6;
+    float* pts = malloc(maxpts * mesh->dim * sizeof(float));
+    int npts = 0;
+
+    // The "verts" x/y/z arrays are the 4 corners and 4 midpoints around the
+    // square,
+    // in counter-clockwise order.  The origin of "triangle space" is at the
+    // lower-left, although we expect the image data to be in raster order
+    // (starts at top-left).
+
+    float normalization = 1.0f / MAX(width, height);
+    float normalized_cellsize = cellsize * normalization;
+    int maxrow = (height - 1) * width;
+    uint16_t* ptris = tris;
+    float* ppts = pts;
+    float vertsx[8], vertsy[8], vertsz[8];
+    for (int i = 0; i < 8; i++) {
+        vertsz[0] = 0;
+    }
+    int* prevrowmasks = calloc(sizeof(int) * ncols, 1);
+    int* prevrowinds = calloc(sizeof(int) * ncols * 3, 1);
+
+    // Do the march!
+
+    for (int row = 0; row < nrows; row++) {
+        vertsx[0] = vertsx[6] = vertsx[7] = 0;
+        vertsx[1] = vertsx[5] = 0.5 * normalized_cellsize;
+        vertsx[2] = vertsx[3] = vertsx[4] = normalized_cellsize;
+        vertsy[0] = vertsy[1] = vertsy[2] = normalized_cellsize * (row + 1);
+        vertsy[4] = vertsy[5] = vertsy[6] = normalized_cellsize * row;
+        vertsy[3] = vertsy[7] = normalized_cellsize * (row + 0.5);
+
+        int northi = row * cellsize * width;
+        int southi = MIN(northi + cellsize * width, maxrow);
+        int northwest = invert ^ callback(northi, context);
+        int southwest = invert ^ callback(southi, context);
+        int previnds[8] = {0};
+        int prevmask = 0;
+
+        for (int col = 0; col < ncols; col++) {
+            northi += cellsize;
+            southi += cellsize;
+            if (col == ncols - 1) {
+                northi--;
+                southi--;
+            }
+
+            int northeast = invert ^ callback(northi, context);
+            int southeast = invert ^ callback(southi, context);
+            int code = southwest | (southeast << 1) | (northwest << 2) |
+                (northeast << 3);
+
+            int const* pointspec = point_table[code];
+            int ptspeclength = *pointspec++;
+            int currinds[8] = {0};
+            int mask = 0;
+            int prevrowmask = prevrowmasks[col];
+            while (ptspeclength--) {
+                int midp = *pointspec++;
+                int bit = 1 << midp;
+                mask |= bit;
+
+                // The following six conditionals perform welding to reduce the
+                // number of vertices.  The first three perform welding with the
+                // cell to the west; the latter three perform welding with the
+                // cell to the north.
+
+                if (bit == 1 && (prevmask & 4)) {
+                    currinds[midp] = previnds[2];
+                    continue;
+                }
+                if (bit == 128 && (prevmask & 8)) {
+                    currinds[midp] = previnds[3];
+                    continue;
+                }
+                if (bit == 64 && (prevmask & 16)) {
+                    currinds[midp] = previnds[4];
+                    continue;
+                }
+                if (bit == 16 && (prevrowmask & 4)) {
+                    currinds[midp] = prevrowinds[col * 3 + 2];
+                    continue;
+                }
+                if (bit == 32 && (prevrowmask & 2)) {
+                    currinds[midp] = prevrowinds[col * 3 + 1];
+                    continue;
+                }
+                if (bit == 64 && (prevrowmask & 1)) {
+                    currinds[midp] = prevrowinds[col * 3 + 0];
+                    continue;
+                }
+
+                ppts[0] = vertsx[midp];
+                ppts[1] = vertsy[midp];
+                if (mesh->dim == 3) {
+                    ppts[2] = vertsz[midp];
+                }
+
+                // Adjust the midpoints to a more exact crossing point.
+
+                int begin, end, inc;
+                if (midp == 1) {
+                    if (southeast) {
+                        begin = southi - 1;
+                        end = southi - cellsize;
+                        inc = -1;
+                    } else {
+                        begin = southi - cellsize + 1;
+                        end = southi;
+                        inc = 1;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = invert ^ callback(i, context);
+                        if (!inside) {
+                            ppts[0] = normalization *
+                                (col * cellsize + i - southi + cellsize);
+                            break;
+                        }
+                    }
+                } else if (midp == 5) {
+                    if (northeast) {
+                        begin = northi - 1;
+                        end = northi - cellsize;
+                        inc = -1;
+                    } else {
+                        begin = northi - cellsize + 1;
+                        end = northi;
+                        inc = 1;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = invert ^ callback(i, context);
+                        if (!inside) {
+                            ppts[0] = normalization *
+                                (col * cellsize + i - northi + cellsize);
+                            break;
+                        }
+                    }
+                } else if (midp == 3) {
+                    if (northeast) {
+                        begin = northi + width;
+                        end = southi - width;
+                        inc = width;
+                    } else {
+                        begin = southi - width;
+                        end = northi + width;
+                        inc = -width;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = invert ^ callback(i, context);
+                        if (!inside) {
+                            ppts[1] =
+                                normalization *
+                                (row * cellsize + (i - northi) / (float) width);
+                            break;
+                        }
+                    }
+                } else if (midp == 7) {
+                    if (northwest) {
+                        begin = northi + width - cellsize;
+                        end = southi - width - cellsize;
+                        inc = width;
+                    } else {
+                        begin = southi - width - cellsize;
+                        end = northi + width - cellsize;
+                        inc = -width;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = invert ^ callback(i, context);
+                        if (!inside) {
+                            ppts[1] =
+                                normalization *
+                                (row * cellsize +
+                                (i - northi - cellsize) / (float) width);
+                            break;
+                        }
+                    }
+                }
+
+                ppts += mesh->dim;
+                currinds[midp] = npts++;
+            }
+
+            // Add triangles.
+            int const* trianglespec = triangle_table[code];
+            int trispeclength = *trianglespec++;
+            while (trispeclength--) {
+                int a = *trianglespec++;
+                int b = *trianglespec++;
+                int c = *trianglespec++;
+                *ptris++ = currinds[c];
+                *ptris++ = currinds[b];
+                *ptris++ = currinds[a];
+                ntris++;
+            }
+
+            // Prepare for the next cell.
+            prevrowmasks[col] = mask;
+            prevrowinds[col * 3 + 0] = currinds[0];
+            prevrowinds[col * 3 + 1] = currinds[1];
+            prevrowinds[col * 3 + 2] = currinds[2];
+            prevmask = mask;
+            northwest = northeast;
+            southwest = southeast;
+            for (int i = 0; i < 8; i++) {
+                previnds[i] = currinds[i];
+                vertsx[i] += normalized_cellsize;
+            }
+        }
+    }
+
+    free(prevrowmasks);
+    free(prevrowinds);
+    assert(npts <= maxpts);
+    assert(ntris <= maxtris);
+    mesh->npoints = npts;
+    mesh->points = pts;
+    mesh->ntriangles = ntris;
+    mesh->triangles = tris;
+    return mlist;
 }

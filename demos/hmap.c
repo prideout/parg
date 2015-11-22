@@ -41,12 +41,22 @@ par_buffer* colorbuf;
 
 par_mesh* create_mesh()
 {
-    float const* graydata = par_buffer_lock(graybuf, PAR_READ);
-    float threshold = 0;
-    int flags = 0;
-    par_msquares_meshlist* mlist = par_msquares_from_grayscale(
-        graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-    par_buffer_unlock(graybuf);
+    par_msquares_meshlist* mlist;
+    if (state == STATE_GRAY_MESH) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float threshold = 0;
+        int flags = 0;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else {
+        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        rgbadata += sizeof(int) * 3;
+        int flags = PAR_MSQUARES_INVERT;
+        mlist = par_msquares_from_color(
+            rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
+        par_buffer_unlock(colorbuf);
+    }
     par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, 0);
     printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
     par_mesh* trimesh = par_mesh_create(
@@ -70,7 +80,8 @@ void init(float winwidth, float winheight, float pixratio)
     int ncomps = *rawdata++;
     par_buffer_unlock(colorbuf);
 
-    colortex = par_texture_from_u8(colorbuf, width, height, ncomps, 3 * sizeof(int));
+    colortex =
+        par_texture_from_u8(colorbuf, width, height, ncomps, 3 * sizeof(int));
     graybuf = par_buffer_from_asset(BIN_ISLAND);
     graytex = par_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1, 0);
     const float h = 7.0f;
