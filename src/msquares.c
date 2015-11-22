@@ -165,7 +165,8 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
     // lower-left, although we expect the image data to be in raster order
     // (starts at top-left).
 
-    float normalized_cellsize = (float) cellsize / MAX(width, height);
+    float normalization = 1.0f / MAX(width, height);
+    float normalized_cellsize = cellsize * normalization;
     int maxrow = (height - 1) * width;
     uint16_t* ptris = tris;
     float* ppts = pts;
@@ -245,11 +246,87 @@ par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
                     currinds[midp] = prevrowinds[col * 3 + 0];
                     continue;
                 }
-                *ppts++ = vertsx[midp];
-                *ppts++ = vertsy[midp];
+
+                ppts[0] = vertsx[midp];
+                ppts[1] = vertsy[midp];
                 if (mesh->dim == 3) {
-                    *ppts++ = vertsz[midp];
+                    ppts[2] = vertsz[midp];
                 }
+
+                // Adjust the midpoints to a more exact crossing point.
+
+                int begin, end, inc;
+                if (midp == 1) {
+                    if (southeast) {
+                        begin = southi - 1;
+                        end = southi - cellsize;
+                        inc = -1;
+                    } else {
+                        begin = southi - cellsize + 1;
+                        end = southi;
+                        inc = 1;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = data[i] > threshold;
+                        if (!inside) {
+                            ppts[0] = normalization * (col * cellsize + i - southi + cellsize);
+                            break;
+                        }
+                    }
+                } else if (midp == 5) {
+                    if (northeast) {
+                        begin = northi - 1;
+                        end = northi - cellsize;
+                        inc = -1;
+                    } else {
+                        begin = northi - cellsize + 1;
+                        end = northi;
+                        inc = 1;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = data[i] > threshold;
+                        if (!inside) {
+                            ppts[0] = normalization * (col * cellsize + i - northi + cellsize);
+                            break;
+                        }
+                    }
+                } else if (midp == 3) {
+                    if (northeast) {
+                        begin = northi + width;
+                        end = southi - width;
+                        inc = width;
+                    } else {
+                        begin = southi - width;
+                        end = northi + width;
+                        inc = -width;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = data[i] > threshold;
+                        if (!inside) {
+                            ppts[1] = normalization * (row * cellsize + (i - northi) / (float) width);
+                            break;
+                        }
+                    }
+                } else if (midp == 7) {
+                    if (northwest) {
+                        begin = northi + width - cellsize;
+                        end = southi - width - cellsize;
+                        inc = width;
+                    } else {
+                        begin = southi - width - cellsize;
+                        end = northi + width - cellsize;
+                        inc = -width;
+                    }
+                    for (int i = begin; i != end; i += inc) {
+                        int inside = data[i] > threshold;
+                        if (!inside) {
+                            ppts[1] = normalization * (row * cellsize + (i - northi - cellsize) / (float) width);
+                            break;
+                        }
+                    }
+                }
+
+                ppts += mesh->dim;
                 currinds[midp] = npts++;
             }
 
