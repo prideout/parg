@@ -257,7 +257,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
     float* ppts = pts;
     float vertsx[8], vertsy[8], vertsz[8];
     for (int i = 0; i < 8; i++) {
-        vertsz[0] = 0;
+        vertsz[i] = 0;
     }
     int* prevrowmasks = calloc(sizeof(int) * ncols, 1);
     int* prevrowinds = calloc(sizeof(int) * ncols * 3, 1);
