@@ -132,14 +132,15 @@ void draw()
     case STATE_GRAY_MESH:
         mesh = 1;
         par_shader_bind(P_GRAYMESH);
+        par_texture_bind(colortex, 0);
         break;
     case STATE_COLOR_SOURCE:
         par_shader_bind(P_COLOR);
-        par_texture_bind(colortex, 0);
         break;
     case STATE_COLOR_MESH:
         mesh = 1;
         par_shader_bind(P_COLORMESH);
+        par_texture_bind(colortex, 0);
         break;
     default:
         break;
