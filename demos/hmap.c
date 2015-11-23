@@ -64,9 +64,8 @@ par_mesh* create_mesh()
     printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
 
     // mquares_mesh might have dimensionality of 2 or 3, while par_mesh only
-    // supports
-    // the latter.  So, we potentially need to expand the data from vec2 to
-    // vec3.
+    // supports the latter.  So, we potentially need to expand the data from
+    // vec2 to vec3.
 
     float* points = mesh->points;
     if (mesh->dim == 2) {
