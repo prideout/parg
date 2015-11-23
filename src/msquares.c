@@ -53,10 +53,12 @@ par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
     int height, int cellsize, uint32_t const* colors, int ncolors, int bpp,
     int flags);
 
-typedef int (*par_msquares_fn)(int, void*);
+typedef int (*par_msquares_inside_fn)(int, void*);
+typedef float (*par_msquares_height_fn)(float, float, void*);
 
 par_msquares_meshlist* par_msquares_from_function(int width, int height,
-    int cellsize, int flags, void* context, par_msquares_fn callback);
+    int cellsize, int flags, void* context, par_msquares_inside_fn insidefn,
+    par_msquares_height_fn heightfn);
 
 par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
 
@@ -131,21 +133,33 @@ void init_tables()
 typedef struct {
     float const* data;
     float threshold;
-} density_context;
+    int width;
+    int height;
+} gray_context;
 
-static int density_callback(int location, void* contextptr)
+static int gray_inside(int location, void* contextptr)
 {
-    density_context* context = (density_context*) contextptr;
+    gray_context* context = (gray_context*) contextptr;
     return context->data[location] > context->threshold;
+}
+
+static float gray_height(float x, float y, void* contextptr)
+{
+    gray_context* context = (gray_context*) contextptr;
+    int i = CLAMP(context->width * x, 0, context->width - 1);
+    int j = CLAMP(context->height * y, 0, context->height - 1);
+    return context->data[i + j * context->width];
 }
 
 typedef struct {
     par_byte const* data;
     par_byte color[4];
     int bpp;
+    int width;
+    int height;
 } color_context;
 
-static int color_callback(int location, void* contextptr)
+static int color_inside(int location, void* contextptr)
 {
     color_context* context = (color_context*) contextptr;
     int bpp = context->bpp;
@@ -158,6 +172,16 @@ static int color_callback(int location, void* contextptr)
     return 1;
 }
 
+static float color_height(float x, float y, void* contextptr)
+{
+    color_context* context = (color_context*) contextptr;
+    assert(context->bpp == 4);
+    int i = CLAMP(context->width * x, 0, context->width - 1);
+    int j = CLAMP(context->height * y, 0, context->height - 1);
+    int k = i + j * context->width;
+    return context->data[k * 4 + 3] / 255.0;
+}
+
 par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
     int height, int cellsize, uint32_t color, int bpp, int flags)
 {
@@ -168,18 +192,22 @@ par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
     context.color[2] = (color & 0xff);
     context.color[3] = (color >> 24) & 0xff;
     context.data = data;
+    context.width = width;
+    context.height = height;
     return par_msquares_from_function(
-        width, height, cellsize, flags, &context, color_callback);
+        width, height, cellsize, flags, &context, color_inside, color_height);
 }
 
 par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
     int height, int cellsize, float threshold, int flags)
 {
-    density_context context;
+    gray_context context;
+    context.width = width;
+    context.height = height;
     context.data = data;
     context.threshold = threshold;
     return par_msquares_from_function(
-        width, height, cellsize, flags, &context, density_callback);
+        width, height, cellsize, flags, &context, gray_inside, gray_height);
 }
 
 par_msquares_mesh* par_msquares_get_mesh(
@@ -208,7 +236,8 @@ void par_msquares_free(par_msquares_meshlist* mlist)
 }
 
 par_msquares_meshlist* par_msquares_from_function(int width, int height,
-    int cellsize, int flags, void* context, par_msquares_fn callback)
+    int cellsize, int flags, void* context, par_msquares_inside_fn insidefn,
+    par_msquares_height_fn heightfn)
 {
     assert(width > 0 && width % cellsize == 0);
     assert(height > 0 && height % cellsize == 0);
@@ -229,7 +258,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
     mlist->meshes = malloc(sizeof(par_msquares_mesh*));
     mlist->meshes[0] = malloc(sizeof(par_msquares_mesh));
     par_msquares_mesh* mesh = mlist->meshes[0];
-    mesh->dim = 3;
+    mesh->dim = (flags & PAR_MSQUARES_HEIGHTS) ? 3 : 2;
     int ncols = width / cellsize;
     int nrows = height / cellsize;
     int ncorners = (ncols + 1) * (nrows + 1);
@@ -255,10 +284,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
     int maxrow = (height - 1) * width;
     uint16_t* ptris = tris;
     float* ppts = pts;
-    float vertsx[8], vertsy[8], vertsz[8];
-    for (int i = 0; i < 8; i++) {
-        vertsz[i] = 0;
-    }
+    float vertsx[8], vertsy[8];
     int* prevrowmasks = calloc(sizeof(int) * ncols, 1);
     int* prevrowinds = calloc(sizeof(int) * ncols * 3, 1);
 
@@ -274,8 +300,8 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
 
         int northi = row * cellsize * width;
         int southi = MIN(northi + cellsize * width, maxrow);
-        int northwest = invert ^ callback(northi, context);
-        int southwest = invert ^ callback(southi, context);
+        int northwest = invert ^ insidefn(northi, context);
+        int southwest = invert ^ insidefn(southi, context);
         int previnds[8] = {0};
         int prevmask = 0;
 
@@ -287,8 +313,8 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
                 southi--;
             }
 
-            int northeast = invert ^ callback(northi, context);
-            int southeast = invert ^ callback(southi, context);
+            int northeast = invert ^ insidefn(northi, context);
+            int southeast = invert ^ insidefn(southi, context);
             int code = southwest | (southeast << 1) | (northwest << 2) |
                 (northeast << 3);
 
@@ -334,9 +360,6 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
 
                 ppts[0] = vertsx[midp];
                 ppts[1] = vertsy[midp];
-                if (mesh->dim == 3) {
-                    ppts[2] = vertsz[midp];
-                }
 
                 // Adjust the midpoints to a more exact crossing point.
 
@@ -352,7 +375,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
                         inc = 1;
                     }
                     for (int i = begin; i != end; i += inc) {
-                        int inside = invert ^ callback(i, context);
+                        int inside = invert ^ insidefn(i, context);
                         if (!inside) {
                             ppts[0] = normalization *
                                 (col * cellsize + i - southi + cellsize);
@@ -370,7 +393,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
                         inc = 1;
                     }
                     for (int i = begin; i != end; i += inc) {
-                        int inside = invert ^ callback(i, context);
+                        int inside = invert ^ insidefn(i, context);
                         if (!inside) {
                             ppts[0] = normalization *
                                 (col * cellsize + i - northi + cellsize);
@@ -388,7 +411,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
                         inc = -width;
                     }
                     for (int i = begin; i != end; i += inc) {
-                        int inside = invert ^ callback(i, context);
+                        int inside = invert ^ insidefn(i, context);
                         if (!inside) {
                             ppts[1] =
                                 normalization *
@@ -407,7 +430,7 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
                         inc = -width;
                     }
                     for (int i = begin; i != end; i += inc) {
-                        int inside = invert ^ callback(i, context);
+                        int inside = invert ^ insidefn(i, context);
                         if (!inside) {
                             ppts[1] =
                                 normalization *
@@ -416,6 +439,10 @@ par_msquares_meshlist* par_msquares_from_function(int width, int height,
                             break;
                         }
                     }
+                }
+
+                if (mesh->dim == 3) {
+                    ppts[2] = heightfn(ppts[0], ppts[1], context);
                 }
 
                 ppts += mesh->dim;
