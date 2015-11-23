@@ -1,0 +1,16 @@
+- offload `par_buffer` to be external in emscripten builds
+    - remove ALLOW_MEMORY_GROWTH
+- demos/picking.c
+    - add rong & tan
+- par_data_type should be a normal enum (0 1 2 3...)
+    - the mapping to GL types should be internal
+- demos/gamma.c
+    - see the notes at the top
+- demos/turntable
+    - add klein to mesh.c
+    - see img/wallpaper.png
+- gles3 branch: core profile + webgl2 (USE_WEBGL2 exists in emscripten)
+- fluid
+    - http://codepen.io/tmrDevelops/pen/jbbeMo
+- lighting with sdf's
+    - https://t.co/sFfcR0hWDo
