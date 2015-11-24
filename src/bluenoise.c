@@ -147,6 +147,7 @@ struct par_bluenoise_context_s {
     float mag;
     int window_width;
     int window_height;
+    int abridged;
 };
 
 static float sample_density(par_bluenoise_context* ctx, float x, float y)
@@ -292,6 +293,7 @@ static par_bluenoise_context* par_bluenoise_create(
     ctx->maxpoints = maxpts;
     ctx->points = malloc(maxpts * sizeof(par_vec3));
     ctx->density = 0;
+    ctx->abridged = 0;
     par_bluenoise_set_window(ctx, 1024, 768);
     par_bluenoise_set_viewport(ctx, -.5, -.5, .5, .5);
 
@@ -300,7 +302,7 @@ static par_bluenoise_context* par_bluenoise_create(
         FILE* fin = fopen(filepath, "rb");
         assert(fin);
         fseek(fin, 0, SEEK_END);
-        nbytes = ftell(fin);
+        nbytes = (int) ftell(fin);
         fseek(fin, 0, SEEK_SET);
         buf = malloc(nbytes);
         fread(buf, nbytes, 1, fin);
@@ -345,11 +347,13 @@ static par_bluenoise_context* par_bluenoise_create(
         // observable, and the footprint savings are huge (10x).
 
         if (tiles[i].npoints == 0) {
+            ctx->abridged = 1;
             tiles[i].npoints = tiles[0].npoints;
             tiles[i].points = tiles[0].points;
             tiles[i].nsubpts = tiles[0].nsubpts;
             tiles[i].subpts = tiles[0].subpts;
         }
+
     }
     free(buf);
     return ctx;
@@ -419,8 +423,10 @@ void par_bluenoise_free(par_bluenoise_context* ctx)
             free(ctx->tiles[t].subdivs[s]);
         }
         free(ctx->tiles[t].subdivs);
-        free(ctx->tiles[t].points);
-        free(ctx->tiles[t].subpts);
+        if (t == 0 || !ctx->abridged) {
+            free(ctx->tiles[t].points);
+            free(ctx->tiles[t].subpts);
+        }
     }
     free(ctx->tiles);
     free(ctx->density);
