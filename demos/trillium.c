@@ -1,4 +1,4 @@
-#include <par.h>
+#include <parg.h>
 #include <parwin.h>
 #include <stdio.h>
 #include <stdlib.h>

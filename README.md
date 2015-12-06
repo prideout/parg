@@ -10,7 +10,7 @@ The [par](https://github.com/prideout/par) library is a required submodule, so b
 $ git submodule update --init
 ```
 
-The [API](https://github.com/prideout/parg/blob/master/include/par.h) is divided into modules, each of which has a single C file:
+The [API](https://github.com/prideout/parg/blob/master/include/parg.h) is divided into modules, each of which has a single C file:
 
 - **token** string-to-uint32 hashing, and a lookup table for uint32-to-string.
 - **asset** unified way of loading buffers, shaders, and textures.

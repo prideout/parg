@@ -1,4 +1,4 @@
-#include <par.h>
+#include <parg.h>
 #include "pargl.h"
 
 void par_uniform1f(par_token tok, float val)

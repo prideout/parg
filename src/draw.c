@@ -1,4 +1,4 @@
-#include <par.h>
+#include <parg.h>
 #include "pargl.h"
 
 void par_draw_clear()

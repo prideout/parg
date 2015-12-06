@@ -1,4 +1,4 @@
-#include <par.h>
+#include <parg.h>
 #include "internal.h"
 #include "pargl.h"
 #include <string.h>

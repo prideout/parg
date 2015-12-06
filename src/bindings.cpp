@@ -1,5 +1,5 @@
 extern "C" {
-    #include <par.h>
+    #include <parg.h>
     #include <parwin.h>
     #include "pargl.h"
     void par_asset_set_baseurl(const char* url);

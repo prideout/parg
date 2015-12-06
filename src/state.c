@@ -1,4 +1,4 @@
-#include <par.h>
+#include <parg.h>
 #include "pargl.h"
 
 int _par_depthtest = 0;
