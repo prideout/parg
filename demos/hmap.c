@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#define PAR_MSQUARES_IMPLEMENTATION
+#include <par/par_msquares.h>
+
 #define TOKEN_TABLE(F)            \
     F(P_COLOR, "p_color")         \
     F(P_GRAY, "p_gray")           \
@@ -161,7 +164,6 @@ void draw()
     }
 
     Matrix4 modelview = M4Mul(view, model);
-    Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_clear();

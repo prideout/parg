@@ -189,44 +189,6 @@ typedef struct par_framebuffer_s par_framebuffer;
 par_framebuffer* par_framebuffer_create(int width, int height);
 void par_framebuffer_free(par_framebuffer*);
 
-// MSQUARES
-
-typedef struct par_msquares_meshlist_s par_msquares_meshlist;
-typedef int (*par_msquares_inside_fn)(int, void*);
-typedef float (*par_msquares_height_fn)(float, float, void*);
-
-typedef struct {
-    float* points;        // pointer to XY (or XYZ) vertex coordinates
-    int npoints;          // number of vertex coordinates
-    uint16_t* triangles;  // pointer to 3-tuples of vertex indices
-    int ntriangles;       // number of 3-tuples
-    int dim;              // number of floats per point (either 2 or 3)
-} par_msquares_mesh;
-
-#define PAR_MSQUARES_INVERT (1 << 0)
-#define PAR_MSQUARES_DUAL (1 << 1)
-#define PAR_MSQUARES_WELD (1 << 2)
-#define PAR_MSQUARES_CONNECT (1 << 3)
-#define PAR_MSQUARES_SIMPLIFY (1 << 4)
-#define PAR_MSQUARES_HEIGHTS (1 << 5)
-
-par_msquares_meshlist* par_msquares_from_grayscale(float const* data, int width,
-    int height, int cellsize, float threshold, int flags);
-par_msquares_meshlist* par_msquares_from_levels(float const* data, int width,
-    int height, int cellsize, float const* thresholds, int nthresholds,
-    int flags);
-par_msquares_meshlist* par_msquares_from_color(par_byte const* data, int width,
-    int height, int cellsize, uint32_t color, int bpp, int flags);
-par_msquares_meshlist* par_msquares_from_colors(par_byte const* data, int width,
-    int height, int cellsize, uint32_t const* colors, int ncolors, int bpp,
-    int flags);
-par_msquares_meshlist* par_msquares_from_function(int width, int height,
-    int cellsize, int flags, void* context, par_msquares_inside_fn insidefn,
-    par_msquares_inside_fn heightfn);
-par_msquares_mesh* par_msquares_get_mesh(par_msquares_meshlist*, int n);
-int par_msquares_get_count(par_msquares_meshlist*);
-void par_msquares_free(par_msquares_meshlist*);
-
 #ifdef __cplusplus
 }
 #endif

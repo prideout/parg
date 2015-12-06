@@ -22,14 +22,14 @@ pkg_search_module(CURL REQUIRED libcurl)
 find_library(OPENGL_LIB OpenGL)
 
 file(GLOB COREC src/*.c)
-file(GLOB VENDORC src/vendor/*.c)
+file(GLOB VENDORC extern/*.c)
 file(GLOB SRCFILES ${COREC} ${VENDORC})
 file(GLOB JSEXCLUSIONS src/window.c src/easycurl.c src/filecache.c)
 file(GLOB JSCPP src/bindings.cpp)
 
 include_directories(
     include
-    src/vendor
+    extern
     ${GLFW_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIRS}
 )
@@ -41,7 +41,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         -O3
         -Wall
         -I../include
-        -I../src/vendor
+        -I../extern
     )
     set(PLATFORM_LIBS
         ${X11_LIBRARIES}
@@ -66,14 +66,14 @@ set(EMCCARGS
     -O3
     -Wall
     -I../include
-    -I../src/vendor
+    -I../extern
 )
 set(EMCXXARGS
     -O3
     -std=c++11
     -Wall
     -I../include
-    -I../src/vendor
+    -I../extern
 )
 set(EMLINKARGS
     -O3 --memory-init-file 0 --profiling --bind
