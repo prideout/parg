@@ -30,7 +30,7 @@ brew update
 brew tap homebrew/versions
 brew install cmake uncrustify glfw3 clang-format pkg-config emscripten
 python emsetup.py
-. setup.sh
+source aliases.sh
 init && build
 ```
 
