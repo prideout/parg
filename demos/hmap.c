@@ -14,6 +14,7 @@
     F(P_COLORMESH, "p_colormesh") \
     F(A_POSITION, "a_position")   \
     F(A_TEXCOORD, "a_texcoord")   \
+    F(U_COLOR, "u_color")         \
     F(U_MVP, "u_mvp")
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -25,7 +26,10 @@ ASSET_TABLE(PAR_TOKEN_DECLARE);
 
 enum {
     STATE_GRAY_SOURCE,
-    STATE_GRAY_MESH,
+    STATE_GRAY_DEFAULT,
+    STATE_GRAY_SIMPLIFY,
+    STATE_GRAY_INVERT,
+    STATE_GRAY_DUAL,
     STATE_COLOR_SOURCE,
     STATE_COLOR_MESH,
     STATE_COUNT
@@ -35,61 +39,83 @@ enum {
 #define IMGWIDTH 1024
 #define IMGHEIGHT 1024
 
-int state = STATE_COLOR_MESH;
+int needs_draw = 1;
+int state = STATE_GRAY_DUAL;
 Matrix4 projection;
 Matrix4 view;
-par_mesh* trimesh = 0;
+par_mesh* trimesh[2] = {0};
 par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
 par_buffer* graybuf;
 par_buffer* colorbuf;
 
-par_mesh* create_mesh()
+static void create_mesh()
 {
     par_msquares_meshlist* mlist;
-    if (state == STATE_GRAY_MESH) {
+    float threshold = 0;
+    int flags = 0;
+    if (state == STATE_GRAY_DEFAULT) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
-        float threshold = 0;
-        int flags = PAR_MSQUARES_HEIGHTS;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else if (state == STATE_GRAY_SIMPLIFY) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        flags = PAR_MSQUARES_SIMPLIFY;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else if (state == STATE_GRAY_INVERT) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        flags = PAR_MSQUARES_INVERT;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else if (state == STATE_GRAY_DUAL) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        flags = PAR_MSQUARES_DUAL;
         mlist = par_msquares_from_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
-        int flags = PAR_MSQUARES_INVERT | PAR_MSQUARES_HEIGHTS;
+        flags = PAR_MSQUARES_INVERT | PAR_MSQUARES_HEIGHTS;
         mlist = par_msquares_from_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
     }
-    par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, 0);
-    printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
 
-    // mquares_mesh might have dimensionality of 2 or 3, while par_mesh only
-    // supports the latter.  So, we potentially need to expand the data from
-    // vec2 to vec3.
+    int nmeshes = (flags & PAR_MSQUARES_DUAL) ? 2 : 1;
+    for (int imesh = 0; imesh < nmeshes; imesh++) {
+        par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, imesh);
+        printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
 
-    float* points = mesh->points;
-    if (mesh->dim == 2) {
-        printf("Expanding vec2 mesh into a vec3 mesh.\n");
-        points = malloc(mesh->npoints * sizeof(float) * 3);
-        for (int i = 0; i < mesh->npoints; i++) {
-            points[i * 3] = mesh->points[i * 2];
-            points[i * 3 + 1] = mesh->points[i * 2 + 1];
-            points[i * 3 + 2] = 0;
+        // mquares_mesh might have dimensionality of 2 or 3, while par_mesh only
+        // supports the latter.  So, we potentially need to expand the data from
+        // vec2 to vec3.
+
+        float* points = mesh->points;
+        if (mesh->dim == 2) {
+            printf("Expanding vec2 mesh into a vec3 mesh.\n");
+            points = malloc(mesh->npoints * sizeof(float) * 3);
+            for (int i = 0; i < mesh->npoints; i++) {
+                points[i * 3] = mesh->points[i * 2];
+                points[i * 3 + 1] = mesh->points[i * 2 + 1];
+                points[i * 3 + 2] = 0;
+            }
+        }
+
+        trimesh[imesh] = par_mesh_create(
+            points, mesh->npoints, mesh->triangles, mesh->ntriangles);
+
+        if (mesh->dim == 2) {
+            free(points);
         }
     }
 
-    par_mesh* trimesh = par_mesh_create(
-        points, mesh->npoints, mesh->triangles, mesh->ntriangles);
-
-    if (mesh->dim == 2) {
-        free(points);
-    }
-
     par_msquares_free(mlist);
-    return trimesh;
 }
 
 void init(float winwidth, float winheight, float pixratio)
@@ -97,7 +123,7 @@ void init(float winwidth, float winheight, float pixratio)
     const Vector4 bgcolor = {0.937, 0.937, 0.93, 1.00};
     par_state_clearcolor(bgcolor);
     par_state_cullfaces(1);
-    par_state_depthtest(1);
+    par_state_depthtest(0);
     par_shader_load_from_asset(SHADER_SIMPLE);
 
     int* rawdata;
@@ -125,14 +151,21 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
-    int mesh = 0;
+    int mesh = 0, multi = 0;
     switch (state) {
     case STATE_GRAY_SOURCE:
         par_shader_bind(P_GRAY);
         par_texture_bind(graytex, 0);
         break;
-    case STATE_GRAY_MESH:
+    case STATE_GRAY_DEFAULT:
+    case STATE_GRAY_SIMPLIFY:
+    case STATE_GRAY_INVERT:
         mesh = 1;
+        par_shader_bind(P_GRAYMESH);
+        par_texture_bind(colortex, 0);
+        break;
+    case STATE_GRAY_DUAL:
+        mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
         par_texture_bind(colortex, 0);
         break;
@@ -148,11 +181,10 @@ void draw()
         break;
     }
 
-    if (mesh && !trimesh) {
-        trimesh = create_mesh();
-    } else if (!mesh && trimesh) {
-        par_mesh_free(trimesh);
-        trimesh = 0;
+    if (mesh) {
+        par_mesh_free(trimesh[0]);
+        par_mesh_free(trimesh[1]);
+        create_mesh();
     }
 
     Matrix4 model;
@@ -168,10 +200,23 @@ void draw()
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_clear();
     if (mesh) {
-        par_varray_enable(
-            par_mesh_coord(trimesh), A_POSITION, 3, PAR_FLOAT, 0, 0);
-        par_varray_bind(par_mesh_index(trimesh));
-        par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh));
+
+        int nmeshes = multi ? 2 : 1;
+        Vector4 colors[2];
+        colors[0] = (Vector4) {0, 0.6, 0.9, 1};
+        colors[1] = (Vector4) {0, 0.9, 0.6, 1};
+        Vector4 black = {0, 0, 0, 1};
+
+        for (int imesh = 0; imesh < nmeshes; imesh++) {
+            par_varray_enable(
+                par_mesh_coord(trimesh[imesh]), A_POSITION, 3, PAR_FLOAT, 0, 0);
+            par_varray_bind(par_mesh_index(trimesh[imesh]));
+            par_uniform4f(U_COLOR, &colors[imesh]);
+            par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
+            par_uniform4f(U_COLOR, &black);
+            par_draw_wireframe_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
+        }
+
     } else {
         par_varray_enable(
             par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
@@ -192,9 +237,8 @@ void dispose()
     par_texture_free(colortex);
     par_texture_free(graytex);
     par_buffer_free(graybuf);
-    if (trimesh) {
-        par_mesh_free(trimesh);
-    }
+    par_mesh_free(trimesh[0]);
+    par_mesh_free(trimesh[1]);
 }
 
 void input(par_event evt, float code, float unused0, float unused1)
@@ -202,7 +246,15 @@ void input(par_event evt, float code, float unused0, float unused1)
     int key = (char) code;
     if ((evt == PAR_EVENT_KEYPRESS && key == ' ') || evt == PAR_EVENT_UP) {
         state = (state + 1) % STATE_COUNT;
+        needs_draw = 1;
     }
+}
+
+int tick(float seconds, float winwidth, float winheight, float pixratio)
+{
+    int retval = needs_draw;
+    needs_draw = 0;
+    return retval;
 }
 
 int main(int argc, char* argv[])
@@ -213,6 +265,7 @@ int main(int argc, char* argv[])
     par_window_oninit(init);
     par_window_oninput(input);
     par_window_ondraw(draw);
+    par_window_ontick(tick);
     par_window_onexit(dispose);
-    return par_window_exec(185 * 5, 100 * 5, 1);
+    return par_window_exec(480, 320, 1);
 }

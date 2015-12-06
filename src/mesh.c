@@ -295,6 +295,9 @@ par_mesh* par_mesh_sierpinski(float width, int depth)
 
 void par_mesh_free(par_mesh* m)
 {
+    if (!m) {
+        return;
+    }
     par_buffer_free(m->coords);
     par_buffer_free(m->indices);
     par_buffer_free(m->normals);

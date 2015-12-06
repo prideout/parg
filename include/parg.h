@@ -130,6 +130,7 @@ void par_draw_clear();
 void par_draw_one_quad();
 void par_draw_triangles(int start, int count);
 void par_draw_triangles_u16(int start, int count);
+void par_draw_wireframe_triangles_u16(int start, int count);
 void par_draw_lines(int nsegments);
 void par_draw_points(int npoints);
 

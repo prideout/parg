@@ -5,6 +5,7 @@
 // @program p_colormesh, vertexcolor, colormesh
 
 uniform mat4 u_mvp;
+uniform vec4 u_color;
 varying vec2 v_texcoord;
 
 -- vertex
@@ -54,11 +55,8 @@ uniform sampler2D img;
 void main()
 {
     vec4 texel = texture2D(img, v_texcoord);
-    #ifdef GRAY
-    gl_FragColor.rgb = 0.5 * vec3(texel.a + 1.0);
-    #else
-    gl_FragColor.rgb = vec3(step(texel.a, 0.0));
-    #endif
+    float L = 0.75 * (texel.a + 1.0);
+    gl_FragColor.rgb = vec3(L * L);
     gl_FragColor.a = 1.0;
 }
 
@@ -68,7 +66,7 @@ varying float v_brightness;
 
 void main()
 {
-    vec3 base = vec3(0.0, 0.3, 0.2);
+    vec3 base = u_color.rgb;
     gl_FragColor.rgb = mix(base, vec3(1), v_brightness);
     gl_FragColor.a = 1.0;
 }
