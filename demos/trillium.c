@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PAR_BLUENOISE_IMPLEMENTATION
+#include <par/par_bluenoise.h>
+
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \

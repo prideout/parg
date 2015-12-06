@@ -109,6 +109,9 @@ int par_asset_download(const char* filename, sds targetpath) { return 0; }
 #include <fcntl.h>
 #include <unistd.h>
 
+#define PAR_EASYCURL_IMPLEMENTATION
+#include <par/par_easycurl.h>
+
 sds par_asset_whereami()
 {
     if (!_exedir) {

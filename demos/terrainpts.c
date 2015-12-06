@@ -5,6 +5,9 @@
 #include <string.h>
 #include <assert.h>
 
+#define PAR_BLUENOISE_IMPLEMENTATION
+#include <par/par_bluenoise.h>
+
 #define DO_BAKE 0
 
 #define TOKEN_TABLE(F)                    \
