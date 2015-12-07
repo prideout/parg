@@ -6,6 +6,7 @@
 
 uniform mat4 u_mvp;
 uniform vec4 u_color;
+uniform float u_zscale;
 varying vec2 v_texcoord;
 
 -- vertex
@@ -17,8 +18,9 @@ attribute vec2 a_texcoord;
 void main()
 {
     vec4 p = a_position;
+    p.z *= u_zscale;
     gl_Position = u_mvp * p;
-    v_brightness = a_position.z * 2.0;
+    v_brightness = p.z * 2.5;
     v_texcoord = a_texcoord;
 }
 
@@ -43,7 +45,7 @@ uniform sampler2D img;
 void main()
 {
     vec4 texel = texture2D(img, v_texcoord);
-    vec3 back = vec3(1);
+    vec3 back = vec3(0.937, 0.937, 0.93); // 0.0, 0.2, 0.8);
     gl_FragColor.rgb = mix(back, texel.rgb, texel.a);
     gl_FragColor.a = 1.0;
 }

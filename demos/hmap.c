@@ -15,6 +15,7 @@
     F(A_POSITION, "a_position")   \
     F(A_TEXCOORD, "a_texcoord")   \
     F(U_COLOR, "u_color")         \
+    F(U_ZSCALE, "u_zscale")       \
     F(U_MVP, "u_mvp")
 TOKEN_TABLE(PAR_TOKEN_DECLARE);
 
@@ -30,8 +31,13 @@ enum {
     STATE_GRAY_SIMPLIFY,
     STATE_GRAY_INVERT,
     STATE_GRAY_DUAL,
+    STATE_GRAY_HEIGHTS,
+    STATE_GRAY_DHS,
+    STATE_GRAY_DHSC,
     STATE_COLOR_SOURCE,
-    STATE_COLOR_MESH,
+    STATE_COLOR_DEFAULT,
+    STATE_COLOR_IH,
+    STATE_COLOR_DHSCS,
     STATE_COUNT
 };
 
@@ -40,7 +46,7 @@ enum {
 #define IMGHEIGHT 1024
 
 int needs_draw = 1;
-int state = STATE_GRAY_DUAL;
+int state = STATE_COLOR_DHSCS;
 Matrix4 projection;
 Matrix4 view;
 par_mesh* trimesh[2] = {0};
@@ -78,10 +84,43 @@ static void create_mesh()
         mlist = par_msquares_from_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
-    } else {
+    } else if (state == STATE_GRAY_HEIGHTS) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        flags = PAR_MSQUARES_HEIGHTS;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else if (state == STATE_GRAY_DHS) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else if (state == STATE_GRAY_DHSC) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
+            PAR_MSQUARES_CONNECT;
+        mlist = par_msquares_from_grayscale(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
+        par_buffer_unlock(graybuf);
+    } else if (state == STATE_COLOR_DEFAULT) {
+        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        rgbadata += sizeof(int) * 3;
+        mlist = par_msquares_from_color(
+            rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
+        par_buffer_unlock(colorbuf);
+    } else if (state == STATE_COLOR_IH) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_INVERT | PAR_MSQUARES_HEIGHTS;
+        mlist = par_msquares_from_color(
+            rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
+        par_buffer_unlock(colorbuf);
+    } else if (state == STATE_COLOR_DHSCS) {
+        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        rgbadata += sizeof(int) * 3;
+        flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
+            PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY;
         mlist = par_msquares_from_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
@@ -123,7 +162,7 @@ void init(float winwidth, float winheight, float pixratio)
     const Vector4 bgcolor = {0.937, 0.937, 0.93, 1.00};
     par_state_clearcolor(bgcolor);
     par_state_cullfaces(1);
-    par_state_depthtest(0);
+    par_state_depthtest(1);
     par_shader_load_from_asset(SHADER_SIMPLE);
 
     int* rawdata;
@@ -156,26 +195,44 @@ void draw()
     case STATE_GRAY_SOURCE:
         par_shader_bind(P_GRAY);
         par_texture_bind(graytex, 0);
+        par_uniform1f(U_ZSCALE, 1);
         break;
+    case STATE_COLOR_IH:
+        mesh = 1;
+        par_shader_bind(P_GRAYMESH);
+        par_uniform1f(U_ZSCALE, 0.3);
+        break;
+    case STATE_COLOR_DHSCS:
+        mesh = multi = 1;
+        par_shader_bind(P_GRAYMESH);
+        par_uniform1f(U_ZSCALE, 0.3);
+        break;
+    case STATE_COLOR_DEFAULT:
     case STATE_GRAY_DEFAULT:
     case STATE_GRAY_SIMPLIFY:
     case STATE_GRAY_INVERT:
+    case STATE_GRAY_HEIGHTS:
         mesh = 1;
         par_shader_bind(P_GRAYMESH);
-        par_texture_bind(colortex, 0);
+        par_uniform1f(U_ZSCALE, 1);
         break;
     case STATE_GRAY_DUAL:
         mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
         par_texture_bind(colortex, 0);
+        par_uniform1f(U_ZSCALE, 1);
+        break;
+    case STATE_GRAY_DHS:
+    case STATE_GRAY_DHSC:
+        mesh = multi = 1;
+        par_shader_bind(P_GRAYMESH);
+        par_texture_bind(colortex, 0);
+        par_uniform1f(U_ZSCALE, 0.5);
         break;
     case STATE_COLOR_SOURCE:
-        par_shader_bind(P_COLOR);
-        break;
-    case STATE_COLOR_MESH:
-        mesh = 1;
-        par_shader_bind(P_COLORMESH);
         par_texture_bind(colortex, 0);
+        par_shader_bind(P_COLOR);
+        par_uniform1f(U_ZSCALE, 1);
         break;
     default:
         break;

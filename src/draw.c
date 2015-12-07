@@ -29,10 +29,13 @@ void par_draw_wireframe_triangles_u16(int start, int count)
     #ifndef EMSCRIPTEN
     glLineWidth(2);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonOffset(0.0001, -0.0001);
+    glEnable(GL_POLYGON_OFFSET_LINE);
     long offset = start * 3 * sizeof(unsigned short);
     const GLvoid* ptr = (const GLvoid*) offset;
     glDrawElements(GL_TRIANGLES, count * 3, GL_UNSIGNED_SHORT, ptr);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_POLYGON_OFFSET_LINE);
     #endif
 }
 
