@@ -37,7 +37,7 @@ enum {
     STATE_COLOR_SOURCE,
     STATE_COLOR_DEFAULT,
     STATE_COLOR_IH,
-    STATE_COLOR_DHSCS,
+    STATE_COLOR_DHSCSI,
     STATE_COUNT
 };
 
@@ -46,7 +46,7 @@ enum {
 #define IMGHEIGHT 1024
 
 int needs_draw = 1;
-int state = STATE_COLOR_DHSCS;
+int state = STATE_COLOR_DHSCSI;
 Matrix4 projection;
 Matrix4 view;
 par_mesh* trimesh[2] = {0};
@@ -116,11 +116,11 @@ static void create_mesh()
         mlist = par_msquares_from_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
-    } else if (state == STATE_COLOR_DHSCS) {
+    } else if (state == STATE_COLOR_DHSCSI) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
-            PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY;
+            PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_INVERT;
         mlist = par_msquares_from_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
@@ -202,7 +202,7 @@ void draw()
         par_shader_bind(P_GRAYMESH);
         par_uniform1f(U_ZSCALE, 0.3);
         break;
-    case STATE_COLOR_DHSCS:
+    case STATE_COLOR_DHSCSI:
         mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
         par_uniform1f(U_ZSCALE, 0.3);
