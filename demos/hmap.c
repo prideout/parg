@@ -46,7 +46,7 @@ enum {
 #define IMGHEIGHT 1024
 
 int needs_draw = 1;
-int state = STATE_COLOR_DHSCSI;
+int state = STATE_GRAY_HEIGHTS;
 Matrix4 projection;
 Matrix4 view;
 par_mesh* trimesh[2] = {0};
@@ -128,7 +128,7 @@ static void create_mesh()
 
     int nmeshes = (flags & PAR_MSQUARES_DUAL) ? 2 : 1;
     for (int imesh = 0; imesh < nmeshes; imesh++) {
-        par_msquares_mesh* mesh = par_msquares_get_mesh(mlist, imesh);
+        par_msquares_mesh const* mesh = par_msquares_get_mesh(mlist, imesh);
         printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
 
         // mquares_mesh might have dimensionality of 2 or 3, while par_mesh only
