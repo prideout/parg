@@ -63,57 +63,57 @@ static void create_mesh()
     int flags = 0;
     if (state == STATE_GRAY_DEFAULT) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_SIMPLIFY) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         flags = PAR_MSQUARES_SIMPLIFY;
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_INVERT) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         flags = PAR_MSQUARES_INVERT;
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_DUAL) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         flags = PAR_MSQUARES_DUAL;
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_HEIGHTS) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         flags = PAR_MSQUARES_HEIGHTS;
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_DHS) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP;
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_DHSC) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
             PAR_MSQUARES_CONNECT;
-        mlist = par_msquares_from_grayscale(
+        mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
     } else if (state == STATE_COLOR_DEFAULT) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
-        mlist = par_msquares_from_color(
+        mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
     } else if (state == STATE_COLOR_IH) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_INVERT | PAR_MSQUARES_HEIGHTS;
-        mlist = par_msquares_from_color(
+        mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
     } else if (state == STATE_COLOR_DHSCSI) {
@@ -121,7 +121,7 @@ static void create_mesh()
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
             PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_INVERT;
-        mlist = par_msquares_from_color(
+        mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
     }
