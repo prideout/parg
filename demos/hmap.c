@@ -108,7 +108,8 @@ static void create_mesh()
     } else if (state == STATE_GRAY_MULTI) {
         float const* graydata = par_buffer_lock(graybuf, PAR_READ);
         float thresholds[] = {0.0, 0.1};
-        flags = PAR_MSQUARES_SIMPLIFY;
+        flags = PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_HEIGHTS |
+            PAR_MSQUARES_SNAP | PAR_MSQUARES_CONNECT;
         mlist = par_msquares_grayscale_multi(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, thresholds, 2, flags);
         par_buffer_unlock(graybuf);
@@ -226,6 +227,11 @@ void draw()
         par_uniform1f(U_ZSCALE, 1);
         break;
     case STATE_GRAY_MULTI:
+        mesh = multi = 1;
+        par_shader_bind(P_GRAYMESH);
+        par_texture_bind(colortex, 0);
+        par_uniform1f(U_ZSCALE, 0.3);
+        break;
     case STATE_GRAY_DUAL:
         mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
@@ -283,9 +289,7 @@ void draw()
             par_uniform4f(U_COLOR, &colors[imesh]);
             par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
             par_uniform4f(U_COLOR, &black);
-            par_state_blending(1);
             par_draw_wireframe_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
-            par_state_blending(0);
         }
 
     } else {
