@@ -70,7 +70,7 @@ void main()
 {
     vec3 base = u_color.rgb;
     gl_FragColor.rgb = mix(base, vec3(1), v_brightness);
-    gl_FragColor.a = 1.0;
+    gl_FragColor.a = u_color.a;
 }
 
 -- colormesh

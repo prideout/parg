@@ -34,6 +34,7 @@ enum {
     STATE_GRAY_HEIGHTS,
     STATE_GRAY_DHS,
     STATE_GRAY_DHSC,
+    STATE_GRAY_MULTI,
     STATE_COLOR_SOURCE,
     STATE_COLOR_DEFAULT,
     STATE_COLOR_IH,
@@ -46,15 +47,16 @@ enum {
 #define IMGHEIGHT 1024
 
 int needs_draw = 1;
-int state = STATE_GRAY_HEIGHTS;
+int state = STATE_GRAY_MULTI;
 Matrix4 projection;
 Matrix4 view;
-par_mesh* trimesh[2] = {0};
+par_mesh* trimesh[3] = {0};
 par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
 par_buffer* graybuf;
 par_buffer* colorbuf;
+int nmeshes = 0;
 
 static void create_mesh()
 {
@@ -103,6 +105,13 @@ static void create_mesh()
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
         par_buffer_unlock(graybuf);
+    } else if (state == STATE_GRAY_MULTI) {
+        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float thresholds[] = {0.0, 0.1};
+        flags = PAR_MSQUARES_SIMPLIFY;
+        mlist = par_msquares_grayscale_multi(
+            graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, thresholds, 2, flags);
+        par_buffer_unlock(graybuf);
     } else if (state == STATE_COLOR_DEFAULT) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
@@ -126,7 +135,7 @@ static void create_mesh()
         par_buffer_unlock(colorbuf);
     }
 
-    int nmeshes = (flags & PAR_MSQUARES_DUAL) ? 2 : 1;
+    nmeshes = par_msquares_get_count(mlist);
     for (int imesh = 0; imesh < nmeshes; imesh++) {
         par_msquares_mesh const* mesh = par_msquares_get_mesh(mlist, imesh);
         printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
@@ -216,6 +225,7 @@ void draw()
         par_shader_bind(P_GRAYMESH);
         par_uniform1f(U_ZSCALE, 1);
         break;
+    case STATE_GRAY_MULTI:
     case STATE_GRAY_DUAL:
         mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
@@ -241,6 +251,8 @@ void draw()
     if (mesh) {
         par_mesh_free(trimesh[0]);
         par_mesh_free(trimesh[1]);
+        par_mesh_free(trimesh[2]);
+        trimesh[0] = trimesh[1] = trimesh[2] = 0;
         create_mesh();
     }
 
@@ -258,11 +270,11 @@ void draw()
     par_draw_clear();
     if (mesh) {
 
-        int nmeshes = multi ? 2 : 1;
-        Vector4 colors[2];
+        Vector4 colors[3];
         colors[0] = (Vector4) {0, 0.6, 0.9, 1};
         colors[1] = (Vector4) {0, 0.9, 0.6, 1};
-        Vector4 black = {0, 0, 0, 1};
+        colors[2] = (Vector4) {0.9, 0.6, 0, 1};
+        Vector4 black = {0, 0, 0, 0.5};
 
         for (int imesh = 0; imesh < nmeshes; imesh++) {
             par_varray_enable(
@@ -271,7 +283,9 @@ void draw()
             par_uniform4f(U_COLOR, &colors[imesh]);
             par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
             par_uniform4f(U_COLOR, &black);
+            par_state_blending(1);
             par_draw_wireframe_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
+            par_state_blending(0);
         }
 
     } else {
@@ -296,6 +310,7 @@ void dispose()
     par_buffer_free(graybuf);
     par_mesh_free(trimesh[0]);
     par_mesh_free(trimesh[1]);
+    par_mesh_free(trimesh[2]);
 }
 
 void input(par_event evt, float code, float unused0, float unused1)
