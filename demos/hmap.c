@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "lodepng.h"
+
 #define PAR_MSQUARES_IMPLEMENTATION
 #include <par/par_msquares.h>
 
@@ -39,6 +41,8 @@ enum {
     STATE_COLOR_DEFAULT,
     STATE_COLOR_IH,
     STATE_COLOR_DHSCSI,
+    STATE_MULTI_RGB,
+    STATE_MULTI_DIAGRAM,
     STATE_COUNT
 };
 
@@ -47,10 +51,10 @@ enum {
 #define IMGHEIGHT 1024
 
 int needs_draw = 1;
-int state = STATE_GRAY_MULTI;
+int state = STATE_MULTI_RGB;
 Matrix4 projection;
 Matrix4 view;
-par_mesh* trimesh[3] = {0};
+par_mesh* trimesh[48] = {0};
 par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
@@ -134,12 +138,25 @@ static void create_mesh()
         mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
+    } else if (state == STATE_MULTI_RGB) {
+        unsigned dims[2] = {0, 0};
+        unsigned char* pixels;
+        lodepng_decode_file(&pixels, &dims[0], &dims[1],
+            "extern/par/test/rgb.png", LCT_RGB, 8);
+        mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 3, 0);
+        free(pixels);
+    } else if (state == STATE_MULTI_DIAGRAM) {
+        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        rgbadata += sizeof(int) * 3;
+        mlist = par_msquares_color_multi(rgbadata, IMGWIDTH, IMGHEIGHT,
+            CELLSIZE, 4, 0);
+        par_buffer_unlock(colorbuf);
     }
 
     nmeshes = par_msquares_get_count(mlist);
+    printf("%d meshes\n", nmeshes);
     for (int imesh = 0; imesh < nmeshes; imesh++) {
         par_msquares_mesh const* mesh = par_msquares_get_mesh(mlist, imesh);
-        printf("%d points, %d triangles\n", mesh->npoints, mesh->ntriangles);
 
         // mquares_mesh might have dimensionality of 2 or 3, while par_mesh only
         // supports the latter.  So, we potentially need to expand the data from
@@ -147,7 +164,6 @@ static void create_mesh()
 
         float* points = mesh->points;
         if (mesh->dim == 2) {
-            printf("Expanding vec2 mesh into a vec3 mesh.\n");
             points = malloc(mesh->npoints * sizeof(float) * 3);
             for (int i = 0; i < mesh->npoints; i++) {
                 points[i * 3] = mesh->points[i * 2];
@@ -155,10 +171,8 @@ static void create_mesh()
                 points[i * 3 + 2] = 0;
             }
         }
-
         trimesh[imesh] = par_mesh_create(
             points, mesh->npoints, mesh->triangles, mesh->ntriangles);
-
         if (mesh->dim == 2) {
             free(points);
         }
@@ -217,6 +231,11 @@ void draw()
         par_shader_bind(P_GRAYMESH);
         par_uniform1f(U_ZSCALE, 0.3);
         break;
+    case STATE_MULTI_RGB:
+    case STATE_MULTI_DIAGRAM:
+        mesh = multi = 1;
+        par_shader_bind(P_GRAYMESH);
+        break;
     case STATE_COLOR_DEFAULT:
     case STATE_GRAY_DEFAULT:
     case STATE_GRAY_SIMPLIFY:
@@ -255,10 +274,10 @@ void draw()
     }
 
     if (mesh) {
-        par_mesh_free(trimesh[0]);
-        par_mesh_free(trimesh[1]);
-        par_mesh_free(trimesh[2]);
-        trimesh[0] = trimesh[1] = trimesh[2] = 0;
+        for (int i = 0; i < sizeof(trimesh) / sizeof(trimesh[0]); i++) {
+            par_mesh_free(trimesh[i]);
+        }
+        memset(trimesh, 0, sizeof(trimesh));
         create_mesh();
     }
 
@@ -312,9 +331,9 @@ void dispose()
     par_texture_free(colortex);
     par_texture_free(graytex);
     par_buffer_free(graybuf);
-    par_mesh_free(trimesh[0]);
-    par_mesh_free(trimesh[1]);
-    par_mesh_free(trimesh[2]);
+    for (int i = 0; i < sizeof(trimesh) / sizeof(trimesh[0]); i++) {
+        par_mesh_free(trimesh[i]);
+    }
 }
 
 void input(par_event evt, float code, float unused0, float unused1)
