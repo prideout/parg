@@ -55,6 +55,7 @@ int state = STATE_MULTI_RGB;
 Matrix4 projection;
 Matrix4 view;
 par_mesh* trimesh[48] = {0};
+uint32_t meshcolors[48];
 par_mesh* rectmesh;
 par_texture* colortex;
 par_texture* graytex;
@@ -171,6 +172,7 @@ static void create_mesh()
                 points[i * 3 + 2] = 0;
             }
         }
+        meshcolors[imesh] = mesh->color;
         trimesh[imesh] = par_mesh_create(
             points, mesh->npoints, mesh->triangles, mesh->ntriangles);
         if (mesh->dim == 2) {
@@ -214,7 +216,7 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
-    int mesh = 0, multi = 0;
+    int mesh = 0, multi = 0, meshcolor = 0;
     switch (state) {
     case STATE_GRAY_SOURCE:
         par_shader_bind(P_GRAY);
@@ -233,7 +235,7 @@ void draw()
         break;
     case STATE_MULTI_RGB:
     case STATE_MULTI_DIAGRAM:
-        mesh = multi = 1;
+        meshcolor = mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
         break;
     case STATE_COLOR_DEFAULT:
@@ -299,16 +301,30 @@ void draw()
         colors[0] = (Vector4) {0, 0.6, 0.9, 1};
         colors[1] = (Vector4) {0, 0.9, 0.6, 1};
         colors[2] = (Vector4) {0.9, 0.6, 0, 1};
-        Vector4 black = {0, 0, 0, 0.5};
+        Vector4 black = {0.5, 0.5, 0.5, 1.0};
 
         for (int imesh = 0; imesh < nmeshes; imesh++) {
             par_varray_enable(
                 par_mesh_coord(trimesh[imesh]), A_POSITION, 3, PAR_FLOAT, 0, 0);
             par_varray_bind(par_mesh_index(trimesh[imesh]));
-            par_uniform4f(U_COLOR, &colors[imesh]);
+            if (meshcolor) {
+                unsigned int b = meshcolors[imesh] & 0xff;
+                unsigned int g = (meshcolors[imesh] >> 8) & 0xff;
+                unsigned int r = (meshcolors[imesh] >> 16) & 0xff;
+                unsigned int a = (meshcolors[imesh] >> 24) & 0xff;
+                Vector4 color;
+                color.x = r / 255.0f;
+                color.y = g / 255.0f;
+                color.z = b / 255.0f;
+                color.w = a / 255.0f;
+                par_uniform4f(U_COLOR, &color);
+            } else {
+                par_uniform4f(U_COLOR, &colors[imesh]);
+            }
             par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
             par_uniform4f(U_COLOR, &black);
-            par_draw_wireframe_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
+            par_draw_wireframe_triangles_u16(0,
+                par_mesh_ntriangles(trimesh[imesh]));
         }
 
     } else {
@@ -362,5 +378,5 @@ int main(int argc, char* argv[])
     par_window_ondraw(draw);
     par_window_ontick(tick);
     par_window_onexit(dispose);
-    return par_window_exec(480, 320, 1);
+    return par_window_exec(480 * 2, 320 * 2, 1);
 }
