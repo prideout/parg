@@ -144,13 +144,14 @@ static void create_mesh()
         unsigned char* pixels;
         lodepng_decode_file(&pixels, &dims[0], &dims[1],
             "extern/par/test/rgb.png", LCT_RGB, 8);
-        mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 3, 0);
+        mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 3,
+            PAR_MSQUARES_SIMPLIFY);
         free(pixels);
     } else if (state == STATE_MULTI_DIAGRAM) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         mlist = par_msquares_color_multi(rgbadata, IMGWIDTH, IMGHEIGHT,
-            CELLSIZE, 4, 0);
+            CELLSIZE, 4, PAR_MSQUARES_SIMPLIFY);
         par_buffer_unlock(colorbuf);
     }
 
@@ -301,7 +302,7 @@ void draw()
         colors[0] = (Vector4) {0, 0.6, 0.9, 1};
         colors[1] = (Vector4) {0, 0.9, 0.6, 1};
         colors[2] = (Vector4) {0.9, 0.6, 0, 1};
-        Vector4 black = {0.5, 0.5, 0.5, 1.0};
+        Vector4 black = {0.2, 0.2, 0.2, 1.0};
 
         for (int imesh = 0; imesh < nmeshes; imesh++) {
             par_varray_enable(
@@ -378,5 +379,5 @@ int main(int argc, char* argv[])
     par_window_ondraw(draw);
     par_window_ontick(tick);
     par_window_onexit(dispose);
-    return par_window_exec(480 * 2, 320 * 2, 1);
+    return par_window_exec(480, 320, 1);
 }
