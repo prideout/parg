@@ -41,6 +41,7 @@ enum {
     STATE_COLOR_DEFAULT,
     STATE_COLOR_IH,
     STATE_COLOR_DHSCSI,
+    STATE_MULTI_RGBA,
     STATE_MULTI_RGB,
     STATE_MULTI_DIAGRAM,
     STATE_COUNT
@@ -51,7 +52,7 @@ enum {
 #define IMGHEIGHT 1024
 
 int needs_draw = 1;
-int state = STATE_MULTI_RGB;
+int state = STATE_MULTI_RGBA;
 Matrix4 projection;
 Matrix4 view;
 par_mesh* trimesh[48] = {0};
@@ -147,11 +148,19 @@ static void create_mesh()
         mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 3,
             PAR_MSQUARES_SIMPLIFY);
         free(pixels);
+    } else if (state == STATE_MULTI_RGBA) {
+        unsigned dims[2] = {0, 0};
+        unsigned char* pixels;
+        lodepng_decode_file(&pixels, &dims[0], &dims[1],
+            "extern/par/test/rgba.png", LCT_RGBA, 8);
+        mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 4,
+            PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY);
+        free(pixels);
     } else if (state == STATE_MULTI_DIAGRAM) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         mlist = par_msquares_color_multi(rgbadata, IMGWIDTH, IMGHEIGHT,
-            CELLSIZE, 4, PAR_MSQUARES_SIMPLIFY);
+            CELLSIZE, 4, PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_HEIGHTS);
         par_buffer_unlock(colorbuf);
     }
 
@@ -234,10 +243,12 @@ void draw()
         par_shader_bind(P_GRAYMESH);
         par_uniform1f(U_ZSCALE, 0.3);
         break;
+    case STATE_MULTI_RGBA:
     case STATE_MULTI_RGB:
     case STATE_MULTI_DIAGRAM:
         meshcolor = mesh = multi = 1;
         par_shader_bind(P_GRAYMESH);
+        par_uniform1f(U_ZSCALE, 0.25);
         break;
     case STATE_COLOR_DEFAULT:
     case STATE_GRAY_DEFAULT:
@@ -302,7 +313,7 @@ void draw()
         colors[0] = (Vector4) {0, 0.6, 0.9, 1};
         colors[1] = (Vector4) {0, 0.9, 0.6, 1};
         colors[2] = (Vector4) {0.9, 0.6, 0, 1};
-        Vector4 black = {0.2, 0.2, 0.2, 1.0};
+        Vector4 black = {0, 0, 0, 1.0};
 
         for (int imesh = 0; imesh < nmeshes; imesh++) {
             par_varray_enable(
@@ -379,5 +390,5 @@ int main(int argc, char* argv[])
     par_window_ondraw(draw);
     par_window_ontick(tick);
     par_window_onexit(dispose);
-    return par_window_exec(480, 320, 1);
+    return par_window_exec(480 * 2, 320 * 2, 1);
 }
