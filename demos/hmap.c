@@ -66,7 +66,7 @@ int nmeshes = 0;
 
 static void create_mesh()
 {
-    par_msquares_meshlist* mlist;
+    par_msquares_meshlist* mlist = 0;
     float threshold = 0;
     int flags = 0;
     if (state == STATE_GRAY_DEFAULT) {
@@ -136,17 +136,18 @@ static void create_mesh()
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
-            PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_INVERT;
+            PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY |
+            PAR_MSQUARES_INVERT;
         mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
         par_buffer_unlock(colorbuf);
     } else if (state == STATE_MULTI_RGB) {
         unsigned dims[2] = {0, 0};
         unsigned char* pixels;
-        lodepng_decode_file(&pixels, &dims[0], &dims[1],
-            "extern/par/test/rgb.png", LCT_RGB, 8);
-        mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 3,
-            PAR_MSQUARES_SIMPLIFY);
+        lodepng_decode_file(
+            &pixels, &dims[0], &dims[1], "extern/par/test/rgb.png", LCT_RGB, 8);
+        mlist = par_msquares_color_multi(
+            pixels, dims[0], dims[1], 16, 3, PAR_MSQUARES_SIMPLIFY);
         free(pixels);
     } else if (state == STATE_MULTI_RGBA) {
         unsigned dims[2] = {0, 0};
@@ -154,13 +155,14 @@ static void create_mesh()
         lodepng_decode_file(&pixels, &dims[0], &dims[1],
             "extern/par/test/rgba.png", LCT_RGBA, 8);
         mlist = par_msquares_color_multi(pixels, dims[0], dims[1], 16, 4,
-            PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY);
+                PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_CONNECT |
+                PAR_MSQUARES_SIMPLIFY);
         free(pixels);
     } else if (state == STATE_MULTI_DIAGRAM) {
         par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
         rgbadata += sizeof(int) * 3;
         mlist = par_msquares_color_multi(rgbadata, IMGWIDTH, IMGHEIGHT,
-            CELLSIZE, 4, PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_HEIGHTS);
+                CELLSIZE, 4, PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_HEIGHTS);
         par_buffer_unlock(colorbuf);
     }
 
@@ -308,11 +310,10 @@ void draw()
     par_uniform_matrix4f(U_MVP, &mvp);
     par_draw_clear();
     if (mesh) {
-
         Vector4 colors[3];
-        colors[0] = (Vector4) {0, 0.6, 0.9, 1};
-        colors[1] = (Vector4) {0, 0.9, 0.6, 1};
-        colors[2] = (Vector4) {0.9, 0.6, 0, 1};
+        colors[0] = (Vector4){0, 0.6, 0.9, 1};
+        colors[1] = (Vector4){0, 0.9, 0.6, 1};
+        colors[2] = (Vector4){0.9, 0.6, 0, 1};
         Vector4 black = {0, 0, 0, 1.0};
 
         for (int imesh = 0; imesh < nmeshes; imesh++) {
@@ -335,8 +336,8 @@ void draw()
             }
             par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
             par_uniform4f(U_COLOR, &black);
-            par_draw_wireframe_triangles_u16(0,
-                par_mesh_ntriangles(trimesh[imesh]));
+            par_draw_wireframe_triangles_u16(
+                0, par_mesh_ntriangles(trimesh[imesh]));
         }
 
     } else {

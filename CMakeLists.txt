@@ -14,7 +14,7 @@ set(DEMOS
     trillium
     terrainpts
     hmap
-)
+    ztex)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
@@ -31,8 +31,7 @@ include_directories(
     include
     extern
     ${GLFW_INCLUDE_DIRS}
-    ${CURL_INCLUDE_DIRS}
-)
+    ${CURL_INCLUDE_DIRS})
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     find_package (X11 REQUIRED)
@@ -41,8 +40,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         -O3
         -Wall
         -I../include
-        -I../extern
-    )
+        -I../extern)
     set(PLATFORM_LIBS
         ${X11_LIBRARIES}
         Xinerama
@@ -54,8 +52,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         Xi
         Xxf86vm
         GL
-        m
-    )
+        m)
 endif()
 
 add_library(parg STATIC ${SRCFILES})
@@ -66,23 +63,20 @@ set(EMCCARGS
     -O3
     -Wall
     -I../include
-    -I../extern
-)
+    -I../extern)
 set(EMCXXARGS
     -O3
     -std=c++11
     -Wall
     -I../include
-    -I../extern
-)
+    -I../extern)
 set(EMLINKARGS
     -O3 --memory-init-file 0 --profiling --bind
     -s 'MODULARIZE=1'
     -s 'EXPORT_NAME="CreateParg"'
     -s 'NO_FILESYSTEM=1'
     -s 'ALLOW_MEMORY_GROWTH=1'
-    -s 'PRECISE_F32=1'
-)
+    -s 'PRECISE_F32=1')
 
 set(JSSRC ${SRCFILES})
 list(REMOVE_ITEM JSSRC ${JSEXCLUSIONS})
@@ -113,36 +107,30 @@ foreach(DEMONAME ${DEMOS})
             ${DEMONAME}
             demos/${DEMONAME}.c
             ${DEMONAME}.glsl
-            ${DEMONAME}.js
-        )
+            ${DEMONAME}.js)
     else()
         add_executable(
             ${DEMONAME}
             demos/${DEMONAME}.c
-            ${DEMONAME}.glsl
-        )
+            ${DEMONAME}.glsl)
     endif()
     add_custom_command(
         OUTPUT ${DEMONAME}.glsl
         COMMAND cp ../demos/${DEMONAME}.glsl ${DEMONAME}.glsl
-        DEPENDS demos/${DEMONAME}.glsl
-    )
+        DEPENDS demos/${DEMONAME}.glsl)
     target_link_libraries(
         ${DEMONAME}
         parg
         ${OPENGL_LIB}
         ${GLFW_LIBRARIES}
         ${CURL_LIBRARIES}
-        ${PLATFORM_LIBS}
-    )
+        ${PLATFORM_LIBS})
     add_custom_command(
         OUTPUT ${DEMONAME}.js.o
         COMMAND emcc -o ${DEMONAME}.js.o ${EMCCARGS} ../demos/${DEMONAME}.c
-        DEPENDS demos/${DEMONAME}.c
-    )
+        DEPENDS demos/${DEMONAME}.c)
     add_custom_command(
         OUTPUT ${DEMONAME}.js
         COMMAND emcc -o ${DEMONAME}.js ${EMLINKARGS} ${JSOBJECTS} ${DEMONAME}.js.o
-        DEPENDS ${DEMONAME}.js.o ${JSOBJECTS} ${POSTJS}
-    )
+        DEPENDS ${DEMONAME}.js.o ${JSOBJECTS} ${POSTJS})
 endforeach()
