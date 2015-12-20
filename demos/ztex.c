@@ -28,12 +28,16 @@ const float fovy = 16 * PARG_TWOPI / 180;
 int mode_highp = 1;
 parg_mesh* landmass_mesh;
 parg_mesh* ocean_mesh;
-parg_mesh* quad_mesh;
+parg_mesh* quad_mesh = 0;
 parg_texture* ocean_texture;
 parg_texture* paper_texture;
+parg_aar quadrect = {0, 0, 0, 0};
+int quad_dirty = 1;
 
 void init(float winwidth, float winheight, float pixratio)
 {
+    printf("Press P to highlight the current slippy area.\n"
+        "Spacebar to toggle texture modes.\n");
     parg_state_clearcolor((Vector4){0.43, 0.61, 0.8, 1});
     parg_state_cullfaces(1);
     parg_state_depthtest(0);
@@ -42,8 +46,6 @@ void init(float winwidth, float winheight, float pixratio)
     parg_zcam_grab_update(0.5, 0.5, 30);
     ocean_texture = parg_texture_from_asset(TEXTURE_OCEAN);
     paper_texture = parg_texture_from_asset(TEXTURE_PAPER);
-    parg_aar rect = {-0.125 + 0.05, -0.125 + 0.05, 0.125 + 0.05, 0.125 + 0.05};
-    quad_mesh = parg_mesh_aar(rect);
 
     // Decode the europe image and pass it into msquares.
     int* rawdata;
@@ -73,6 +75,12 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
+    if (quad_dirty) {
+        quad_dirty = 0;
+        parg_mesh_free(quad_mesh);
+        quad_mesh = parg_mesh_aar(quadrect);
+    }
+
     DMatrix4 view, projection;
     parg_zcam_dmatrices(&projection, &view);
     DMatrix4 model = DM4MakeTranslation((DVector3){-0.5, -0.5, -1});
@@ -118,7 +126,7 @@ void draw()
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     parg_zcam_tick(winwidth / winheight, seconds);
-    return parg_zcam_has_moved();
+    return parg_zcam_has_moved() || quad_dirty;
 }
 
 void dispose()
@@ -139,9 +147,12 @@ void input(parg_event evt, float x, float y, float z)
             printf("Precision %s.\n", mode_highp ? "on" : "off");
         }
         if ((char) x == 'P') {
+            Vector2 mapsize = {1, 1};
             parg_aar rect = parg_zcam_get_rectangle();
-            printf("aar: %+2.2f %+2.2f => %+2.2f %+2.2f\n", rect.left,
-                rect.bottom, rect.right, rect.top);
+            parg_tilerange tiles;
+            parg_aar_to_tilerange(rect, mapsize, &tiles);
+            quadrect = parg_aar_from_tilerange(tiles, mapsize);
+            quad_dirty = 1;
         }
         break;
     case PARG_EVENT_DOWN:
