@@ -33,10 +33,10 @@ static const int HEIGHT = 500;
 void init(float winwidth, float winheight, float pixratio)
 {
     const Vector4 bgcolor = V4ScalarDiv((Vector4){78, 61, 66, 255}, 255);
-    par_state_clearcolor(bgcolor);
+    parg_state_clearcolor(bgcolor);
 }
 
-void draw() { par_draw_clear(); }
+void draw() { parg_draw_clear(); }
 
 int tick(float seconds, float winwidth, float winheight, float pixratio)
 {
@@ -47,10 +47,10 @@ void dispose() {}
 
 int main(int argc, char* argv[])
 {
-    par_window_setargs(argc, argv);
-    par_window_oninit(init);
-    par_window_ontick(tick);
-    par_window_ondraw(draw);
-    par_window_onexit(dispose);
-    return par_window_exec(ASPECT * HEIGHT, HEIGHT, VSYNC);
+    parg_window_setargs(argc, argv);
+    parg_window_oninit(init);
+    parg_window_ontick(tick);
+    parg_window_ondraw(draw);
+    parg_window_onexit(dispose);
+    return parg_window_exec(ASPECT * HEIGHT, HEIGHT, VSYNC);
 }

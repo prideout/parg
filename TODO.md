@@ -1,8 +1,8 @@
-- offload `par_buffer` to be external in emscripten builds
+- offload `parg_buffer` to be external in emscripten builds
     - remove ALLOW_MEMORY_GROWTH
 - demos/picking.c
     - add rong & tan
-- par_data_type should be a normal enum (0 1 2 3...)
+- parg_data_type should be a normal enum (0 1 2 3...)
     - the mapping to GL types should be internal
 - demos/gamma.c
     - see the notes at the top

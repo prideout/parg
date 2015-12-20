@@ -8,64 +8,65 @@
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
     F(SHADER_SIMPLE, "sierpinski.glsl")
-TOKEN_TABLE(PAR_TOKEN_DECLARE);
+TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
-par_mesh* trimesh;
+parg_mesh* trimesh;
 const float gray = 0.8;
-const float fovy = 16 * PAR_TWOPI / 180;
+const float fovy = 16 * PARG_TWOPI / 180;
 const float worldwidth = 6000;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    par_state_clearcolor((Vector4){gray, gray, gray, 1});
-    par_state_depthtest(0);
-    par_state_cullfaces(0);
-    par_shader_load_from_asset(SHADER_SIMPLE);
+    parg_state_clearcolor((Vector4){gray, gray, gray, 1});
+    parg_state_depthtest(0);
+    parg_state_cullfaces(0);
+    parg_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
-    par_zcam_init(worldwidth, worldheight, fovy);
-    trimesh = par_mesh_sierpinski(worldwidth, 10);
-    printf("%d triangles\n", par_mesh_ntriangles(trimesh));
+    parg_zcam_init(worldwidth, worldheight, fovy);
+    trimesh = parg_mesh_sierpinski(worldwidth, 10);
+    printf("%d triangles\n", parg_mesh_ntriangles(trimesh));
 }
 
 void draw()
 {
     Matrix4 view;
     Matrix4 projection;
-    par_zcam_matrices(&projection, &view);
+    parg_zcam_matrices(&projection, &view);
     Matrix4 model = M4MakeIdentity();
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
-    par_draw_clear();
-    par_shader_bind(P_SIMPLE);
-    par_uniform_matrix4f(U_MVP, &mvp);
-    par_varray_enable(par_mesh_coord(trimesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
-    par_draw_triangles(0, par_mesh_ntriangles(trimesh));
+    parg_draw_clear();
+    parg_shader_bind(P_SIMPLE);
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_varray_enable(
+        parg_mesh_coord(trimesh), A_POSITION, 2, PARG_FLOAT, 0, 0);
+    parg_draw_triangles(0, parg_mesh_ntriangles(trimesh));
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
-    par_zcam_tick(winwidth / winheight, seconds);
+    parg_zcam_tick(winwidth / winheight, seconds);
     return 1;
 }
 
 void dispose()
 {
-    par_shader_free(P_SIMPLE);
-    par_mesh_free(trimesh);
+    parg_shader_free(P_SIMPLE);
+    parg_mesh_free(trimesh);
 }
 
-void input(par_event evt, float x, float y, float z)
+void input(parg_event evt, float x, float y, float z)
 {
     switch (evt) {
-    case PAR_EVENT_DOWN:
-        par_zcam_grab_begin(x, y);
+    case PARG_EVENT_DOWN:
+        parg_zcam_grab_begin(x, y);
         break;
-    case PAR_EVENT_UP:
-        par_zcam_grab_update(x, y, z);
-        par_zcam_grab_end();
+    case PARG_EVENT_UP:
+        parg_zcam_grab_update(x, y, z);
+        parg_zcam_grab_end();
         break;
-    case PAR_EVENT_MOVE:
-        par_zcam_grab_update(x, y, z);
+    case PARG_EVENT_MOVE:
+        parg_zcam_grab_update(x, y, z);
         break;
     default:
         break;
@@ -74,13 +75,13 @@ void input(par_event evt, float x, float y, float z)
 
 int main(int argc, char* argv[])
 {
-    TOKEN_TABLE(PAR_TOKEN_DEFINE);
-    par_asset_preload(SHADER_SIMPLE);
-    par_window_setargs(argc, argv);
-    par_window_oninit(init);
-    par_window_ontick(tick);
-    par_window_ondraw(draw);
-    par_window_onexit(dispose);
-    par_window_oninput(input);
-    return par_window_exec(185 * 5, 100 * 5, 1);
+    TOKEN_TABLE(PARG_TOKEN_DEFINE);
+    parg_asset_preload(SHADER_SIMPLE);
+    parg_window_setargs(argc, argv);
+    parg_window_oninit(init);
+    parg_window_ontick(tick);
+    parg_window_ondraw(draw);
+    parg_window_onexit(dispose);
+    parg_window_oninput(input);
+    return parg_window_exec(185 * 5, 100 * 5, 1);
 }

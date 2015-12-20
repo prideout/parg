@@ -27,7 +27,7 @@ static DPoint3 window_to_world(float winx, float winy)
     return worldspace;
 }
 
-void par_zcam_get_viewport(float* lbrt)
+void parg_zcam_get_viewport(float* lbrt)
 {
     double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
     double vpwidth = vpheight * _winaspect;
@@ -41,7 +41,7 @@ void par_zcam_get_viewport(float* lbrt)
     *lbrt = top;
 }
 
-void par_zcam_init(float worldwidth, float worldheight, float fovy)
+void parg_zcam_init(float worldwidth, float worldheight, float fovy)
 {
     _maxcamz = 0.5 * worldheight / tan(fovy * 0.5);
     _camerapos = (DPoint3){0, 0, _maxcamz};
@@ -53,7 +53,7 @@ void par_zcam_init(float worldwidth, float worldheight, float fovy)
     _worldsize.y = worldheight;
 }
 
-void par_zcam_tick(float winaspect, float seconds)
+void parg_zcam_tick(float winaspect, float seconds)
 {
     if (_winaspect != winaspect) {
         _winaspect = winaspect;
@@ -62,19 +62,19 @@ void par_zcam_tick(float winaspect, float seconds)
     }
 }
 
-float par_zcam_get_magnification()
+float parg_zcam_get_magnification()
 {
     double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
     return _worldsize.y / vpheight;
 }
 
-void par_zcam_grab_begin(float winx, float winy)
+void parg_zcam_grab_begin(float winx, float winy)
 {
     _grabbing = 1;
     _grabpt = window_to_world(winx, winy);
 }
 
-void par_zcam_grab_update(float winx, float winy, float scrolldelta)
+void parg_zcam_grab_update(float winx, float winy, float scrolldelta)
 {
     if (_grabbing) {
         double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
@@ -93,9 +93,9 @@ void par_zcam_grab_update(float winx, float winy, float scrolldelta)
     _dirty = 1;
 }
 
-void par_zcam_grab_end() { _grabbing = 0; }
+void parg_zcam_grab_end() { _grabbing = 0; }
 
-DPoint3 par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
+DPoint3 parg_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
 {
     *proj = _projmat;
     DPoint3 target = {_camerapos.x, _camerapos.y, 0};
@@ -104,7 +104,7 @@ DPoint3 par_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
     return _camerapos;
 }
 
-Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view)
+Point3 parg_zcam_matrices(Matrix4* proj, Matrix4* view)
 {
     *proj = M4MakeFromDM4(_projmat);
     DPoint3 target = {_camerapos.x, _camerapos.y, 0};
@@ -113,7 +113,7 @@ Point3 par_zcam_matrices(Matrix4* proj, Matrix4* view)
     return (Point3){_camerapos.x, _camerapos.y, _camerapos.z};
 }
 
-void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi)
+void parg_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi)
 {
     DPoint3 origin = {0, 0, 0};
     DPoint3 target = {0, 0, -1};
@@ -131,7 +131,7 @@ void par_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi)
     *eyepos_hi = eyepos;
 }
 
-int par_zcam_has_moved()
+int parg_zcam_has_moved()
 {
     int retval = _dirty;
     _dirty = 0;

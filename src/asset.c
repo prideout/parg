@@ -5,7 +5,7 @@
 #include "lodepng.h"
 
 // Mapping from asset ids (which are tokens) to buffer pointers.
-KHASH_MAP_INIT_INT(assmap, par_buffer*)
+KHASH_MAP_INIT_INT(assmap, parg_buffer*)
 
 static khash_t(assmap)* _asset_registry = 0;
 
@@ -13,10 +13,10 @@ static sds _exedir = 0;
 static sds _baseurl = 0;
 
 #ifdef EMSCRIPTEN
-void par_asset_onload(const char* name, par_buffer* buf)
+void parg_asset_onload(const char* name, parg_buffer* buf)
 {
-    par_token id = par_token_from_string(name);
-    par_assert(buf, "Unable to load asset");
+    parg_token id = parg_token_from_string(name);
+    parg_assert(buf, "Unable to load asset");
     if (!_asset_registry) {
         _asset_registry = kh_init(assmap);
     }
@@ -29,34 +29,34 @@ void par_asset_onload(const char* name, par_buffer* buf)
 
 static sds _pngsuffix = 0;
 
-void par_asset_preload(par_token id)
+void parg_asset_preload(parg_token id)
 {
     if (!_pngsuffix) {
         _pngsuffix = sdsnew(".png");
     }
-    sds filename = par_token_to_sds(id);
-    par_buffer* buf = par_buffer_from_path(filename);
-    par_assert(buf, "Unable to load asset");
+    sds filename = parg_token_to_sds(id);
+    parg_buffer* buf = parg_buffer_from_path(filename);
+    parg_assert(buf, "Unable to load asset");
     if (sdslen(filename) > 4) {
         sds suffix = sdsdup(filename);
         sdsrange(suffix, -4, -1);
         if (!sdscmp(suffix, _pngsuffix)) {
             unsigned char* decoded;
             unsigned dims[3] = {0, 0, 4};
-            unsigned char* filedata = par_buffer_lock(buf, PAR_READ);
+            unsigned char* filedata = parg_buffer_lock(buf, PARG_READ);
             unsigned err = lodepng_decode_memory(&decoded, &dims[0], &dims[1],
-                    filedata, par_buffer_length(buf), LCT_RGBA, 8);
-            par_assert(err == 0, "PNG decoding error");
-            par_buffer_free(buf);
+                    filedata, parg_buffer_length(buf), LCT_RGBA, 8);
+            parg_assert(err == 0, "PNG decoding error");
+            parg_buffer_free(buf);
             int nbytes = dims[0] * dims[1] * dims[2];
-            buf = par_buffer_alloc(nbytes + 12, PAR_CPU);
-            int* ptr = par_buffer_lock(buf, PAR_WRITE);
+            buf = parg_buffer_alloc(nbytes + 12, PARG_CPU);
+            int* ptr = parg_buffer_lock(buf, PARG_WRITE);
             *ptr++ = dims[0];
             *ptr++ = dims[1];
             *ptr++ = dims[2];
             memcpy(ptr, decoded, nbytes);
             free(decoded);
-            par_buffer_unlock(buf);
+            parg_buffer_unlock(buf);
         }
         sdsfree(suffix);
     }
@@ -70,15 +70,15 @@ void par_asset_preload(par_token id)
 
 #endif
 
-par_buffer* par_asset_to_buffer(par_token id)
+parg_buffer* parg_asset_to_buffer(parg_token id)
 {
-    par_assert(_asset_registry, "Uninitialized asset registry");
+    parg_assert(_asset_registry, "Uninitialized asset registry");
     khiter_t iter = kh_get(assmap, _asset_registry, id);
-    par_assert(iter != kh_end(_asset_registry), "Unknown token");
+    parg_assert(iter != kh_end(_asset_registry), "Unknown token");
     return kh_value(_asset_registry, iter);
 }
 
-sds par_asset_baseurl()
+sds parg_asset_baseurl()
 {
     if (!_baseurl) {
         _baseurl = sdsnew("http://github.prideout.net/assets/");
@@ -88,9 +88,9 @@ sds par_asset_baseurl()
 
 #if EMSCRIPTEN
 
-void par_asset_set_baseurl(const char* url) { _baseurl = sdsnew(url); }
+void parg_asset_set_baseurl(const char* url) { _baseurl = sdsnew(url); }
 
-sds par_asset_whereami()
+sds parg_asset_whereami()
 {
     if (!_exedir) {
         _exedir = sdsnew("web/");
@@ -98,9 +98,9 @@ sds par_asset_whereami()
     return _exedir;
 }
 
-int par_asset_fileexists(sds fullpath) { return 1; }
+int parg_asset_fileexists(sds fullpath) { return 1; }
 
-int par_asset_download(const char* filename, sds targetpath) { return 0; }
+int parg_asset_download(const char* filename, sds targetpath) { return 0; }
 
 #else
 
@@ -112,7 +112,7 @@ int par_asset_download(const char* filename, sds targetpath) { return 0; }
 #define PAR_EASYCURL_IMPLEMENTATION
 #include <par/par_easycurl.h>
 
-sds par_asset_whereami()
+sds parg_asset_whereami()
 {
     if (!_exedir) {
         int length = wai_getExecutablePath(0, 0, 0);
@@ -124,11 +124,11 @@ sds par_asset_whereami()
     return _exedir;
 }
 
-int par_asset_fileexists(sds fullpath) { return access(fullpath, F_OK) != -1; }
+int parg_asset_fileexists(sds fullpath) { return access(fullpath, F_OK) != -1; }
 
-int par_asset_download(const char* filename, sds targetpath)
+int parg_asset_download(const char* filename, sds targetpath)
 {
-    sds baseurl = par_asset_baseurl();
+    sds baseurl = parg_asset_baseurl();
     sds fullurl = sdscat(sdsdup(baseurl), filename);
     printf("Downloading %s...\n", fullurl);
     return par_easycurl_to_file(fullurl, targetpath);

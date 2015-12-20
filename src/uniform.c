@@ -1,49 +1,49 @@
 #include <parg.h>
 #include "pargl.h"
 
-void par_uniform1f(par_token tok, float val)
+void parg_uniform1f(parg_token tok, float val)
 {
-    GLint loc = par_shader_uniform_get(tok);
+    GLint loc = parg_shader_uniform_get(tok);
     if (loc > -1) {
         glUniform1f(loc, val);
     }
 }
 
-void par_uniform3f(par_token tok, const Vector3* val)
+void parg_uniform3f(parg_token tok, const Vector3* val)
 {
-    GLint loc = par_shader_uniform_get(tok);
+    GLint loc = parg_shader_uniform_get(tok);
     if (loc > -1) {
         glUniform3fv(loc, 1, &val->x);
     }
 }
 
-void par_uniform4f(par_token tok, const Vector4* val)
+void parg_uniform4f(parg_token tok, const Vector4* val)
 {
-    GLint loc = par_shader_uniform_get(tok);
+    GLint loc = parg_shader_uniform_get(tok);
     if (loc > -1) {
         glUniform4fv(loc, 1, &val->x);
     }
 }
 
-void par_uniform_point(par_token tok, const Point3* val)
+void parg_uniform_point(parg_token tok, const Point3* val)
 {
-    GLint loc = par_shader_uniform_get(tok);
+    GLint loc = parg_shader_uniform_get(tok);
     if (loc > -1) {
         glUniform3fv(loc, 1, &val->x);
     }
 }
 
-void par_uniform_matrix4f(par_token tok, const Matrix4* val)
+void parg_uniform_matrix4f(parg_token tok, const Matrix4* val)
 {
-    GLint loc = par_shader_uniform_get(tok);
+    GLint loc = parg_shader_uniform_get(tok);
     if (loc > -1) {
         glUniformMatrix4fv(loc, 1, 0, &val->col0.x);
     }
 }
 
-void par_uniform_matrix3f(par_token tok, const Matrix3* val)
+void parg_uniform_matrix3f(parg_token tok, const Matrix3* val)
 {
-    GLint loc = par_shader_uniform_get(tok);
+    GLint loc = parg_shader_uniform_get(tok);
     if (loc == -1) {
         return;
     }

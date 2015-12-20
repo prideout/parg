@@ -13,30 +13,30 @@ static float _touchpt[2] = {0};
 static float _pixscale = 1.0f;
 static int _winwidth = 0;
 static int _winheight = 0;
-static par_window_fn_init _init = 0;
-static par_window_fn_tick _tick = 0;
-static par_window_fn_draw _draw = 0;
-static par_window_fn_exit _dispose = 0;
-static par_window_fn_input _input = 0;
-static par_window_fn_message _message = 0;
+static parg_window_fn_init _init = 0;
+static parg_window_fn_tick _tick = 0;
+static parg_window_fn_draw _draw = 0;
+static parg_window_fn_exit _dispose = 0;
+static parg_window_fn_input _input = 0;
+static parg_window_fn_message _message = 0;
 
-void par_window_setargs(int argc, char* argv[])
+void parg_window_setargs(int argc, char* argv[])
 {
     _argc = argc;
     _argv = argv;
 }
 
-void par_window_oninit(par_window_fn_init fn) { _init = fn; }
+void parg_window_oninit(parg_window_fn_init fn) { _init = fn; }
 
-void par_window_ontick(par_window_fn_tick fn) { _tick = fn; }
+void parg_window_ontick(parg_window_fn_tick fn) { _tick = fn; }
 
-void par_window_ondraw(par_window_fn_draw fn) { _draw = fn; }
+void parg_window_ondraw(parg_window_fn_draw fn) { _draw = fn; }
 
-void par_window_onexit(par_window_fn_exit fn) { _dispose = fn; }
+void parg_window_onexit(parg_window_fn_exit fn) { _dispose = fn; }
 
-void par_window_oninput(par_window_fn_input fn) { _input = fn; }
+void parg_window_oninput(parg_window_fn_input fn) { _input = fn; }
 
-void par_window_onmessage(par_window_fn_message fn) { _message = fn; }
+void parg_window_onmessage(parg_window_fn_message fn) { _message = fn; }
 
 static void onerror(int error, const char* description)
 {
@@ -50,7 +50,7 @@ static void onkey(GLFWwindow* window, int key, int scancode, int action, int m)
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
     if (_input && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        _input(PAR_EVENT_KEYPRESS, key, 0, 0);
+        _input(PARG_EVENT_KEYPRESS, key, 0, 0);
     }
 }
 
@@ -60,7 +60,7 @@ static void onmove(GLFWwindow* window, double x, double y)
     if (_input) {
         _touchpt[0] = x / _winwidth;
         _touchpt[1] = (_winheight - 1 - y) / _winheight;
-        _input(PAR_EVENT_MOVE, _touchpt[0], _touchpt[1], 0);
+        _input(PARG_EVENT_MOVE, _touchpt[0], _touchpt[1], 0);
     }
 }
 
@@ -70,21 +70,21 @@ static void onclick(GLFWwindow* window, int button, int action, int mods)
         return;
     }
     if (action == GLFW_PRESS) {
-        _input(PAR_EVENT_DOWN, _touchpt[0], _touchpt[1], 0);
+        _input(PARG_EVENT_DOWN, _touchpt[0], _touchpt[1], 0);
     }
     if (action == GLFW_RELEASE) {
-        _input(PAR_EVENT_UP, _touchpt[0], _touchpt[1], 0);
+        _input(PARG_EVENT_UP, _touchpt[0], _touchpt[1], 0);
     }
 }
 
 static void onscroll(GLFWwindow* window, double dx, double dy)
 {
     if (_input) {
-        _input(PAR_EVENT_MOVE, _touchpt[0], _touchpt[1], dy);
+        _input(PARG_EVENT_MOVE, _touchpt[0], _touchpt[1], dy);
     }
 }
 
-int par_window_exec(float winwidth, float winheight, int vsync)
+int parg_window_exec(float winwidth, float winheight, int vsync)
 {
     GLFWwindow* window;
     glfwSetErrorCallback(onerror);
@@ -166,7 +166,7 @@ int par_window_exec(float winwidth, float winheight, int vsync)
         glfwMakeContextCurrent(window);
         if (needs_draw && _draw) {
             if (capture) {
-                par_framebuffer_create(width, height);
+                parg_framebuffer_create(width, height);
             }
             _draw();
             GLenum err = glGetError();
@@ -178,7 +178,7 @@ int par_window_exec(float winwidth, float winheight, int vsync)
                 unsigned char* buffer = malloc(width * height * 4);
                 glReadPixels(
                     0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-                par_texture_fliprows(buffer, width * 4, height);
+                parg_texture_fliprows(buffer, width * 4, height);
                 lodepng_encode32_file(capture, buffer, width, height);
                 free(buffer);
                 break;

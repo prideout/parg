@@ -20,7 +20,7 @@ static khash_t(glmap)* _program_registry = 0;
 static khash_t(imap)* _attr_registry = 0;
 static khash_t(imap)* _unif_registry = 0;
 static GLuint _current_program = 0;
-static par_token _current_program_token = 0;
+static parg_token _current_program_token = 0;
 
 #define MAX_SHADER_SPEW 1024
 #define MAX_UNIFORM_LEN 128
@@ -39,7 +39,7 @@ static int kv_find(sdsvec keys, sds key)
     return -1;
 }
 
-void par_shader_load_from_buffer(par_buffer* buf)
+void parg_shader_load_from_buffer(parg_buffer* buf)
 {
     const sds ATTRIBUTE = sdsnew("attribute ");
     const sds PROGRAM = sdsnew("@program ");
@@ -63,11 +63,11 @@ void par_shader_load_from_buffer(par_buffer* buf)
     kv_init(chunk_names);
 
     // Split the buffer into a list of codelines.
-    int len = par_buffer_length(buf);
+    int len = parg_buffer_length(buf);
     int nlines;
-    char* contents = par_buffer_lock(buf, PAR_READ);
+    char* contents = parg_buffer_lock(buf, PARG_READ);
     sds* lines = sdssplitlen(contents, len, "\n", 1, &nlines);
-    par_buffer_unlock(buf);
+    parg_buffer_unlock(buf);
 
     // Group codelines into chunks and stash all @program lines.
     kv_push(sds, chunk_names, sdsdup(PREFIX));
@@ -98,7 +98,7 @@ void par_shader_load_from_buffer(par_buffer* buf)
             sds attr = sdsdup(words[nwords - 1]);
             sdsfreesplitres(words, nwords);
             sdsfree(aline);
-            par_token tok = par_token_from_string(attr);
+            parg_token tok = parg_token_from_string(attr);
             khiter_t iter = kh_get(imap, _attr_registry, tok);
             if (iter == kh_end(_attr_registry)) {
                 int newslot = kh_size(_attr_registry);
@@ -122,13 +122,13 @@ void par_shader_load_from_buffer(par_buffer* buf)
         for (int a = 0; a < nargs; a++) {
             sdstrim(args[a], " \t");
         }
-        par_assert(nargs == 3, "@program should have 3 args");
+        parg_assert(nargs == 3, "@program should have 3 args");
 
         // Build the vshader and fshader strings.
         int vshader_index = kv_find(chunk_names, args[1]);
         int fshader_index = kv_find(chunk_names, args[2]);
-        par_verify(vshader_index > 0, "No such vshader", args[1]);
-        par_verify(fshader_index > 0, "No such fshader", args[2]);
+        parg_verify(vshader_index > 0, "No such vshader", args[1]);
+        parg_verify(fshader_index > 0, "No such fshader", args[2]);
         sds vshader_body = kv_A(chunk_bodies, vshader_index);
         sds fshader_body = kv_A(chunk_bodies, fshader_index);
         vshader_body = sdscat(sdsdup(prefix_body), vshader_body);
@@ -144,7 +144,7 @@ void par_shader_load_from_buffer(par_buffer* buf)
         sdsfree(tmp);
 #endif
 #endif
-        par_token program_name = par_token_from_string(args[0]);
+        parg_token program_name = parg_token_from_string(args[0]);
         sdsfreesplitres(args, nargs);
         sdsfree(argstring);
 
@@ -166,28 +166,28 @@ void par_shader_load_from_buffer(par_buffer* buf)
     sdsfree(PREFIX);
 }
 
-void par_shader_load_from_asset(par_token id)
+void parg_shader_load_from_asset(parg_token id)
 {
-    par_buffer* buf = par_buffer_from_asset(id);
-    par_shader_load_from_buffer(buf);
-    par_buffer_free(buf);
+    parg_buffer* buf = parg_buffer_from_asset(id);
+    parg_shader_load_from_buffer(buf);
+    parg_buffer_free(buf);
 }
 
-GLuint par_shader_attrib(par_token tok) { return 0; }
+GLuint parg_shader_attrib(parg_token tok) { return 0; }
 
-static GLuint compile_program(par_token tok)
+static GLuint compile_program(parg_token tok)
 {
     khiter_t iter;
 
     iter = kh_get(smap, _vshader_registry, tok);
-    par_verify(iter != kh_end(_vshader_registry), "No vshader",
-        par_token_to_string(tok));
+    parg_verify(iter != kh_end(_vshader_registry), "No vshader",
+        parg_token_to_string(tok));
     sds vshader_body = kh_value(_vshader_registry, iter);
     PARGL_STRING vshader_ptr = (PARGL_STRING) &vshader_body;
 
     iter = kh_get(smap, _fshader_registry, tok);
-    par_verify(iter != kh_end(_fshader_registry), "No fshader",
-        par_token_to_string(tok));
+    parg_verify(iter != kh_end(_fshader_registry), "No fshader",
+        parg_token_to_string(tok));
     sds fshader_body = kh_value(_fshader_registry, iter);
     PARGL_STRING fshader_ptr = (PARGL_STRING) &fshader_body;
 
@@ -199,14 +199,14 @@ static GLuint compile_program(par_token tok)
     glCompileShader(vs_handle);
     glGetShaderiv(vs_handle, GL_COMPILE_STATUS, &compile_success);
     glGetShaderInfoLog(vs_handle, MAX_SHADER_SPEW, 0, spew);
-    par_verify(compile_success, par_token_to_string(tok), spew);
+    parg_verify(compile_success, parg_token_to_string(tok), spew);
 
     GLuint fs_handle = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fs_handle, 1, fshader_ptr, 0);
     glCompileShader(fs_handle);
     glGetShaderiv(fs_handle, GL_COMPILE_STATUS, &compile_success);
     glGetShaderInfoLog(fs_handle, MAX_SHADER_SPEW, 0, spew);
-    par_verify(compile_success, par_token_to_string(tok), spew);
+    parg_verify(compile_success, parg_token_to_string(tok), spew);
 
     GLuint program_handle = glCreateProgram();
     glAttachShader(program_handle, vs_handle);
@@ -218,8 +218,8 @@ static GLuint compile_program(par_token tok)
             continue;
         }
         int slot = kh_value(_attr_registry, iter);
-        par_token tok = kh_key(_attr_registry, iter);
-        const char* name = par_token_to_string(tok);
+        parg_token tok = kh_key(_attr_registry, iter);
+        const char* name = parg_token_to_string(tok);
         glBindAttribLocation(program_handle, slot, name);
     }
 
@@ -227,12 +227,12 @@ static GLuint compile_program(par_token tok)
     glLinkProgram(program_handle);
     glGetProgramiv(program_handle, GL_LINK_STATUS, &link_success);
     glGetProgramInfoLog(program_handle, MAX_SHADER_SPEW, 0, spew);
-    par_verify(link_success, par_token_to_string(tok), spew);
+    parg_verify(link_success, parg_token_to_string(tok), spew);
 
     return program_handle;
 }
 
-static void gather_uniforms(par_token ptoken, GLuint phandle)
+static void gather_uniforms(parg_token ptoken, GLuint phandle)
 {
     int nuniforms;
     glGetProgramiv(phandle, GL_ACTIVE_UNIFORMS, &nuniforms);
@@ -244,25 +244,25 @@ static void gather_uniforms(par_token ptoken, GLuint phandle)
         glGetActiveUniform(
             phandle, nuniforms, MAX_UNIFORM_LEN, 0, &size, &type, uname);
         GLint loc = glGetUniformLocation(phandle, uname);
-        par_token utoken = par_token_from_string(uname);
-        par_token combined_token = ptoken ^ utoken;
+        parg_token utoken = parg_token_from_string(uname);
+        parg_token combined_token = ptoken ^ utoken;
         khiter_t iter = kh_put(imap, _unif_registry, combined_token, &ret);
         kh_value(_unif_registry, iter) = loc;
     }
 }
 
-GLuint par_shader_attrib_get(par_token tok)
+GLuint parg_shader_attrib_get(parg_token tok)
 {
     khiter_t iter = kh_get(imap, _attr_registry, tok);
-    par_verify(iter != kh_end(_attr_registry), "Unknown attribute",
-        par_token_to_string(tok));
+    parg_verify(iter != kh_end(_attr_registry), "Unknown attribute",
+        parg_token_to_string(tok));
     return kh_value(_attr_registry, iter);
 }
 
-GLint par_shader_uniform_get(par_token utoken)
+GLint parg_shader_uniform_get(parg_token utoken)
 {
-    par_token ptoken = _current_program_token;
-    par_token combined_token = ptoken ^ utoken;
+    parg_token ptoken = _current_program_token;
+    parg_token combined_token = ptoken ^ utoken;
     khiter_t iter = kh_get(imap, _unif_registry, combined_token);
     if (iter == kh_end(_unif_registry)) {
         return -1;
@@ -270,7 +270,7 @@ GLint par_shader_uniform_get(par_token utoken)
     return kh_value(_unif_registry, iter);
 }
 
-void par_shader_bind(par_token tok)
+void parg_shader_bind(parg_token tok)
 {
     if (!_program_registry) {
         _program_registry = kh_init(glmap);
@@ -286,13 +286,13 @@ void par_shader_bind(par_token tok)
     } else {
         program = kh_value(_program_registry, iter);
     }
-    par_verify(program, "No program", par_token_to_string(tok));
+    parg_verify(program, "No program", parg_token_to_string(tok));
     glUseProgram(program);
     _current_program = program;
     _current_program_token = tok;
 }
 
-void par_shader_free(par_token tok)
+void parg_shader_free(parg_token tok)
 {
     khiter_t iter = kh_get(glmap, _program_registry, tok);
     if (iter != kh_end(_program_registry)) {

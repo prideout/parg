@@ -93,12 +93,12 @@ PargApp.prototype.onimage = function(id, img) {
 PargApp.prototype.start = function() {
 
     var cevents = {
-        PAR_EVENT_DOWN: 0,
-        PAR_EVENT_UP: 1,
-        PAR_EVENT_MOVE: 2
+        PARG_EVENT_DOWN: 0,
+        PARG_EVENT_UP: 1,
+        PARG_EVENT_MOVE: 2
     };
 
-    var dims = this.module.par_window_dims;
+    var dims = this.module.parg_window_dims;
     var $canvas = $(this.canvas);
     var canvas = $canvas[0];
     $canvas.css({
@@ -129,23 +129,23 @@ PargApp.prototype.start = function() {
         var etype = event.type;
         var delta;
         if (etype == "mousedown") {
-            this.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
+            this.Window.input(cevents.PARG_EVENT_DOWN, x, y, 0);
         } else if (etype == "mouseup") {
-            this.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
+            this.Window.input(cevents.PARG_EVENT_UP, x, y, 0);
         } else if (etype == "mousemove") {
-            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
+            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, 0);
         } else if (etype == "mousewheel") {
             event.preventDefault();
             delta = event.wheelDelta / 10.0;
-            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, delta);
         } else if (etype == "DOMMouseScroll") {
             event.preventDefault();
             delta = -event.detail * 2.0;
-            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, delta);
         } else if (etype == "wheel") {
             event.preventDefault();
             delta = -event.deltaY / 2.0;
-            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, delta);
         }
     };
 

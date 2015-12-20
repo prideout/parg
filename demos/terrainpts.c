@@ -21,7 +21,7 @@
     F(U_DENSITY, "u_density")             \
     F(U_POINTSIZE, "u_pointsize")
 
-TOKEN_TABLE(PAR_TOKEN_DECLARE);
+TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
 #if DO_BAKE
 #define ASSET_TABLE(F)                   \
@@ -35,13 +35,13 @@ TOKEN_TABLE(PAR_TOKEN_DECLARE);
     F(BUFFER_TERRAIN, "terrainpts.bin")
 #endif
 
-ASSET_TABLE(PAR_TOKEN_DECLARE);
+ASSET_TABLE(PARG_TOKEN_DECLARE);
 
-par_buffer* ptsvbo;
-par_texture* terraintex;
-par_mesh* backquad;
+parg_buffer* ptsvbo;
+parg_texture* terraintex;
+parg_mesh* backquad;
 float pointscale = 1;
-const float fovy = 16 * PAR_TWOPI / 180;
+const float fovy = 16 * PARG_TWOPI / 180;
 const float worldwidth = 1;
 const int maxpts = 1400000;
 const unsigned int ocean_color = 0xFFB2B283;
@@ -51,121 +51,123 @@ const unsigned int ocean_color = 0xFFB2B283;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    backquad = par_mesh_rectangle(1, 0.5);
+    backquad = parg_mesh_rectangle(1, 0.5);
 
 #if DO_BAKE
 
     par_bluenoise_context* ctx;
-    par_buffer* buffer;
+    parg_buffer* buffer;
     void* buffer_data;
 
     printf("Reading tiles...\n");
-    buffer = par_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
+    buffer = parg_buffer_slurp_asset(BUFFER_BLUENOISE, &buffer_data);
     assert(buffer_data);
-    ctx = par_bluenoise_from_buffer(buffer_data, par_buffer_length(buffer), 0);
-    par_buffer_free(buffer);
+    ctx = par_bluenoise_from_buffer(buffer_data, parg_buffer_length(buffer), 0);
+    parg_buffer_free(buffer);
 
     printf("Pushing density function...\n");
-    buffer = par_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
+    buffer = parg_buffer_slurp_asset(TEXTURE_TERRAIN, &buffer_data);
     assert(buffer_data);
     par_bluenoise_density_from_color(
         ctx, buffer_data + 12, 4096, 2048, 4, ocean_color, 0);
 
     printf("Generating point sequence...\n");
     float* cpupts = par_bluenoise_generate_exact(ctx, maxpts, 3);
-    ptsvbo = par_buffer_alloc(maxpts * 12, PAR_GPU_ARRAY);
-    float* gpupts = par_buffer_lock(ptsvbo, PAR_WRITE);
-    memcpy(gpupts, cpupts, par_buffer_length(ptsvbo));
-    par_buffer_unlock(ptsvbo);
+    ptsvbo = parg_buffer_alloc(maxpts * 12, PARG_GPU_ARRAY);
+    float* gpupts = parg_buffer_lock(ptsvbo, PARG_WRITE);
+    memcpy(gpupts, cpupts, parg_buffer_length(ptsvbo));
+    parg_buffer_unlock(ptsvbo);
 
-    par_buffer* filevbo = par_buffer_alloc(maxpts * sizeof(float) * 3, PAR_CPU);
-    float* filepts = par_buffer_lock(filevbo, PAR_WRITE);
-    memcpy(filepts, cpupts, par_buffer_length(filevbo));
-    par_buffer_unlock(filevbo);
-    par_buffer_to_file(filevbo, "terrainpts.bin");
-    par_buffer_free(filevbo);
+    parg_buffer* filevbo =
+        parg_buffer_alloc(maxpts * sizeof(float) * 3, PARG_CPU);
+    float* filepts = parg_buffer_lock(filevbo, PARG_WRITE);
+    memcpy(filepts, cpupts, parg_buffer_length(filevbo));
+    parg_buffer_unlock(filevbo);
+    parg_buffer_to_file(filevbo, "terrainpts.bin");
+    parg_buffer_free(filevbo);
     par_bluenoise_free(ctx);
 
 #else
 
-    par_buffer* filevbo = par_buffer_from_asset(BUFFER_TERRAIN);
-    ptsvbo = par_buffer_dup(filevbo, PAR_GPU_ARRAY);
-    par_buffer_free(filevbo);
+    parg_buffer* filevbo = parg_buffer_from_asset(BUFFER_TERRAIN);
+    ptsvbo = parg_buffer_dup(filevbo, PARG_GPU_ARRAY);
+    parg_buffer_free(filevbo);
 
 #endif
 
-    terraintex = par_texture_from_asset(TEXTURE_TERRAIN);
+    terraintex = parg_texture_from_asset(TEXTURE_TERRAIN);
     printf("%d points.\n", maxpts);
-    par_state_clearcolor((Vector4){0.51, 0.7, 0.7, 1.0});
-    par_state_depthtest(0);
-    par_state_cullfaces(0);
-    par_state_blending(1);
-    par_shader_load_from_asset(SHADER_SIMPLE);
+    parg_state_clearcolor((Vector4){0.51, 0.7, 0.7, 1.0});
+    parg_state_depthtest(0);
+    parg_state_cullfaces(0);
+    parg_state_blending(1);
+    parg_shader_load_from_asset(SHADER_SIMPLE);
     float worldheight = worldwidth * sqrt(0.75);
-    par_zcam_init(worldwidth, worldheight, fovy);
-    par_zcam_grab_update(0.5, 0.5, 30.0);
+    parg_zcam_init(worldwidth, worldheight, fovy);
+    parg_zcam_grab_update(0.5, 0.5, 30.0);
 }
 
 void draw()
 {
     Matrix4 view;
     Matrix4 projection;
-    par_zcam_matrices(&projection, &view);
+    parg_zcam_matrices(&projection, &view);
     Matrix4 model = M4MakeIdentity();
 
     Point3 eyepos;
-    par_zcam_highprec(0, 0, &eyepos);
+    parg_zcam_highprec(0, 0, &eyepos);
 
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
-    par_draw_clear();
-    par_texture_bind(terraintex, 0);
+    parg_draw_clear();
+    parg_texture_bind(terraintex, 0);
 
-    par_shader_bind(P_TEXTURED);
-    par_varray_enable(par_mesh_coord(backquad), A_POSITION, 2, PAR_FLOAT, 0, 0);
-    par_varray_enable(par_mesh_uv(backquad), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
-    par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
-    par_uniform_matrix4f(U_MVP, &mvp);
-    par_draw_one_quad();
+    parg_shader_bind(P_TEXTURED);
+    parg_varray_enable(
+        parg_mesh_coord(backquad), A_POSITION, 2, PARG_FLOAT, 0, 0);
+    parg_varray_enable(parg_mesh_uv(backquad), A_TEXCOORD, 2, PARG_FLOAT, 0, 0);
+    parg_uniform1f(U_MAGNIFICATION, parg_zcam_get_magnification());
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_draw_one_quad();
 
-    par_shader_bind(P_SIMPLE);
-    par_uniform_matrix4f(U_MVP, &mvp);
-    par_uniform_point(U_EYEPOS, &eyepos);
-    par_uniform1f(U_MAGNIFICATION, par_zcam_get_magnification());
-    par_uniform1f(U_DENSITY, 0.1f);
-    par_uniform1f(U_POINTSIZE, 20.0f * pointscale);
-    par_varray_enable(ptsvbo, A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_draw_points(maxpts);
+    parg_shader_bind(P_SIMPLE);
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_uniform_point(U_EYEPOS, &eyepos);
+    parg_uniform1f(U_MAGNIFICATION, parg_zcam_get_magnification());
+    parg_uniform1f(U_DENSITY, 0.1f);
+    parg_uniform1f(U_POINTSIZE, 20.0f * pointscale);
+    parg_varray_enable(ptsvbo, A_POSITION, 3, PARG_FLOAT, 0, 0);
+    parg_draw_points(maxpts);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     pointscale = pixratio;
-    par_zcam_tick(winwidth / winheight, seconds);
-    return par_zcam_has_moved();
+    parg_zcam_tick(winwidth / winheight, seconds);
+    return parg_zcam_has_moved();
 }
 
 void dispose()
 {
-    par_shader_free(P_SIMPLE);
-    par_shader_free(P_TEXTURED);
-    par_buffer_free(ptsvbo);
-    par_texture_free(terraintex);
-    par_mesh_free(backquad);
+    parg_shader_free(P_SIMPLE);
+    parg_shader_free(P_TEXTURED);
+    parg_buffer_free(ptsvbo);
+    parg_texture_free(terraintex);
+    parg_mesh_free(backquad);
 }
 
-void input(par_event evt, float x, float y, float z)
+void input(parg_event evt, float x, float y, float z)
 {
     switch (evt) {
-    case PAR_EVENT_DOWN:
-        par_zcam_grab_begin(x, y);
+    case PARG_EVENT_DOWN:
+        parg_zcam_grab_begin(x, y);
         break;
-    case PAR_EVENT_UP:
-        par_zcam_grab_update(x, y, z);
-        par_zcam_grab_end();
+    case PARG_EVENT_UP:
+        parg_zcam_grab_update(x, y, z);
+        parg_zcam_grab_end();
         break;
-    case PAR_EVENT_MOVE:
-        par_zcam_grab_update(x, y, z);
+    case PARG_EVENT_MOVE:
+        parg_zcam_grab_update(x, y, z);
         break;
     default:
         break;
@@ -174,13 +176,13 @@ void input(par_event evt, float x, float y, float z)
 
 int main(int argc, char* argv[])
 {
-    TOKEN_TABLE(PAR_TOKEN_DEFINE);
-    ASSET_TABLE(PAR_ASSET_TABLE);
-    par_window_setargs(argc, argv);
-    par_window_oninit(init);
-    par_window_ontick(tick);
-    par_window_ondraw(draw);
-    par_window_onexit(dispose);
-    par_window_oninput(input);
-    return par_window_exec(700, 350, 1);
+    TOKEN_TABLE(PARG_TOKEN_DEFINE);
+    ASSET_TABLE(PARG_ASSET_TABLE);
+    parg_window_setargs(argc, argv);
+    parg_window_oninit(init);
+    parg_window_ontick(tick);
+    parg_window_ondraw(draw);
+    parg_window_onexit(dispose);
+    parg_window_oninput(input);
+    return parg_window_exec(700, 350, 1);
 }

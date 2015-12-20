@@ -4,7 +4,7 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <emscripten.h>
-#define PAR_HALF_FLOAT GL_HALF_FLOAT_OES
+#define PARG_HALF_FLOAT GL_HALF_FLOAT_OES
 #define PARGL_STRING const GLchar* *
 #else
 #define PARGL_STRING const GLchar* const *
@@ -17,8 +17,8 @@
 
 void glGenerateMipmap(GLenum target);
 
-GLuint par_buffer_gpu_handle(par_buffer*);
-GLuint par_shader_attrib_get(par_token);
-GLint par_shader_uniform_get(par_token);
+GLuint parg_buffer_gpu_handle(parg_buffer*);
+GLuint parg_shader_attrib_get(parg_token);
+GLint parg_shader_uniform_get(parg_token);
 
-extern int _par_depthtest;
+extern int _parg_depthtest;

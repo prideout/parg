@@ -19,13 +19,13 @@
     F(U_COLOR, "u_color")         \
     F(U_ZSCALE, "u_zscale")       \
     F(U_MVP, "u_mvp")
-TOKEN_TABLE(PAR_TOKEN_DECLARE);
+TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)                     \
     F(SHADER_SIMPLE, "hmap.glsl")          \
     F(TEXTURE_COLOR, "msquares_color.png") \
     F(BIN_ISLAND, "msquares_island.1024.bin")
-ASSET_TABLE(PAR_TOKEN_DECLARE);
+ASSET_TABLE(PARG_TOKEN_DECLARE);
 
 enum {
     STATE_GRAY_SOURCE,
@@ -55,13 +55,13 @@ int needs_draw = 1;
 int state = STATE_MULTI_RGBA;
 Matrix4 projection;
 Matrix4 view;
-par_mesh* trimesh[48] = {0};
+parg_mesh* trimesh[48] = {0};
 uint32_t meshcolors[48];
-par_mesh* rectmesh;
-par_texture* colortex;
-par_texture* graytex;
-par_buffer* graybuf;
-par_buffer* colorbuf;
+parg_mesh* rectmesh;
+parg_texture* colortex;
+parg_texture* graytex;
+parg_buffer* graybuf;
+parg_buffer* colorbuf;
 int nmeshes = 0;
 
 static void create_mesh()
@@ -70,77 +70,77 @@ static void create_mesh()
     float threshold = 0;
     int flags = 0;
     if (state == STATE_GRAY_DEFAULT) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_SIMPLIFY) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         flags = PAR_MSQUARES_SIMPLIFY;
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_INVERT) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         flags = PAR_MSQUARES_INVERT;
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_DUAL) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         flags = PAR_MSQUARES_DUAL;
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_HEIGHTS) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         flags = PAR_MSQUARES_HEIGHTS;
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_DHS) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP;
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_DHSC) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
             PAR_MSQUARES_CONNECT;
         mlist = par_msquares_grayscale(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, threshold, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_GRAY_MULTI) {
-        float const* graydata = par_buffer_lock(graybuf, PAR_READ);
+        float const* graydata = parg_buffer_lock(graybuf, PARG_READ);
         float thresholds[] = {0.0, 0.1};
         flags = PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_HEIGHTS |
             PAR_MSQUARES_SNAP | PAR_MSQUARES_CONNECT;
         mlist = par_msquares_grayscale_multi(
             graydata, IMGWIDTH, IMGHEIGHT, CELLSIZE, thresholds, 2, flags);
-        par_buffer_unlock(graybuf);
+        parg_buffer_unlock(graybuf);
     } else if (state == STATE_COLOR_DEFAULT) {
-        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        parg_byte const* rgbadata = parg_buffer_lock(colorbuf, PARG_READ);
         rgbadata += sizeof(int) * 3;
         mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
-        par_buffer_unlock(colorbuf);
+        parg_buffer_unlock(colorbuf);
     } else if (state == STATE_COLOR_IH) {
-        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        parg_byte const* rgbadata = parg_buffer_lock(colorbuf, PARG_READ);
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_INVERT | PAR_MSQUARES_HEIGHTS;
         mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
-        par_buffer_unlock(colorbuf);
+        parg_buffer_unlock(colorbuf);
     } else if (state == STATE_COLOR_DHSCSI) {
-        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        parg_byte const* rgbadata = parg_buffer_lock(colorbuf, PARG_READ);
         rgbadata += sizeof(int) * 3;
         flags = PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SNAP |
             PAR_MSQUARES_CONNECT | PAR_MSQUARES_SIMPLIFY |
             PAR_MSQUARES_INVERT;
         mlist = par_msquares_color(
             rgbadata, IMGWIDTH, IMGHEIGHT, CELLSIZE, 0x214562, 4, flags);
-        par_buffer_unlock(colorbuf);
+        parg_buffer_unlock(colorbuf);
     } else if (state == STATE_MULTI_RGB) {
         unsigned dims[2] = {0, 0};
         unsigned char* pixels;
@@ -159,11 +159,11 @@ static void create_mesh()
                 PAR_MSQUARES_SIMPLIFY);
         free(pixels);
     } else if (state == STATE_MULTI_DIAGRAM) {
-        par_byte const* rgbadata = par_buffer_lock(colorbuf, PAR_READ);
+        parg_byte const* rgbadata = parg_buffer_lock(colorbuf, PARG_READ);
         rgbadata += sizeof(int) * 3;
         mlist = par_msquares_color_multi(rgbadata, IMGWIDTH, IMGHEIGHT,
                 CELLSIZE, 4, PAR_MSQUARES_SIMPLIFY | PAR_MSQUARES_HEIGHTS);
-        par_buffer_unlock(colorbuf);
+        parg_buffer_unlock(colorbuf);
     }
 
     nmeshes = par_msquares_get_count(mlist);
@@ -171,7 +171,8 @@ static void create_mesh()
     for (int imesh = 0; imesh < nmeshes; imesh++) {
         par_msquares_mesh const* mesh = par_msquares_get_mesh(mlist, imesh);
 
-        // mquares_mesh might have dimensionality of 2 or 3, while par_mesh only
+        // mquares_mesh might have dimensionality of 2 or 3, while parg_mesh
+        // only
         // supports the latter.  So, we potentially need to expand the data from
         // vec2 to vec3.
 
@@ -185,7 +186,7 @@ static void create_mesh()
             }
         }
         meshcolors[imesh] = mesh->color;
-        trimesh[imesh] = par_mesh_create(
+        trimesh[imesh] = parg_mesh_create(
             points, mesh->npoints, mesh->triangles, mesh->ntriangles);
         if (mesh->dim == 2) {
             free(points);
@@ -198,22 +199,22 @@ static void create_mesh()
 void init(float winwidth, float winheight, float pixratio)
 {
     const Vector4 bgcolor = {0.937, 0.937, 0.93, 1.00};
-    par_state_clearcolor(bgcolor);
-    par_state_cullfaces(1);
-    par_state_depthtest(1);
-    par_shader_load_from_asset(SHADER_SIMPLE);
+    parg_state_clearcolor(bgcolor);
+    parg_state_cullfaces(1);
+    parg_state_depthtest(1);
+    parg_shader_load_from_asset(SHADER_SIMPLE);
 
     int* rawdata;
-    colorbuf = par_buffer_slurp_asset(TEXTURE_COLOR, (void*) &rawdata);
+    colorbuf = parg_buffer_slurp_asset(TEXTURE_COLOR, (void*) &rawdata);
     int width = *rawdata++;
     int height = *rawdata++;
     int ncomps = *rawdata++;
-    par_buffer_unlock(colorbuf);
+    parg_buffer_unlock(colorbuf);
 
     colortex =
-        par_texture_from_u8(colorbuf, width, height, ncomps, 3 * sizeof(int));
-    graybuf = par_buffer_from_asset(BIN_ISLAND);
-    graytex = par_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1, 0);
+        parg_texture_from_u8(colorbuf, width, height, ncomps, 3 * sizeof(int));
+    graybuf = parg_buffer_from_asset(BIN_ISLAND);
+    graytex = parg_texture_from_fp32(graybuf, IMGWIDTH, IMGHEIGHT, 1, 0);
     const float h = 1.5f;
     const float w = h * winwidth / winheight;
     const float znear = 10;
@@ -223,7 +224,7 @@ void init(float winwidth, float winheight, float pixratio)
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
-    rectmesh = par_mesh_rectangle(20, 20);
+    rectmesh = parg_mesh_rectangle(20, 20);
 }
 
 void draw()
@@ -231,26 +232,26 @@ void draw()
     int mesh = 0, multi = 0, meshcolor = 0;
     switch (state) {
     case STATE_GRAY_SOURCE:
-        par_shader_bind(P_GRAY);
-        par_texture_bind(graytex, 0);
-        par_uniform1f(U_ZSCALE, 1);
+        parg_shader_bind(P_GRAY);
+        parg_texture_bind(graytex, 0);
+        parg_uniform1f(U_ZSCALE, 1);
         break;
     case STATE_COLOR_IH:
         mesh = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_uniform1f(U_ZSCALE, 0.3);
+        parg_shader_bind(P_GRAYMESH);
+        parg_uniform1f(U_ZSCALE, 0.3);
         break;
     case STATE_COLOR_DHSCSI:
         mesh = multi = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_uniform1f(U_ZSCALE, 0.3);
+        parg_shader_bind(P_GRAYMESH);
+        parg_uniform1f(U_ZSCALE, 0.3);
         break;
     case STATE_MULTI_RGBA:
     case STATE_MULTI_RGB:
     case STATE_MULTI_DIAGRAM:
         meshcolor = mesh = multi = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_uniform1f(U_ZSCALE, 0.25);
+        parg_shader_bind(P_GRAYMESH);
+        parg_uniform1f(U_ZSCALE, 0.25);
         break;
     case STATE_COLOR_DEFAULT:
     case STATE_GRAY_DEFAULT:
@@ -258,32 +259,32 @@ void draw()
     case STATE_GRAY_INVERT:
     case STATE_GRAY_HEIGHTS:
         mesh = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_uniform1f(U_ZSCALE, 1);
+        parg_shader_bind(P_GRAYMESH);
+        parg_uniform1f(U_ZSCALE, 1);
         break;
     case STATE_GRAY_MULTI:
         mesh = multi = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_texture_bind(colortex, 0);
-        par_uniform1f(U_ZSCALE, 0.3);
+        parg_shader_bind(P_GRAYMESH);
+        parg_texture_bind(colortex, 0);
+        parg_uniform1f(U_ZSCALE, 0.3);
         break;
     case STATE_GRAY_DUAL:
         mesh = multi = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_texture_bind(colortex, 0);
-        par_uniform1f(U_ZSCALE, 1);
+        parg_shader_bind(P_GRAYMESH);
+        parg_texture_bind(colortex, 0);
+        parg_uniform1f(U_ZSCALE, 1);
         break;
     case STATE_GRAY_DHS:
     case STATE_GRAY_DHSC:
         mesh = multi = 1;
-        par_shader_bind(P_GRAYMESH);
-        par_texture_bind(colortex, 0);
-        par_uniform1f(U_ZSCALE, 0.5);
+        parg_shader_bind(P_GRAYMESH);
+        parg_texture_bind(colortex, 0);
+        parg_uniform1f(U_ZSCALE, 0.5);
         break;
     case STATE_COLOR_SOURCE:
-        par_texture_bind(colortex, 0);
-        par_shader_bind(P_COLOR);
-        par_uniform1f(U_ZSCALE, 1);
+        parg_texture_bind(colortex, 0);
+        parg_shader_bind(P_COLOR);
+        parg_uniform1f(U_ZSCALE, 1);
         break;
     default:
         break;
@@ -291,7 +292,7 @@ void draw()
 
     if (mesh) {
         for (int i = 0; i < sizeof(trimesh) / sizeof(trimesh[0]); i++) {
-            par_mesh_free(trimesh[i]);
+            parg_mesh_free(trimesh[i]);
         }
         memset(trimesh, 0, sizeof(trimesh));
         create_mesh();
@@ -307,8 +308,8 @@ void draw()
 
     Matrix4 modelview = M4Mul(view, model);
     Matrix4 mvp = M4Mul(projection, modelview);
-    par_uniform_matrix4f(U_MVP, &mvp);
-    par_draw_clear();
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_draw_clear();
     if (mesh) {
         Vector4 colors[3];
         colors[0] = (Vector4){0, 0.6, 0.9, 1};
@@ -317,9 +318,9 @@ void draw()
         Vector4 black = {0, 0, 0, 1.0};
 
         for (int imesh = 0; imesh < nmeshes; imesh++) {
-            par_varray_enable(
-                par_mesh_coord(trimesh[imesh]), A_POSITION, 3, PAR_FLOAT, 0, 0);
-            par_varray_bind(par_mesh_index(trimesh[imesh]));
+            parg_varray_enable(parg_mesh_coord(trimesh[imesh]), A_POSITION, 3,
+                PARG_FLOAT, 0, 0);
+            parg_varray_bind(parg_mesh_index(trimesh[imesh]));
             if (meshcolor) {
                 unsigned int b = meshcolors[imesh] & 0xff;
                 unsigned int g = (meshcolors[imesh] >> 8) & 0xff;
@@ -330,45 +331,45 @@ void draw()
                 color.y = g / 255.0f;
                 color.z = b / 255.0f;
                 color.w = a / 255.0f;
-                par_uniform4f(U_COLOR, &color);
+                parg_uniform4f(U_COLOR, &color);
             } else {
-                par_uniform4f(U_COLOR, &colors[imesh]);
+                parg_uniform4f(U_COLOR, &colors[imesh]);
             }
-            par_draw_triangles_u16(0, par_mesh_ntriangles(trimesh[imesh]));
-            par_uniform4f(U_COLOR, &black);
-            par_draw_wireframe_triangles_u16(
-                0, par_mesh_ntriangles(trimesh[imesh]));
+            parg_draw_triangles_u16(0, parg_mesh_ntriangles(trimesh[imesh]));
+            parg_uniform4f(U_COLOR, &black);
+            parg_draw_wireframe_triangles_u16(
+                0, parg_mesh_ntriangles(trimesh[imesh]));
         }
 
     } else {
-        par_varray_enable(
-            par_mesh_coord(rectmesh), A_POSITION, 2, PAR_FLOAT, 0, 0);
-        par_varray_enable(
-            par_mesh_uv(rectmesh), A_TEXCOORD, 2, PAR_FLOAT, 0, 0);
-        par_draw_one_quad();
-        par_varray_disable(A_TEXCOORD);
+        parg_varray_enable(
+            parg_mesh_coord(rectmesh), A_POSITION, 2, PARG_FLOAT, 0, 0);
+        parg_varray_enable(
+            parg_mesh_uv(rectmesh), A_TEXCOORD, 2, PARG_FLOAT, 0, 0);
+        parg_draw_one_quad();
+        parg_varray_disable(A_TEXCOORD);
     }
 }
 
 void dispose()
 {
-    par_shader_free(P_GRAY);
-    par_shader_free(P_COLOR);
-    par_shader_free(P_GRAYMESH);
-    par_shader_free(P_COLORMESH);
-    par_mesh_free(rectmesh);
-    par_texture_free(colortex);
-    par_texture_free(graytex);
-    par_buffer_free(graybuf);
+    parg_shader_free(P_GRAY);
+    parg_shader_free(P_COLOR);
+    parg_shader_free(P_GRAYMESH);
+    parg_shader_free(P_COLORMESH);
+    parg_mesh_free(rectmesh);
+    parg_texture_free(colortex);
+    parg_texture_free(graytex);
+    parg_buffer_free(graybuf);
     for (int i = 0; i < sizeof(trimesh) / sizeof(trimesh[0]); i++) {
-        par_mesh_free(trimesh[i]);
+        parg_mesh_free(trimesh[i]);
     }
 }
 
-void input(par_event evt, float code, float unused0, float unused1)
+void input(parg_event evt, float code, float unused0, float unused1)
 {
     int key = (char) code;
-    if ((evt == PAR_EVENT_KEYPRESS && key == ' ') || evt == PAR_EVENT_UP) {
+    if ((evt == PARG_EVENT_KEYPRESS && key == ' ') || evt == PARG_EVENT_UP) {
         state = (state + 1) % STATE_COUNT;
         needs_draw = 1;
     }
@@ -383,13 +384,13 @@ int tick(float seconds, float winwidth, float winheight, float pixratio)
 
 int main(int argc, char* argv[])
 {
-    TOKEN_TABLE(PAR_TOKEN_DEFINE);
-    ASSET_TABLE(PAR_ASSET_TABLE);
-    par_window_setargs(argc, argv);
-    par_window_oninit(init);
-    par_window_oninput(input);
-    par_window_ondraw(draw);
-    par_window_ontick(tick);
-    par_window_onexit(dispose);
-    return par_window_exec(480 * 2, 320 * 2, 1);
+    TOKEN_TABLE(PARG_TOKEN_DEFINE);
+    ASSET_TABLE(PARG_ASSET_TABLE);
+    parg_window_setargs(argc, argv);
+    parg_window_oninit(init);
+    parg_window_oninput(input);
+    parg_window_ondraw(draw);
+    parg_window_ontick(tick);
+    parg_window_onexit(dispose);
+    return parg_window_exec(480 * 2, 320 * 2, 1);
 }

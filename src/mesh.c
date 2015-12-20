@@ -3,23 +3,23 @@
 #include <memory.h>
 #include <assert.h>
 
-struct par_mesh_s {
-    par_buffer* coords;
-    par_buffer* uvs;
-    par_buffer* normals;
-    par_buffer* indices;
+struct parg_mesh_s {
+    parg_buffer* coords;
+    parg_buffer* uvs;
+    parg_buffer* normals;
+    parg_buffer* indices;
     int ntriangles;
 };
 
-par_mesh* par_mesh_create(float* pts, int npts, uint16_t* tris, int ntris)
+parg_mesh* parg_mesh_create(float* pts, int npts, uint16_t* tris, int ntris)
 {
-    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    parg_mesh* surf = malloc(sizeof(struct parg_mesh_s));
     surf->coords =
-        par_buffer_create(pts, npts * sizeof(float) * 3, PAR_GPU_ARRAY);
+        parg_buffer_create(pts, npts * sizeof(float) * 3, PARG_GPU_ARRAY);
     surf->uvs = 0;
     surf->normals = 0;
-    surf->indices =
-        par_buffer_create(tris, ntris * sizeof(uint16_t) * 3, PAR_GPU_ELEMENTS);
+    surf->indices = parg_buffer_create(
+        tris, ntris * sizeof(uint16_t) * 3, PARG_GPU_ELEMENTS);
     surf->ntriangles = ntris;
     return surf;
 }
@@ -40,8 +40,8 @@ Point3 knot_fn(float s, float t)
     const float b = 0.3f;
     const float c = 0.5f;
     const float d = 0.1f;
-    const float u = (1 - s) * 2 * PAR_TWOPI;
-    const float v = t * PAR_TWOPI;
+    const float u = (1 - s) * 2 * PARG_TWOPI;
+    const float v = t * PARG_TWOPI;
     const float r = a + b * cos(1.5f * u);
     const float x = r * cos(u);
     const float y = r * sin(u);
@@ -65,18 +65,20 @@ Point3 knot_fn(float s, float t)
     return range;
 }
 
-par_mesh* par_mesh_knot(int slices, int stacks, float major, float minor)
+parg_mesh* parg_mesh_knot(int slices, int stacks, float major, float minor)
 {
-    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    parg_mesh* surf = malloc(sizeof(struct parg_mesh_s));
     float ds = 1.0f / slices;
     float dt = 1.0f / stacks;
     int vertexCount = slices * stacks * 3;
     int vertexStride = sizeof(float) * 3;
-    surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
-    surf->normals = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
+    surf->coords =
+        parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
+    surf->normals =
+        parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
     surf->uvs = 0;
-    Point3* position = (Point3*) par_buffer_lock(surf->coords, PAR_WRITE);
-    Vector3* normal = (Vector3*) par_buffer_lock(surf->normals, PAR_WRITE);
+    Point3* position = (Point3*) parg_buffer_lock(surf->coords, PARG_WRITE);
+    Vector3* normal = (Vector3*) parg_buffer_lock(surf->normals, PARG_WRITE);
     for (float s = 0; s < 1 - ds / 2; s += ds) {
         for (float t = 0; t < 1 - dt / 2; t += dt) {
             const float E = 0.01f;
@@ -88,13 +90,13 @@ par_mesh* par_mesh_knot(int slices, int stacks, float major, float minor)
             *normal++ = n;
         }
     }
-    par_buffer_unlock(surf->coords);
-    par_buffer_unlock(surf->normals);
+    parg_buffer_unlock(surf->coords);
+    parg_buffer_unlock(surf->normals);
 
     surf->ntriangles = slices * stacks * 2;
     int indexCount = surf->ntriangles * 3;
-    surf->indices = par_buffer_alloc(indexCount * 2, PAR_GPU_ELEMENTS);
-    uint16_t* index = (uint16_t*) par_buffer_lock(surf->indices, PAR_WRITE);
+    surf->indices = parg_buffer_alloc(indexCount * 2, PARG_GPU_ELEMENTS);
+    uint16_t* index = (uint16_t*) parg_buffer_lock(surf->indices, PARG_WRITE);
     int v = 0;
     for (int i = 0; i < slices - 1; i++) {
         for (int j = 0; j < stacks; j++) {
@@ -117,20 +119,21 @@ par_mesh* par_mesh_knot(int slices, int stacks, float major, float minor)
         *index++ = j;
         *index++ = next;
     }
-    par_buffer_unlock(surf->indices);
+    parg_buffer_unlock(surf->indices);
     return surf;
 }
 
-par_mesh* par_mesh_torus(int slices, int stacks, float major, float minor)
+parg_mesh* parg_mesh_torus(int slices, int stacks, float major, float minor)
 {
-    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
-    float dphi = PAR_TWOPI / stacks;
-    float dtheta = PAR_TWOPI / slices;
+    parg_mesh* surf = malloc(sizeof(struct parg_mesh_s));
+    float dphi = PARG_TWOPI / stacks;
+    float dtheta = PARG_TWOPI / slices;
     int vertexCount = slices * stacks * 3;
     int vertexStride = sizeof(float) * 3;
-    surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
+    surf->coords =
+        parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
     surf->uvs = 0;
-    Point3* position = (Point3*) par_buffer_lock(surf->coords, PAR_WRITE);
+    Point3* position = (Point3*) parg_buffer_lock(surf->coords, PARG_WRITE);
     for (int slice = 0; slice < slices; slice++) {
         float theta = slice * dtheta;
         for (int stack = 0; stack < stacks; stack++) {
@@ -138,10 +141,11 @@ par_mesh* par_mesh_torus(int slices, int stacks, float major, float minor)
             *position++ = torus_fn(major, minor, phi, theta);
         }
     }
-    par_buffer_unlock(surf->coords);
+    parg_buffer_unlock(surf->coords);
 
-    surf->normals = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
-    Vector3* normal = (Vector3*) par_buffer_lock(surf->normals, PAR_WRITE);
+    surf->normals =
+        parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
+    Vector3* normal = (Vector3*) parg_buffer_lock(surf->normals, PARG_WRITE);
     for (int slice = 0; slice < slices; slice++) {
         float theta = slice * dtheta;
         for (int stack = 0; stack < stacks; stack++) {
@@ -155,12 +159,12 @@ par_mesh* par_mesh_torus(int slices, int stacks, float major, float minor)
             ++normal;
         }
     }
-    par_buffer_unlock(surf->normals);
+    parg_buffer_unlock(surf->normals);
 
     surf->ntriangles = slices * stacks * 2;
     int indexCount = surf->ntriangles * 3;
-    surf->indices = par_buffer_alloc(indexCount * 2, PAR_GPU_ELEMENTS);
-    uint16_t* index = (uint16_t*) par_buffer_lock(surf->indices, PAR_WRITE);
+    surf->indices = parg_buffer_alloc(indexCount * 2, PARG_GPU_ELEMENTS);
+    uint16_t* index = (uint16_t*) parg_buffer_lock(surf->indices, PARG_WRITE);
     int v = 0;
     for (int i = 0; i < slices - 1; i++) {
         for (int j = 0; j < stacks; j++) {
@@ -183,20 +187,21 @@ par_mesh* par_mesh_torus(int slices, int stacks, float major, float minor)
         *index++ = j;
         *index++ = next;
     }
-    par_buffer_unlock(surf->indices);
+    parg_buffer_unlock(surf->indices);
     return surf;
 }
 
-par_mesh* par_mesh_rectangle(float width, float height)
+parg_mesh* parg_mesh_rectangle(float width, float height)
 {
-    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    parg_mesh* surf = malloc(sizeof(struct parg_mesh_s));
     surf->normals = 0;
     surf->indices = 0;
     surf->ntriangles = 2;
     int vertexCount = 4;
     int vertexStride = sizeof(float) * 2;
-    surf->coords = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
-    float* position = (float*) par_buffer_lock(surf->coords, PAR_WRITE);
+    surf->coords =
+        parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
+    float* position = (float*) parg_buffer_lock(surf->coords, PARG_WRITE);
     float w = width * 0.5, h = height * 0.5;
     *position++ = -w;
     *position++ = -h;
@@ -206,9 +211,9 @@ par_mesh* par_mesh_rectangle(float width, float height)
     *position++ = +h;
     *position++ = +w;
     *position = +h;
-    par_buffer_unlock(surf->coords);
-    surf->uvs = par_buffer_alloc(vertexCount * vertexStride, PAR_GPU_ARRAY);
-    float* texcoord = (float*) par_buffer_lock(surf->uvs, PAR_WRITE);
+    parg_buffer_unlock(surf->coords);
+    surf->uvs = parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
+    float* texcoord = (float*) parg_buffer_lock(surf->uvs, PARG_WRITE);
     *texcoord++ = 0;
     *texcoord++ = 0;
     *texcoord++ = 1;
@@ -217,13 +222,13 @@ par_mesh* par_mesh_rectangle(float width, float height)
     *texcoord++ = 1;
     *texcoord++ = 1;
     *texcoord = 1;
-    par_buffer_unlock(surf->uvs);
+    parg_buffer_unlock(surf->uvs);
     return surf;
 }
 
-par_mesh* par_mesh_sierpinski(float width, int depth)
+parg_mesh* parg_mesh_sierpinski(float width, int depth)
 {
-    par_mesh* surf = malloc(sizeof(struct par_mesh_s));
+    parg_mesh* surf = malloc(sizeof(struct parg_mesh_s));
     surf->normals = 0;
     surf->indices = 0;
     surf->uvs = 0;
@@ -233,15 +238,15 @@ par_mesh* par_mesh_sierpinski(float width, int depth)
     int nverts = ntriangles * 3;
     float height = width * sqrt(0.75);
 
-    par_buffer* src = par_buffer_alloc(nverts * vstride, PAR_CPU);
-    float* psrc = (float*) par_buffer_lock(src, PAR_WRITE);
+    parg_buffer* src = parg_buffer_alloc(nverts * vstride, PARG_CPU);
+    float* psrc = (float*) parg_buffer_lock(src, PARG_WRITE);
     *psrc++ = 0;
     *psrc++ = height * 0.5;
     *psrc++ = width * 0.5;
     *psrc++ = -height * 0.5;
     *psrc++ = -width * 0.5;
     *psrc++ = -height * 0.5;
-    par_buffer_unlock(src);
+    parg_buffer_unlock(src);
 
 #define WRITE_TRIANGLE(a, b, c) \
     *pdst++ = x[a];             \
@@ -256,9 +261,9 @@ par_mesh* par_mesh_sierpinski(float width, int depth)
     while (depth--) {
         ntriangles *= 3;
         nverts = ntriangles * 3;
-        par_buffer* dst = par_buffer_alloc(nverts * vstride, PAR_CPU);
-        float* pdst = par_buffer_lock(dst, PAR_WRITE);
-        const float* psrc = par_buffer_lock(src, PAR_READ);
+        parg_buffer* dst = parg_buffer_alloc(nverts * vstride, PARG_CPU);
+        float* pdst = parg_buffer_lock(dst, PARG_WRITE);
+        const float* psrc = parg_buffer_lock(src, PARG_READ);
         for (int i = 0; i < ntriangles / 3; i++) {
             x[0] = *psrc++;
             y[0] = *psrc++;
@@ -276,41 +281,41 @@ par_mesh* par_mesh_sierpinski(float width, int depth)
             WRITE_TRIANGLE(3, 1, 4);
             WRITE_TRIANGLE(5, 4, 2);
         }
-        par_buffer_unlock(src);
-        par_buffer_unlock(dst);
-        par_buffer_free(src);
+        parg_buffer_unlock(src);
+        parg_buffer_unlock(dst);
+        parg_buffer_free(src);
         src = dst;
     }
 
     assert(surf->ntriangles == ntriangles);
-    surf->coords = par_buffer_alloc(nverts * vstride, PAR_GPU_ARRAY);
-    float* pdst = par_buffer_lock(surf->coords, PAR_WRITE);
-    psrc = par_buffer_lock(src, PAR_READ);
+    surf->coords = parg_buffer_alloc(nverts * vstride, PARG_GPU_ARRAY);
+    float* pdst = parg_buffer_lock(surf->coords, PARG_WRITE);
+    psrc = parg_buffer_lock(src, PARG_READ);
     memcpy(pdst, psrc, nverts * vstride);
-    par_buffer_unlock(src);
-    par_buffer_unlock(surf->coords);
-    par_buffer_free(src);
+    parg_buffer_unlock(src);
+    parg_buffer_unlock(surf->coords);
+    parg_buffer_free(src);
     return surf;
 }
 
-void par_mesh_free(par_mesh* m)
+void parg_mesh_free(parg_mesh* m)
 {
     if (!m) {
         return;
     }
-    par_buffer_free(m->coords);
-    par_buffer_free(m->indices);
-    par_buffer_free(m->normals);
-    par_buffer_free(m->uvs);
+    parg_buffer_free(m->coords);
+    parg_buffer_free(m->indices);
+    parg_buffer_free(m->normals);
+    parg_buffer_free(m->uvs);
     free(m);
 }
 
-par_buffer* par_mesh_coord(par_mesh* m) { return m->coords; }
+parg_buffer* parg_mesh_coord(parg_mesh* m) { return m->coords; }
 
-par_buffer* par_mesh_uv(par_mesh* m) { return m->uvs; }
+parg_buffer* parg_mesh_uv(parg_mesh* m) { return m->uvs; }
 
-par_buffer* par_mesh_norml(par_mesh* m) { return m->normals; }
+parg_buffer* parg_mesh_norml(parg_mesh* m) { return m->normals; }
 
-par_buffer* par_mesh_index(par_mesh* m) { return m->indices; }
+parg_buffer* parg_mesh_index(parg_mesh* m) { return m->indices; }
 
-int par_mesh_ntriangles(par_mesh* m) { return m->ntriangles; }
+int parg_mesh_ntriangles(parg_mesh* m) { return m->ntriangles; }

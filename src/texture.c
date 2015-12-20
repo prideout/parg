@@ -4,27 +4,27 @@
 #include "internal.h"
 #include "pargl.h"
 
-struct par_texture_s {
+struct parg_texture_s {
     int width;
     int height;
     GLuint handle;
 };
 
-par_texture* par_texture_from_asset(par_token id)
+parg_texture* parg_texture_from_asset(parg_token id)
 {
-    par_texture* tex = malloc(sizeof(struct par_texture_s));
+    parg_texture* tex = malloc(sizeof(struct parg_texture_s));
     int* rawdata;
-    par_buffer* pngbuf = par_buffer_slurp_asset(id, (void*) &rawdata);
+    parg_buffer* pngbuf = parg_buffer_slurp_asset(id, (void*) &rawdata);
     tex->width = *rawdata++;
     tex->height = *rawdata++;
     int ncomps = *rawdata++;
     assert(ncomps == 4);
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
-    par_texture_fliprows(rawdata, tex->width * ncomps, tex->height);
+    parg_texture_fliprows(rawdata, tex->width * ncomps, tex->height);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA,
         GL_UNSIGNED_BYTE, rawdata);
-    par_buffer_free(pngbuf);
+    parg_buffer_free(pngbuf);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -32,25 +32,25 @@ par_texture* par_texture_from_asset(par_token id)
     return tex;
 }
 
-void par_texture_bind(par_texture* tex, int stage)
+void parg_texture_bind(parg_texture* tex, int stage)
 {
     glActiveTexture(GL_TEXTURE0 + stage);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
 }
 
-void par_texture_info(par_texture* tex, int* width, int* height)
+void parg_texture_info(parg_texture* tex, int* width, int* height)
 {
     *width = tex->width;
     *height = tex->height;
 }
 
-void par_texture_free(par_texture* tex)
+void parg_texture_free(parg_texture* tex)
 {
     glDeleteTextures(1, &tex->handle);
     free(tex);
 }
 
-void par_texture_fliprows(void* data, int rowsize, int nrows)
+void parg_texture_fliprows(void* data, int rowsize, int nrows)
 {
     char* tmp = malloc(rowsize);
     char* top = data;
@@ -65,14 +65,14 @@ void par_texture_fliprows(void* data, int rowsize, int nrows)
     free(tmp);
 }
 
-par_texture* par_texture_from_u8(
-    par_buffer* buf, int width, int height, int ncomps, int byteoffset)
+parg_texture* parg_texture_from_u8(
+    parg_buffer* buf, int width, int height, int ncomps, int byteoffset)
 {
     assert(ncomps == 4);
-    par_texture* tex = malloc(sizeof(struct par_texture_s));
+    parg_texture* tex = malloc(sizeof(struct parg_texture_s));
     tex->width = width;
     tex->height = height;
-    char* rawdata = par_buffer_lock(buf, PAR_READ);
+    char* rawdata = parg_buffer_lock(buf, PARG_READ);
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA,
@@ -81,18 +81,18 @@ par_texture* par_texture_from_u8(
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
-    par_buffer_unlock(buf);
+    parg_buffer_unlock(buf);
     return tex;
 }
 
-par_texture* par_texture_from_fp32(
-    par_buffer* buf, int width, int height, int ncomps, int byteoffset)
+parg_texture* parg_texture_from_fp32(
+    parg_buffer* buf, int width, int height, int ncomps, int byteoffset)
 {
     assert(ncomps == 1);
-    par_texture* tex = malloc(sizeof(struct par_texture_s));
+    parg_texture* tex = malloc(sizeof(struct parg_texture_s));
     tex->width = width;
     tex->height = height;
-    char* rawdata = par_buffer_lock(buf, PAR_READ);
+    char* rawdata = parg_buffer_lock(buf, PARG_READ);
     glGenTextures(1, &tex->handle);
     glBindTexture(GL_TEXTURE_2D, tex->handle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, tex->width, tex->height, 0,
@@ -101,6 +101,6 @@ par_texture* par_texture_from_fp32(
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
-    par_buffer_unlock(buf);
+    parg_buffer_unlock(buf);
     return tex;
 }

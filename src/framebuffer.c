@@ -4,7 +4,7 @@
 #include "internal.h"
 #include "pargl.h"
 
-struct par_framebuffer_s {
+struct parg_framebuffer_s {
     int width;
     int height;
     GLuint tex;
@@ -12,7 +12,7 @@ struct par_framebuffer_s {
     GLuint depth;
 };
 
-par_framebuffer* par_framebuffer_create(int width, int height)
+parg_framebuffer* parg_framebuffer_create(int width, int height)
 {
     GLuint tex, fbo, depth;
 
@@ -39,7 +39,7 @@ par_framebuffer* par_framebuffer_create(int width, int height)
         printf("Failed to create FBO.");
     }
 
-    par_framebuffer* framebuffer = malloc(sizeof(struct par_framebuffer_s));
+    parg_framebuffer* framebuffer = malloc(sizeof(struct parg_framebuffer_s));
     framebuffer->width = width;
     framebuffer->height = height;
     framebuffer->tex = tex;
@@ -48,7 +48,7 @@ par_framebuffer* par_framebuffer_create(int width, int height)
     return framebuffer;
 }
 
-void par_framebuffer_free(par_framebuffer* framebuffer)
+void parg_framebuffer_free(parg_framebuffer* framebuffer)
 {
     glDeleteTextures(1, &framebuffer->tex);
     glDeleteFramebuffers(1, &framebuffer->fbo);
