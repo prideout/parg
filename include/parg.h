@@ -33,7 +33,7 @@ typedef enum {
 
 typedef enum { PARG_READ, PARG_WRITE, PARG_MODIFY } parg_buffer_mode;
 
-// TOKEN
+// TOKENS
 
 typedef uint32_t parg_token;
 #define PARG_TOKEN_DECLARE(NAME, VAL) static parg_token NAME;
@@ -41,7 +41,7 @@ typedef uint32_t parg_token;
 const char* parg_token_to_string(parg_token);
 parg_token parg_token_from_string(const char*);
 
-// ASSET
+// ASSETS
 
 #define PARG_ASSET_TABLE(NAME, VAL) \
     PARG_TOKEN_DEFINE(NAME, VAL);   \
@@ -49,7 +49,7 @@ parg_token parg_token_from_string(const char*);
 #define PARG_ASSET_LIST(VAL) parg_asset_preload(parg_token_from_string(VAL));
 void parg_asset_preload(parg_token id);
 
-// BUFFER
+// BUFFERS
 
 typedef struct parg_buffer_s parg_buffer;
 parg_buffer* parg_buffer_create(
@@ -66,7 +66,7 @@ parg_buffer* parg_buffer_from_asset(parg_token id);
 parg_buffer* parg_buffer_slurp_asset(parg_token id, void** ptr);
 void parg_buffer_to_file(parg_buffer*, const char* filepath);
 
-// MESH
+// MESHES
 
 typedef struct parg_mesh_s parg_mesh;
 parg_mesh* parg_mesh_create(float* pts, int npts, uint16_t* tris, int ntris);
@@ -81,14 +81,14 @@ parg_buffer* parg_mesh_norml(parg_mesh* m);
 parg_buffer* parg_mesh_index(parg_mesh* m);
 int parg_mesh_ntriangles(parg_mesh* m);
 
-// SHADER
+// SHADERS
 
 void parg_shader_load_from_buffer(parg_buffer*);
 void parg_shader_load_from_asset(parg_token id);
 void parg_shader_bind(parg_token);
 void parg_shader_free(parg_token);
 
-// TEXTURE
+// TEXTURES
 
 typedef struct parg_texture_s parg_texture;
 parg_texture* parg_texture_from_buffer(parg_buffer* rgba);
@@ -102,7 +102,7 @@ void parg_texture_info(parg_texture*, int* width, int* height);
 void parg_texture_free(parg_texture*);
 void parg_texture_fliprows(void* data, int rowsize, int nrows);
 
-// UNIFORM
+// UNIFORMS
 
 void parg_uniform1f(parg_token tok, float val);
 void parg_uniform3f(parg_token, const Vector3* val);
@@ -111,21 +111,21 @@ void parg_uniform_point(parg_token, const Point3* val);
 void parg_uniform_matrix4f(parg_token, const Matrix4* val);
 void parg_uniform_matrix3f(parg_token, const Matrix3* val);
 
-// STATE
+// GL STATE MACHINE
 
 void parg_state_clearcolor(Vector4 color);
 void parg_state_cullfaces(int enabled);
 void parg_state_depthtest(int enabled);
 void parg_state_blending(int enabled);
 
-// VARRAY
+// VERTEX ARRAYS
 
 void parg_varray_disable(parg_token attr);
 void parg_varray_bind(parg_buffer*);
 void parg_varray_enable(parg_buffer*, parg_token attr, int ncomps,
     parg_data_type type, int stride, int offset);
 
-// DRAW
+// DRAW CALLS
 
 void parg_draw_clear();
 void parg_draw_one_quad();
@@ -135,7 +135,7 @@ void parg_draw_wireframe_triangles_u16(int start, int count);
 void parg_draw_lines(int nsegments);
 void parg_draw_points(int npoints);
 
-// ZCAM
+// MAP CAMERA
 
 void parg_zcam_init(float world_width, float world_height, float fovy);
 void parg_zcam_tick(float window_aspect, float seconds);
@@ -149,11 +149,32 @@ DPoint3 parg_zcam_dmatrices(DMatrix4* proj, DMatrix4* view);
 void parg_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi);
 int parg_zcam_has_moved();
 
-// FRAMEBUFFER
+// OFFSCREEN FRAMEBUFFER
 
 typedef struct parg_framebuffer_s parg_framebuffer;
 parg_framebuffer* parg_framebuffer_create(int width, int height);
 void parg_framebuffer_free(parg_framebuffer*);
+
+// AXIS-ALIGNED RECTANGLE
+
+typedef struct {
+    float left, bottom, right, top;
+} par_aar;
+
+typedef struct {
+    int x, y, z;
+} par_tilename;
+
+typedef struct {
+    par_tilename mintile;
+    par_tilename maxtile;
+} par_tilerange;
+
+par_aar parg_aar_from_zcam(Matrix4 const* proj, Matrix4 const* view);
+void parg_aar_to_tilerange(par_aar, Vector2 mapsize, par_tilerange* range);
+par_aar parg_aar_from_tilename(par_tilename tile, Vector2 mapsize);
+par_aar parg_aar_from_tilerange(par_tilerange range, Vector2 mapsize);
+par_aar parg_aar_encompass(par_aar a, par_aar b);
 
 #ifdef __cplusplus
 }

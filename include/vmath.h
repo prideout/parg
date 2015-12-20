@@ -44,6 +44,11 @@ extern "C" {
 #ifndef _VECTORMATH_AOS_C_TYPES_H
 #define _VECTORMATH_AOS_C_TYPES_H
 
+typedef struct _VmathVector2 {
+    float x;
+    float y;
+} VmathVector2;
+
 /* A 3-D vector in array-of-structures format
  */
 typedef struct _VmathVector3 {
@@ -8610,6 +8615,7 @@ static inline VmathMatrix3 vmathV3CrossMatrixMul_V(
 // We need shortened (yes, namespace-polluting) names for our book.
 
 #define Point3 VmathPoint3
+#define Vector2 VmathVector2
 #define Vector3 VmathVector3
 #define Vector4 VmathVector4
 #define Quaternion VmathQuat
