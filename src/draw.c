@@ -27,7 +27,7 @@ void par_draw_triangles_u16(int start, int count)
 void par_draw_wireframe_triangles_u16(int start, int count)
 {
 #ifndef EMSCRIPTEN
-    glLineWidth(1);
+    glLineWidth(2);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glPolygonOffset(0.0001, -0.0001);
     glEnable(GL_POLYGON_OFFSET_LINE);

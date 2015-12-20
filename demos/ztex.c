@@ -10,6 +10,7 @@
 #define TOKEN_TABLE(F)          \
     F(P_LANDMASS, "p_landmass") \
     F(P_OCEAN, "p_ocean")       \
+    F(P_SOLID, "p_solid")       \
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
     F(U_MAGNIFICATION, "u_magnification")
@@ -75,14 +76,7 @@ void draw()
     float mag = par_zcam_get_magnification();
 
     par_draw_clear();
-    par_shader_bind(P_LANDMASS);
-    par_uniform_matrix4f(U_MVP, &mvp);
-    par_uniform1f(U_MAGNIFICATION, mag);
-    par_texture_bind(paper_texture, 0);
-    par_varray_bind(par_mesh_index(landmass_mesh));
-    par_varray_enable(
-        par_mesh_coord(landmass_mesh), A_POSITION, 3, PAR_FLOAT, 0, 0);
-    par_draw_triangles_u16(0, par_mesh_ntriangles(ocean_mesh));
+
     par_shader_bind(P_OCEAN);
     par_uniform_matrix4f(U_MVP, &mvp);
     par_uniform1f(U_MAGNIFICATION, mag);
@@ -91,6 +85,19 @@ void draw()
     par_varray_enable(
         par_mesh_coord(ocean_mesh), A_POSITION, 3, PAR_FLOAT, 0, 0);
     par_draw_triangles_u16(0, par_mesh_ntriangles(ocean_mesh));
+
+    par_shader_bind(P_SOLID);
+    par_uniform_matrix4f(U_MVP, &mvp);
+    par_varray_bind(par_mesh_index(landmass_mesh));
+    par_varray_enable(
+        par_mesh_coord(landmass_mesh), A_POSITION, 3, PAR_FLOAT, 0, 0);
+    par_draw_wireframe_triangles_u16(0, par_mesh_ntriangles(landmass_mesh));
+
+    par_shader_bind(P_LANDMASS);
+    par_uniform_matrix4f(U_MVP, &mvp);
+    par_uniform1f(U_MAGNIFICATION, mag);
+    par_texture_bind(paper_texture, 0);
+    par_draw_triangles_u16(0, par_mesh_ntriangles(landmass_mesh));
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
