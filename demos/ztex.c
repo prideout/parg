@@ -13,6 +13,7 @@
     F(P_SOLID, "p_solid")       \
     F(A_POSITION, "a_position") \
     F(U_MVP, "u_mvp")           \
+    F(U_COLOR, "u_color")       \
     F(U_MAGNIFICATION, "u_magnification")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
@@ -27,6 +28,7 @@ const float fovy = 16 * PARG_TWOPI / 180;
 int mode_highp = 1;
 parg_mesh* landmass_mesh;
 parg_mesh* ocean_mesh;
+parg_mesh* quad_mesh;
 parg_texture* ocean_texture;
 parg_texture* paper_texture;
 
@@ -40,6 +42,8 @@ void init(float winwidth, float winheight, float pixratio)
     parg_zcam_grab_update(0.5, 0.5, 30);
     ocean_texture = parg_texture_from_asset(TEXTURE_OCEAN);
     paper_texture = parg_texture_from_asset(TEXTURE_PAPER);
+    parg_aar rect = {-0.125 + 0.05, -0.125 + 0.05, 0.125 + 0.05, 0.125 + 0.05};
+    quad_mesh = parg_mesh_aar(rect);
 
     // Decode the europe image and pass it into msquares.
     int* rawdata;
@@ -74,9 +78,10 @@ void draw()
     DMatrix4 model = DM4MakeTranslation((DVector3){-0.5, -0.5, -1});
     Matrix4 mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
     float mag = parg_zcam_get_magnification();
+    const Vector4 BLACK = {0, 0, 0, 1};
+    const Vector4 SEMI = {1, 1, 1, 0.5};
 
     parg_draw_clear();
-
     parg_shader_bind(P_OCEAN);
     parg_uniform_matrix4f(U_MVP, &mvp);
     parg_uniform1f(U_MAGNIFICATION, mag);
@@ -85,19 +90,29 @@ void draw()
     parg_varray_enable(
         parg_mesh_coord(ocean_mesh), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_draw_triangles_u16(0, parg_mesh_ntriangles(ocean_mesh));
-
     parg_shader_bind(P_SOLID);
     parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_uniform4f(U_COLOR, &BLACK);
     parg_varray_bind(parg_mesh_index(landmass_mesh));
     parg_varray_enable(
         parg_mesh_coord(landmass_mesh), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_draw_wireframe_triangles_u16(0, parg_mesh_ntriangles(landmass_mesh));
-
     parg_shader_bind(P_LANDMASS);
     parg_uniform_matrix4f(U_MVP, &mvp);
     parg_uniform1f(U_MAGNIFICATION, mag);
     parg_texture_bind(paper_texture, 0);
     parg_draw_triangles_u16(0, parg_mesh_ntriangles(landmass_mesh));
+
+    model = DM4MakeTranslation((DVector3){0, 0, 0});
+    mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
+    parg_state_blending(1);
+    parg_shader_bind(P_SOLID);
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_varray_enable(
+        parg_mesh_coord(quad_mesh), A_POSITION, 2, PARG_FLOAT, 0, 0);
+    parg_uniform4f(U_COLOR, &SEMI);
+    parg_draw_one_quad();
+    parg_state_blending(0);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
@@ -110,6 +125,7 @@ void dispose()
 {
     parg_mesh_free(landmass_mesh);
     parg_mesh_free(ocean_mesh);
+    parg_mesh_free(quad_mesh);
     parg_texture_free(ocean_texture);
     parg_texture_free(paper_texture);
 }
@@ -121,6 +137,11 @@ void input(parg_event evt, float x, float y, float z)
         if ((char) x == ' ') {
             mode_highp = !mode_highp;
             printf("Precision %s.\n", mode_highp ? "on" : "off");
+        }
+        if ((char) x == 'P') {
+            parg_aar rect = parg_zcam_get_rectangle();
+            printf("aar: %+2.2f %+2.2f => %+2.2f %+2.2f\n", rect.left,
+                rect.bottom, rect.right, rect.top);
         }
         break;
     case PARG_EVENT_DOWN:
@@ -158,5 +179,5 @@ int main(int argc, char* argv[])
     parg_window_onexit(dispose);
     parg_window_oninput(input);
     parg_window_onmessage(message);
-    return parg_window_exec(400, 300, 1);
+    return parg_window_exec(500, 500, 1);
 }

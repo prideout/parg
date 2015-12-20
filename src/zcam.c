@@ -41,6 +41,13 @@ void parg_zcam_get_viewport(float* lbrt)
     *lbrt = top;
 }
 
+parg_aar parg_zcam_get_rectangle()
+{
+    parg_aar rect;
+    parg_zcam_get_viewport(&rect.left);
+    return rect;
+}
+
 void parg_zcam_init(float worldwidth, float worldheight, float fovy)
 {
     _maxcamz = 0.5 * worldheight / tan(fovy * 0.5);

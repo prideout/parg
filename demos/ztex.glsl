@@ -5,6 +5,7 @@
 
 uniform mat4 u_mvp;
 uniform float u_magnification;
+uniform vec4 u_color;
 uniform sampler2D u_texture;
 varying vec2 v_texcoord;
 
@@ -49,5 +50,5 @@ void main()
 
 void main()
 {
-    gl_FragColor = vec4(0.1, 0.1, 0.1, 1.0);
+    gl_FragColor = u_color;
 }

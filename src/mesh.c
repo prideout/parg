@@ -191,7 +191,7 @@ parg_mesh* parg_mesh_torus(int slices, int stacks, float major, float minor)
     return surf;
 }
 
-parg_mesh* parg_mesh_rectangle(float width, float height)
+parg_mesh* parg_mesh_aar(parg_aar rect)
 {
     parg_mesh* surf = malloc(sizeof(struct parg_mesh_s));
     surf->normals = 0;
@@ -202,15 +202,14 @@ parg_mesh* parg_mesh_rectangle(float width, float height)
     surf->coords =
         parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
     float* position = (float*) parg_buffer_lock(surf->coords, PARG_WRITE);
-    float w = width * 0.5, h = height * 0.5;
-    *position++ = -w;
-    *position++ = -h;
-    *position++ = +w;
-    *position++ = -h;
-    *position++ = -w;
-    *position++ = +h;
-    *position++ = +w;
-    *position = +h;
+    *position++ = rect.left;
+    *position++ = rect.bottom;
+    *position++ = rect.right;
+    *position++ = rect.bottom;
+    *position++ = rect.left;
+    *position++ = rect.top;
+    *position++ = rect.right;
+    *position = rect.top;
     parg_buffer_unlock(surf->coords);
     surf->uvs = parg_buffer_alloc(vertexCount * vertexStride, PARG_GPU_ARRAY);
     float* texcoord = (float*) parg_buffer_lock(surf->uvs, PARG_WRITE);
@@ -224,6 +223,12 @@ parg_mesh* parg_mesh_rectangle(float width, float height)
     *texcoord = 1;
     parg_buffer_unlock(surf->uvs);
     return surf;
+}
+
+parg_mesh* parg_mesh_rectangle(float width, float height)
+{
+    float w = width * 0.5, h = height * 0.5;
+    return parg_mesh_aar((parg_aar){-w, -h, w, h});
 }
 
 parg_mesh* parg_mesh_sierpinski(float width, int depth)

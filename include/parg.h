@@ -8,6 +8,13 @@
 extern "C" {
 #endif
 
+// MACROS
+
+#define PARG_CLAMP(x, min, max) ((x < min) ? min : ((x > max) ? max : x))
+#define PARG_SQR(a) (a * a)
+#define PARG_MIN(a, b) ((a < b) ? a : b)
+#define PARG_MAX(a, b) ((a > b) ? a : b)
+
 // ENUMS & CONSTANTS
 
 #define PARG_PI 3.14159265359
@@ -66,6 +73,29 @@ parg_buffer* parg_buffer_from_asset(parg_token id);
 parg_buffer* parg_buffer_slurp_asset(parg_token id, void** ptr);
 void parg_buffer_to_file(parg_buffer*, const char* filepath);
 
+// AXIS-ALIGNED RECTANGLE
+
+typedef struct {
+    float left, bottom, right, top;
+} parg_aar;
+
+typedef struct {
+    int x, y, z;
+} parg_tilename;
+
+typedef struct {
+    parg_tilename mintile;
+    parg_tilename maxtile;
+} parg_tilerange;
+
+void parg_aar_to_tilerange(parg_aar, Vector2 mapsize, parg_tilerange* range);
+parg_aar parg_aar_from_tilename(parg_tilename tile, Vector2 mapsize);
+parg_aar parg_aar_from_tilerange(parg_tilerange range, Vector2 mapsize);
+parg_aar parg_aar_encompass(parg_aar a, parg_aar b);
+parg_aar parg_aar_stretch_to_square(parg_aar rect);
+float parg_aar_height(parg_aar rect);
+float parg_aar_width(parg_aar rect);
+
 // MESHES
 
 typedef struct parg_mesh_s parg_mesh;
@@ -73,6 +103,7 @@ parg_mesh* parg_mesh_create(float* pts, int npts, uint16_t* tris, int ntris);
 parg_mesh* parg_mesh_knot(int cols, int rows, float major, float minor);
 parg_mesh* parg_mesh_torus(int cols, int rows, float major, float minor);
 parg_mesh* parg_mesh_rectangle(float width, float height);
+parg_mesh* parg_mesh_aar(parg_aar rect);
 parg_mesh* parg_mesh_sierpinski(float width, int depth);
 void parg_mesh_free(parg_mesh* m);
 parg_buffer* parg_mesh_coord(parg_mesh* m);
@@ -141,6 +172,7 @@ void parg_zcam_init(float world_width, float world_height, float fovy);
 void parg_zcam_tick(float window_aspect, float seconds);
 float parg_zcam_get_magnification();
 void parg_zcam_get_viewport(float* lbrt);
+parg_aar parg_zcam_get_rectangle();
 void parg_zcam_grab_begin(float winx, float winy);
 void parg_zcam_grab_update(float winx, float winy, float scrolldelta);
 void parg_zcam_grab_end();
@@ -154,27 +186,6 @@ int parg_zcam_has_moved();
 typedef struct parg_framebuffer_s parg_framebuffer;
 parg_framebuffer* parg_framebuffer_create(int width, int height);
 void parg_framebuffer_free(parg_framebuffer*);
-
-// AXIS-ALIGNED RECTANGLE
-
-typedef struct {
-    float left, bottom, right, top;
-} par_aar;
-
-typedef struct {
-    int x, y, z;
-} par_tilename;
-
-typedef struct {
-    par_tilename mintile;
-    par_tilename maxtile;
-} par_tilerange;
-
-par_aar parg_aar_from_zcam(Matrix4 const* proj, Matrix4 const* view);
-void parg_aar_to_tilerange(par_aar, Vector2 mapsize, par_tilerange* range);
-par_aar parg_aar_from_tilename(par_tilename tile, Vector2 mapsize);
-par_aar parg_aar_from_tilerange(par_tilerange range, Vector2 mapsize);
-par_aar parg_aar_encompass(par_aar a, par_aar b);
 
 #ifdef __cplusplus
 }
