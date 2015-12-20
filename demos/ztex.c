@@ -7,14 +7,16 @@
 #define PAR_MSQUARES_IMPLEMENTATION
 #include <par/par_msquares.h>
 
-#define TOKEN_TABLE(F)          \
-    F(P_LANDMASS, "p_landmass") \
-    F(P_OCEAN, "p_ocean")       \
-    F(P_SOLID, "p_solid")       \
-    F(A_POSITION, "a_position") \
-    F(U_MVP, "u_mvp")           \
-    F(U_COLOR, "u_color")       \
-    F(U_MAGNIFICATION, "u_magnification")
+#define TOKEN_TABLE(F)            \
+    F(P_LANDMASS, "p_landmass")   \
+    F(P_OCEAN, "p_ocean")         \
+    F(P_SOLID, "p_solid")         \
+    F(A_POSITION, "a_position")   \
+    F(U_MVP, "u_mvp")             \
+    F(U_COLOR, "u_color")         \
+    F(U_SHOWGRID, "u_showgrid")   \
+    F(U_SLIPPYBOX, "u_slippybox") \
+    F(U_SLIPPYFRACT, "u_slippyfract")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
 #define ASSET_TABLE(F)              \
@@ -28,16 +30,12 @@ const float fovy = 16 * PARG_TWOPI / 180;
 int mode_highp = 1;
 parg_mesh* landmass_mesh;
 parg_mesh* ocean_mesh;
-parg_mesh* quad_mesh = 0;
 parg_texture* ocean_texture;
 parg_texture* paper_texture;
-parg_aar quadrect = {0, 0, 0, 0};
-int quad_dirty = 1;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    printf("Press P to highlight the current slippy area.\n"
-        "Spacebar to toggle texture modes.\n");
+    printf("Spacebar to toggle texture modes.\n");
     parg_state_clearcolor((Vector4){0.43, 0.61, 0.8, 1});
     parg_state_cullfaces(1);
     parg_state_depthtest(0);
@@ -75,24 +73,26 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
-    if (quad_dirty) {
-        quad_dirty = 0;
-        parg_mesh_free(quad_mesh);
-        quad_mesh = parg_mesh_aar(quadrect);
-    }
-
     DMatrix4 view, projection;
     parg_zcam_dmatrices(&projection, &view);
     DMatrix4 model = DM4MakeTranslation((DVector3){-0.5, -0.5, -1});
     Matrix4 mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
-    float mag = parg_zcam_get_magnification();
     const Vector4 BLACK = {0, 0, 0, 1};
-    const Vector4 SEMI = {1, 1, 1, 0.5};
+
+    Vector2 mapsize = {1, 1};
+    parg_aar rect = parg_zcam_get_rectangle();
+    parg_tilerange tiles;
+    parg_aar_to_tilerange(rect, mapsize, &tiles);
+    parg_aar slippyaar = parg_aar_from_tilename(tiles.mintile, mapsize);
+    Vector4 const* slippybox = (Vector4 const*) &slippyaar;
+    float slippyfract = 0;
 
     parg_draw_clear();
     parg_shader_bind(P_OCEAN);
     parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_uniform1f(U_MAGNIFICATION, mag);
+    parg_uniform1i(U_SHOWGRID, 1);
+    parg_uniform4f(U_SLIPPYBOX, slippybox);
+    parg_uniform1f(U_SLIPPYFRACT, slippyfract);
     parg_texture_bind(ocean_texture, 0);
     parg_varray_bind(parg_mesh_index(ocean_mesh));
     parg_varray_enable(
@@ -107,33 +107,23 @@ void draw()
     parg_draw_wireframe_triangles_u16(0, parg_mesh_ntriangles(landmass_mesh));
     parg_shader_bind(P_LANDMASS);
     parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_uniform1f(U_MAGNIFICATION, mag);
+    parg_uniform1i(U_SHOWGRID, 1);
+    parg_uniform4f(U_SLIPPYBOX, slippybox);
+    parg_uniform1f(U_SLIPPYFRACT, slippyfract);
     parg_texture_bind(paper_texture, 0);
     parg_draw_triangles_u16(0, parg_mesh_ntriangles(landmass_mesh));
-
-    model = DM4MakeTranslation((DVector3){0, 0, 0});
-    mvp = M4MakeFromDM4(DM4Mul(projection, DM4Mul(view, model)));
-    parg_state_blending(1);
-    parg_shader_bind(P_SOLID);
-    parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_varray_enable(
-        parg_mesh_coord(quad_mesh), A_POSITION, 2, PARG_FLOAT, 0, 0);
-    parg_uniform4f(U_COLOR, &SEMI);
-    parg_draw_one_quad();
-    parg_state_blending(0);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     parg_zcam_tick(winwidth / winheight, seconds);
-    return parg_zcam_has_moved() || quad_dirty;
+    return parg_zcam_has_moved();
 }
 
 void dispose()
 {
     parg_mesh_free(landmass_mesh);
     parg_mesh_free(ocean_mesh);
-    parg_mesh_free(quad_mesh);
     parg_texture_free(ocean_texture);
     parg_texture_free(paper_texture);
 }
@@ -145,14 +135,6 @@ void input(parg_event evt, float x, float y, float z)
         if ((char) x == ' ') {
             mode_highp = !mode_highp;
             printf("Precision %s.\n", mode_highp ? "on" : "off");
-        }
-        if ((char) x == 'P') {
-            Vector2 mapsize = {1, 1};
-            parg_aar rect = parg_zcam_get_rectangle();
-            parg_tilerange tiles;
-            parg_aar_to_tilerange(rect, mapsize, &tiles);
-            quadrect = parg_aar_from_tilerange(tiles, mapsize);
-            quad_dirty = 1;
         }
         break;
     case PARG_EVENT_DOWN:
@@ -190,5 +172,5 @@ int main(int argc, char* argv[])
     parg_window_onexit(dispose);
     parg_window_oninput(input);
     parg_window_onmessage(message);
-    return parg_window_exec(500, 500, 1);
+    return parg_window_exec(400, 300, 1);
 }

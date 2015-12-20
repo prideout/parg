@@ -4,10 +4,27 @@
 // @program p_solid, vertex, solid
 
 uniform mat4 u_mvp;
-uniform float u_magnification;
 uniform vec4 u_color;
+uniform vec4 u_slippybox;
+uniform vec4 u_slippyfract;
+uniform bool u_showgrid;
 uniform sampler2D u_texture;
 varying vec2 v_texcoord;
+
+const float LANDMASS_TEXTURE_FREQUENCY = 4.0;
+const float OCEAN_TEXTURE_FREQUENCY = 16.0;
+
+vec4 sample(vec2 uv)
+{
+    vec4 texel = texture2D(u_texture, uv);
+    if (u_showgrid) {
+        uv = mod(uv, vec2(1));
+        vec2 del = abs(vec2(0.5) - uv);
+        vec2 m = 0.5 * smoothstep(0.5, 0.45, del);
+        texel *= m.x * m.y + 0.5;
+    }
+    return texel;
+}
 
 -- vertex
 
@@ -21,29 +38,24 @@ void main()
 
 -- landmass
 
-vec4 sample(vec2 uv)
-{
-    return texture2D(u_texture, uv);
-}
+const vec4 COLOR = vec4(0.5, 0.7, 0.6, 1.0);
 
 void main()
 {
-    const vec3 COLOR = vec3(0.55, 0.73, 0.61);
-    float mag = u_magnification;
-    float steps = 1.0;
-    float freq0 = floor(mag * steps);
-    float freq1 = ceil(mag * steps);
-    float t = fract(mag * steps);
-    vec4 c0 = sample(2.0 * v_texcoord * freq0 / steps);
-    vec4 c1 = sample(2.0 * v_texcoord * freq1 / steps);
-    gl_FragColor = mix(c0, c1, t) * vec4(COLOR, 1.0);
+    vec2 tex_offset = v_texcoord - u_slippybox.xy;
+    vec2 tex_scale = u_slippybox.zw - u_slippybox.xy;
+    vec2 uv = tex_offset / tex_scale;
+    gl_FragColor = COLOR * sample(uv * LANDMASS_TEXTURE_FREQUENCY);
 }
 
 -- ocean
 
 void main()
 {
-    gl_FragColor = texture2D(u_texture, 16.0 * v_texcoord);
+    vec2 tex_offset = v_texcoord - u_slippybox.xy;
+    vec2 tex_scale = u_slippybox.zw - u_slippybox.xy;
+    vec2 uv = tex_offset / tex_scale;
+    gl_FragColor = sample(uv * OCEAN_TEXTURE_FREQUENCY);
 }
 
 -- solid

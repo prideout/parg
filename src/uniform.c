@@ -1,6 +1,14 @@
 #include <parg.h>
 #include "pargl.h"
 
+void parg_uniform1i(parg_token tok, int val)
+{
+    GLint loc = parg_shader_uniform_get(tok);
+    if (loc > -1) {
+        glUniform1i(loc, val);
+    }
+}
+
 void parg_uniform1f(parg_token tok, float val)
 {
     GLint loc = parg_shader_uniform_get(tok);
