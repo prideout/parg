@@ -6,7 +6,7 @@
 uniform mat4 u_mvp;
 uniform vec4 u_color;
 uniform vec4 u_slippybox;
-uniform vec4 u_slippyfract;
+uniform float u_slippyfract;
 uniform bool u_showgrid;
 uniform sampler2D u_texture;
 varying vec2 v_texcoord;
@@ -45,7 +45,12 @@ void main()
     vec2 tex_offset = v_texcoord - u_slippybox.xy;
     vec2 tex_scale = u_slippybox.zw - u_slippybox.xy;
     vec2 uv = tex_offset / tex_scale;
-    gl_FragColor = COLOR * sample(uv * LANDMASS_TEXTURE_FREQUENCY);
+
+    vec4 texel0 = sample(uv * LANDMASS_TEXTURE_FREQUENCY);
+    vec4 texel1 = sample(uv * LANDMASS_TEXTURE_FREQUENCY * 2.0);
+    vec4 mixed = mix(texel0, texel1, u_slippyfract);
+
+    gl_FragColor = COLOR * mixed;
 }
 
 -- ocean

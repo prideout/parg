@@ -28,6 +28,7 @@ ASSET_TABLE(PARG_TOKEN_DECLARE);
 
 const float fovy = 16 * PARG_TWOPI / 180;
 int mode_highp = 1;
+int showgrid = 0;
 parg_mesh* landmass_mesh;
 parg_mesh* ocean_mesh;
 parg_texture* ocean_texture;
@@ -35,7 +36,9 @@ parg_texture* paper_texture;
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    printf("Spacebar to toggle texture modes.\n");
+    printf(
+        "Spacebar to toggle texture modes.\n"
+        "G to toggle the slippy map grid.\n");
     parg_state_clearcolor((Vector4){0.43, 0.61, 0.8, 1});
     parg_state_cullfaces(1);
     parg_state_depthtest(0);
@@ -82,15 +85,14 @@ void draw()
     Vector2 mapsize = {1, 1};
     parg_aar rect = parg_zcam_get_rectangle();
     parg_tilerange tiles;
-    parg_aar_to_tilerange(rect, mapsize, &tiles);
+    float slippyfract = parg_aar_to_tilerange(rect, mapsize, &tiles);
     parg_aar slippyaar = parg_aar_from_tilename(tiles.mintile, mapsize);
     Vector4 const* slippybox = (Vector4 const*) &slippyaar;
-    float slippyfract = 0;
 
     parg_draw_clear();
     parg_shader_bind(P_OCEAN);
     parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_uniform1i(U_SHOWGRID, 1);
+    parg_uniform1i(U_SHOWGRID, showgrid);
     parg_uniform4f(U_SLIPPYBOX, slippybox);
     parg_uniform1f(U_SLIPPYFRACT, slippyfract);
     parg_texture_bind(ocean_texture, 0);
@@ -107,7 +109,7 @@ void draw()
     parg_draw_wireframe_triangles_u16(0, parg_mesh_ntriangles(landmass_mesh));
     parg_shader_bind(P_LANDMASS);
     parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_uniform1i(U_SHOWGRID, 1);
+    parg_uniform1i(U_SHOWGRID, showgrid);
     parg_uniform4f(U_SLIPPYBOX, slippybox);
     parg_uniform1f(U_SLIPPYFRACT, slippyfract);
     parg_texture_bind(paper_texture, 0);
@@ -130,11 +132,15 @@ void dispose()
 
 void input(parg_event evt, float x, float y, float z)
 {
+    char key = (char) x;
     switch (evt) {
     case PARG_EVENT_KEYPRESS:
-        if ((char) x == ' ') {
+        if (key == ' ') {
             mode_highp = !mode_highp;
             printf("Precision %s.\n", mode_highp ? "on" : "off");
+        } else if (key == 'G') {
+            showgrid = 1 - showgrid;
+            parg_zcam_touch();
         }
         break;
     case PARG_EVENT_DOWN:

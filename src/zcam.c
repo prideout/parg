@@ -144,3 +144,5 @@ int parg_zcam_has_moved()
     _dirty = 0;
     return retval;
 }
+
+void parg_zcam_touch() { _dirty = 1; }

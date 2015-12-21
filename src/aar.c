@@ -1,6 +1,7 @@
 #include <parg.h>
+#include <math.h>
 
-void parg_aar_to_tilerange(parg_aar rect, Vector2 size, parg_tilerange* range)
+float parg_aar_to_tilerange(parg_aar rect, Vector2 size, parg_tilerange* range)
 {
     float e = PARG_MAX(size.x, size.y);
     Vector2 mapsquare = {e, e};
@@ -17,6 +18,7 @@ void parg_aar_to_tilerange(parg_aar rect, Vector2 size, parg_tilerange* range)
     range->mintile.y = (rect.bottom - mapmin.y) / tilesize;
     range->maxtile.x = (rect.right - mapmin.x) / tilesize;
     range->maxtile.y = (rect.top - mapmin.y) / tilesize;
+    return fmodf(z, 1.0);
 }
 
 parg_aar parg_aar_from_tilename(parg_tilename tile, Vector2 mapsize)
