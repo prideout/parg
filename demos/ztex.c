@@ -27,6 +27,12 @@ TOKEN_TABLE(PARG_TOKEN_DECLARE);
     F(TEXTURE_OCEAN, "water.png")
 ASSET_TABLE(PARG_TOKEN_DECLARE);
 
+#if EMSCRIPTEN
+#define OCEAN_COLOR 0xffb0e0e6
+#else
+#define OCEAN_COLOR 0xffa0d9e1
+#endif
+
 const float fovy = 16 * PARG_TWOPI / 180;
 int mode_highp = 1;
 int showgrid = 0;
@@ -59,9 +65,8 @@ void init(float winwidth, float winheight, float pixratio)
     int ncomps = *rawdata++;
     parg_texture_fliprows(rawdata, width * ncomps, height);
     par_msquares_meshlist* mlist = par_msquares_color((parg_byte*) rawdata,
-            width, height, 16, 0xffa0d9e1, 4,
+            width, height, 16, OCEAN_COLOR, 4,
             PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SIMPLIFY);
-    printf("%d meshes\n", par_msquares_get_count(mlist));
 
     par_msquares_mesh const* mesh;
     mesh = par_msquares_get_mesh(mlist, 0);
