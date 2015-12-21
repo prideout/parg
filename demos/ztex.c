@@ -7,15 +7,16 @@
 #define PAR_MSQUARES_IMPLEMENTATION
 #include <par/par_msquares.h>
 
-#define TOKEN_TABLE(F)            \
-    F(P_LANDMASS, "p_landmass")   \
-    F(P_OCEAN, "p_ocean")         \
-    F(P_SOLID, "p_solid")         \
-    F(A_POSITION, "a_position")   \
-    F(U_MVP, "u_mvp")             \
-    F(U_COLOR, "u_color")         \
-    F(U_SHOWGRID, "u_showgrid")   \
-    F(U_SLIPPYBOX, "u_slippybox") \
+#define TOKEN_TABLE(F)                              \
+    F(P_LANDMASS, "p_landmass")                     \
+    F(P_LANDMASS_FRAGCOORD, "p_landmass_fragcoord") \
+    F(P_OCEAN, "p_ocean")                           \
+    F(P_SOLID, "p_solid")                           \
+    F(A_POSITION, "a_position")                     \
+    F(U_MVP, "u_mvp")                               \
+    F(U_COLOR, "u_color")                           \
+    F(U_SHOWGRID, "u_showgrid")                     \
+    F(U_SLIPPYBOX, "u_slippybox")                   \
     F(U_SLIPPYFRACT, "u_slippyfract")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
@@ -33,6 +34,7 @@ parg_mesh* landmass_mesh;
 parg_mesh* ocean_mesh;
 parg_texture* ocean_texture;
 parg_texture* paper_texture;
+Vector2 fbsize;
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -87,7 +89,9 @@ void draw()
     parg_tilerange tiles;
     float slippyfract = parg_aar_to_tilerange(rect, mapsize, &tiles);
     parg_aar slippyaar = parg_aar_from_tilename(tiles.mintile, mapsize);
-    Vector4 const* slippybox = (Vector4 const*) &slippyaar;
+    Vector4* slippybox = (Vector4*) &slippyaar;
+    slippybox->z = 1.0 / (slippybox->z - slippybox->x);
+    slippybox->w = 1.0 / (slippybox->w - slippybox->y);
 
     parg_draw_clear();
     parg_shader_bind(P_OCEAN);
@@ -107,7 +111,17 @@ void draw()
     parg_varray_enable(
         parg_mesh_coord(landmass_mesh), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_draw_wireframe_triangles_u16(0, parg_mesh_ntriangles(landmass_mesh));
-    parg_shader_bind(P_LANDMASS);
+
+    if (mode_highp) {
+        float x = parg_aar_width(rect) / fbsize.x;
+        float y = parg_aar_height(rect) / fbsize.y;
+        slippybox->z *= x;
+        slippybox->w *= y;
+        slippybox->x = (slippybox->x - rect.left) / x;
+        slippybox->y = (slippybox->y - rect.bottom) / y;
+    }
+
+    parg_shader_bind(mode_highp ? P_LANDMASS_FRAGCOORD : P_LANDMASS);
     parg_uniform_matrix4f(U_MVP, &mvp);
     parg_uniform1i(U_SHOWGRID, showgrid);
     parg_uniform4f(U_SLIPPYBOX, slippybox);
@@ -118,6 +132,8 @@ void draw()
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
+    fbsize.x = winwidth * pixratio;
+    fbsize.y = winheight * pixratio;
     parg_zcam_tick(winwidth / winheight, seconds);
     return parg_zcam_has_moved();
 }
@@ -138,6 +154,7 @@ void input(parg_event evt, float x, float y, float z)
         if (key == ' ') {
             mode_highp = !mode_highp;
             printf("Precision %s.\n", mode_highp ? "on" : "off");
+            parg_zcam_touch();
         } else if (key == 'G') {
             showgrid = 1 - showgrid;
             parg_zcam_touch();
