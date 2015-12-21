@@ -27,12 +27,6 @@ TOKEN_TABLE(PARG_TOKEN_DECLARE);
     F(TEXTURE_OCEAN, "water.png")
 ASSET_TABLE(PARG_TOKEN_DECLARE);
 
-#if EMSCRIPTEN
-#define OCEAN_COLOR 0xffb0e0e6
-#else
-#define OCEAN_COLOR 0xffa0d9e1
-#endif
-
 const Vector3 TARGETPOS = {0.35287, 0.005156, 0.000005};
 const float DEMO_DURATION = 6;
 const double STARTZ = 1.2;
@@ -63,7 +57,7 @@ void init(float winwidth, float winheight, float pixratio)
     ocean_texture = parg_texture_from_asset(TEXTURE_OCEAN);
     paper_texture = parg_texture_from_asset(TEXTURE_PAPER);
 
-    // Decode the europe image and pass it into msquares.
+    // Decode the europe image.
     int* rawdata;
     parg_buffer* colorbuf =
         parg_buffer_slurp_asset(TEXTURE_EUROPE, (void*) &rawdata);
@@ -71,19 +65,23 @@ void init(float winwidth, float winheight, float pixratio)
     int height = *rawdata++;
     int ncomps = *rawdata++;
     parg_texture_fliprows(rawdata, width * ncomps, height);
-    par_msquares_meshlist* mlist = par_msquares_color((parg_byte*) rawdata,
-            width, height, 16, OCEAN_COLOR, 4,
-            PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SIMPLIFY);
 
+    // Sample the ocean color and swizzle R with B to appease msquares.
+    int ocean_color = rawdata[0];
+    ocean_color = ((ocean_color >> 16) & 0xff) |
+        ((ocean_color << 16) & 0xff0000) | (ocean_color & 0xff00ff00);
+
+    // Perform marching squares and generate a mesh.
+    par_msquares_meshlist* mlist = par_msquares_color((parg_byte*) rawdata,
+            width, height, 16, ocean_color, 4,
+            PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SIMPLIFY);
     par_msquares_mesh const* mesh;
     mesh = par_msquares_get_mesh(mlist, 0);
     landmass_mesh = parg_mesh_create(
         mesh->points, mesh->npoints, mesh->triangles, mesh->ntriangles);
-
     mesh = par_msquares_get_mesh(mlist, 1);
     ocean_mesh = parg_mesh_create(
         mesh->points, mesh->npoints, mesh->triangles, mesh->ntriangles);
-
     parg_buffer_unlock(colorbuf);
     par_msquares_free(mlist);
 }
