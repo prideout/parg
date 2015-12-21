@@ -203,12 +203,12 @@ void input(parg_event evt, float x, float y, float z)
 
 void message(const char* msg)
 {
-    if (!strcmp(msg, "high")) {
-        mode_highp = 1;
-    } else if (!strcmp(msg, "low")) {
-        mode_highp = 0;
+    if (!strcmp(msg, "precision")) {
+        mode_highp = 1 - mode_highp;
+        parg_zcam_touch();
     } else if (!strcmp(msg, "grid")) {
         showgrid = 1 - showgrid;
+        parg_zcam_touch();
     } else if (!strcmp(msg, "demo")) {
         if (!mode_demo_start) {
             mode_demo_start = current_time;
