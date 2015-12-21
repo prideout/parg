@@ -100,6 +100,15 @@ void parg_zcam_grab_update(float winx, float winy, float scrolldelta)
     _dirty = 1;
 }
 
+void parg_zcam_set_position(double x, double y, double z)
+{
+    _camerapos.x = x;
+    _camerapos.y = y;
+    _camerapos.z = z;
+    _dirty = 1;
+    _grabbing = 0;
+}
+
 void parg_zcam_grab_end() { _grabbing = 0; }
 
 DPoint3 parg_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)

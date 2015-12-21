@@ -33,8 +33,14 @@ ASSET_TABLE(PARG_TOKEN_DECLARE);
 #define OCEAN_COLOR 0xffa0d9e1
 #endif
 
+const Vector3 TARGETPOS = {0.35287, 0.005156, 0.000005};
+const float DEMO_DURATION = 6;
+const double STARTZ = 1.2;
 const float fovy = 16 * PARG_TWOPI / 180;
 int mode_highp = 1;
+float current_time;
+float mode_demo_start = 0;
+int mode_demo_direction = 1;
 int showgrid = 0;
 parg_mesh* landmass_mesh;
 parg_mesh* ocean_mesh;
@@ -46,13 +52,14 @@ void init(float winwidth, float winheight, float pixratio)
 {
     printf(
         "Spacebar to toggle texture modes.\n"
+        "D to toggle auto-zooming demo mode.\n"
         "G to toggle the slippy map grid.\n");
     parg_state_clearcolor((Vector4){0.43, 0.61, 0.8, 1});
     parg_state_cullfaces(1);
     parg_state_depthtest(0);
     parg_shader_load_from_asset(SHADER_DEFAULT);
     parg_zcam_init(1, 1, fovy);
-    parg_zcam_grab_update(0.5, 0.5, 30);
+    parg_zcam_set_position(0, 0, STARTZ);
     ocean_texture = parg_texture_from_asset(TEXTURE_OCEAN);
     paper_texture = parg_texture_from_asset(TEXTURE_PAPER);
 
@@ -137,9 +144,18 @@ void draw()
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
+    current_time = seconds;
     fbsize.x = winwidth * pixratio;
     fbsize.y = winheight * pixratio;
     parg_zcam_tick(winwidth / winheight, seconds);
+    if (mode_demo_start) {
+        double t = (current_time - mode_demo_start) / DEMO_DURATION;
+        if (t >= 1) {
+            mode_demo_start = 0;
+        }
+        float scrolldelta = mode_demo_direction ? -3 : 3;
+        parg_zcam_grab_update(TARGETPOS.x, TARGETPOS.y, scrolldelta);
+    }
     return parg_zcam_has_moved();
 }
 
@@ -163,6 +179,11 @@ void input(parg_event evt, float x, float y, float z)
         } else if (key == 'G') {
             showgrid = 1 - showgrid;
             parg_zcam_touch();
+        } else if (key == 'D') {
+            if (!mode_demo_start) {
+                mode_demo_start = current_time;
+                mode_demo_direction = 1 - mode_demo_direction;
+            }
         }
         break;
     case PARG_EVENT_DOWN:
@@ -186,6 +207,13 @@ void message(const char* msg)
         mode_highp = 1;
     } else if (!strcmp(msg, "low")) {
         mode_highp = 0;
+    } else if (!strcmp(msg, "grid")) {
+        showgrid = 1 - showgrid;
+    } else if (!strcmp(msg, "demo")) {
+        if (!mode_demo_start) {
+            mode_demo_start = current_time;
+            mode_demo_direction = 1 - mode_demo_direction;
+        }
     }
 }
 
