@@ -27,6 +27,9 @@ struct {
     parg_texture* asteroidtex;
     parg_mesh* quadmesh;
     parg_buffer* asteroid_positions;
+    parg_framebuffer* particle_positionsa;
+    parg_framebuffer* particle_positionsb;
+    parg_framebuffer* particle_properties;
     float elapsed;
 } app;
 
@@ -50,6 +53,13 @@ void init(float winwidth, float winheight, float pixratio)
     }
     app.asteroid_positions = parg_buffer_create(src, nbytes, PARG_GPU_ARRAY);
     free(src);
+
+    app.particle_positionsa =
+        parg_framebuffer_create_empty(BUFSIZE, BUFSIZE, PARG_FBO_FLOAT);
+    app.particle_positionsb =
+        parg_framebuffer_create_empty(BUFSIZE, BUFSIZE, PARG_FBO_FLOAT);
+    app.particle_properties =
+        parg_framebuffer_create_empty(BUFSIZE, BUFSIZE, PARG_FBO_FLOAT);
 }
 
 void draw()
@@ -83,6 +93,9 @@ void dispose()
     parg_buffer_free(app.asteroid_positions);
     parg_texture_free(app.bkgdtex);
     parg_texture_free(app.asteroidtex);
+    parg_framebuffer_free(app.particle_positionsa);
+    parg_framebuffer_free(app.particle_positionsb);
+    parg_framebuffer_free(app.particle_properties);
 }
 
 int main(int argc, char* argv[])

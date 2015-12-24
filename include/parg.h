@@ -28,6 +28,12 @@ extern "C" {
 #define PARG_FLOAT 0x1406
 #define PARG_DOUBLE 0x140A
 
+#define PARG_FBO_FLOAT (1 << 0)
+#define PARG_FBO_ALPHA (1 << 1)
+#define PARG_FBO_HALF (1 << 2)
+#define PARG_FBO_LINEAR (1 << 3)
+#define PARG_FBO_DEPTH (1 << 3)
+
 typedef unsigned int parg_data_type;
 typedef unsigned char parg_byte;
 
@@ -187,7 +193,10 @@ void parg_zcam_set_position(double x, double y, double z);
 // OFFSCREEN FRAMEBUFFER
 
 typedef struct parg_framebuffer_s parg_framebuffer;
-parg_framebuffer* parg_framebuffer_create(int width, int height);
+parg_framebuffer* parg_framebuffer_create_empty(
+    int width, int height, int flags);
+parg_framebuffer* parg_framebuffer_create(
+    int width, int height, void* src, int nbytes, int flags);
 void parg_framebuffer_free(parg_framebuffer*);
 
 #ifdef __cplusplus

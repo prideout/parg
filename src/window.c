@@ -168,7 +168,8 @@ int parg_window_exec(float winwidth, float winheight, int vsync, int aa)
         glfwMakeContextCurrent(window);
         if (needs_draw && _draw) {
             if (capture) {
-                parg_framebuffer_create(width, height);
+                parg_framebuffer_create_empty(
+                    width, height, PARG_FBO_DEPTH | PARG_FBO_ALPHA);
             }
             _draw();
             GLenum err = glGetError();
