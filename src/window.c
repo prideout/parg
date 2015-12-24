@@ -84,7 +84,7 @@ static void onscroll(GLFWwindow* window, double dx, double dy)
     }
 }
 
-int parg_window_exec(float winwidth, float winheight, int vsync)
+int parg_window_exec(float winwidth, float winheight, int vsync, int aa)
 {
     GLFWwindow* window;
     glfwSetErrorCallback(onerror);
@@ -98,7 +98,9 @@ int parg_window_exec(float winwidth, float winheight, int vsync)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    if (aa) {
+        glfwWindowHint(GLFW_SAMPLES, 4);
+    }
 
     // This removes borders which looks nice sometimes.
     glfwWindowHint(GLFW_DECORATED, GL_FALSE);

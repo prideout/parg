@@ -94,5 +94,5 @@ int main(int argc, char* argv[])
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);
     parg_window_oninput(input);
-    return parg_window_exec(185 * 5, 100 * 5, 1);
+    return parg_window_exec(185 * 5, 100 * 5, 1, 1);
 }

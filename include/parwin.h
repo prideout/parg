@@ -21,4 +21,4 @@ void parg_window_ondraw(parg_window_fn_draw);
 void parg_window_onexit(parg_window_fn_exit);
 void parg_window_oninput(parg_window_fn_input);
 void parg_window_onmessage(parg_window_fn_message);
-int parg_window_exec(float winwidth, float winheight, int vsync);
+int parg_window_exec(float winwidth, float winheight, int vsync, int aa);

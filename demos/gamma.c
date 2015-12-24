@@ -52,5 +52,5 @@ int main(int argc, char* argv[])
     parg_window_ontick(tick);
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);
-    return parg_window_exec(ASPECT * HEIGHT, HEIGHT, VSYNC);
+    return parg_window_exec(ASPECT * HEIGHT, HEIGHT, VSYNC, 1);
 }

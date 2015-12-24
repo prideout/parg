@@ -226,5 +226,5 @@ int main(int argc, char* argv[])
     parg_window_onexit(dispose);
     parg_window_oninput(input);
     parg_window_onmessage(message);
-    return parg_window_exec(400, 300, 1);
+    return parg_window_exec(400, 300, 1, 1);
 }
