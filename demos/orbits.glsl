@@ -1,6 +1,7 @@
 
 // @program p_background, background.vs, background.fs
 // @program p_asteroids, asteroids.vs, asteroids.fs
+// @program p_particles, particles.vs, particles.fs
 
 varying vec2 v_texcoord;
 varying float v_index;
@@ -16,6 +17,7 @@ const float NCOLS = 5.0;
 const float ROTSPEED = 40.0;
 const float BRIGHTEN = 1.75;
 const float DARKEN = 1.0;
+const float BUFSIZE = 256.0;
 
 // http://www.iquilezles.org/www/articles/palettes/palettes.htm
 vec3 select_color(float t)
@@ -70,4 +72,24 @@ void main()
     uv.y = ATLAS_SIZE.y - 1 - uv.y;
     gl_FragColor = texture2D(u_image, uv / ATLAS_SIZE);
     gl_FragColor.rgb *= select_color(v_index) * BRIGHTEN;
+}
+
+-- particles.vs
+
+attribute float a_position;
+
+void main()
+{
+    float u = mod(a_position, BUFSIZE);
+    float v = floor(a_position / BUFSIZE);
+    vec4 texel = texture2D(u_image, vec2(u, v) / BUFSIZE);
+    gl_Position = vec4(texel.xy, 0, 1);
+    gl_PointSize = 2.0;
+}
+
+-- particles.fs
+
+void main()
+{
+    gl_FragColor = vec4(1);
 }

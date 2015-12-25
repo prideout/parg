@@ -91,3 +91,24 @@ void parg_framebuffer_free(parg_framebuffer* framebuffer)
     glDeleteFramebuffers(1, &framebuffer->fbo);
     free(framebuffer);
 }
+
+void parg_framebuffer_bindtex(parg_framebuffer* fbo, int stage)
+{
+    glActiveTexture(GL_TEXTURE0 + stage);
+    glBindTexture(GL_TEXTURE_2D, fbo->tex);
+}
+
+void parg_framebuffer_bindfbo(parg_framebuffer* fbo, int mrt_index)
+{
+    // MRT is not supported.
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo->fbo);
+}
+
+void parg_framebuffer_swap(parg_framebuffer* a, parg_framebuffer* b)
+{
+    assert(a->width == b->width && a->height == b->height);
+    PARG_SWAP(GLuint, a->tex, b->tex);
+    PARG_SWAP(GLuint, a->fbo, b->fbo);
+    PARG_SWAP(GLuint, a->depth, b->depth);
+}
+

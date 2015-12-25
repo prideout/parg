@@ -14,6 +14,7 @@ extern "C" {
 #define PARG_SQR(a) (a * a)
 #define PARG_MIN(a, b) ((a < b) ? a : b)
 #define PARG_MAX(a, b) ((a > b) ? a : b)
+#define PARG_SWAP(T, A, B) { T tmp = B; B = A; A = tmp; }
 
 // ENUMS & CONSTANTS
 
@@ -197,7 +198,10 @@ parg_framebuffer* parg_framebuffer_create_empty(
     int width, int height, int flags);
 parg_framebuffer* parg_framebuffer_create(
     int width, int height, void* src, int nbytes, int flags);
+void parg_framebuffer_bindtex(parg_framebuffer*, int stage);
+void parg_framebuffer_bindfbo(parg_framebuffer*, int mrt_index);
 void parg_framebuffer_free(parg_framebuffer*);
+void parg_framebuffer_swap(parg_framebuffer*, parg_framebuffer*);
 
 #ifdef __cplusplus
 }
