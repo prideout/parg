@@ -1,5 +1,6 @@
 
 // @program p_background, background.vs, background.fs
+// @program p_physics, background.vs, physics.fs
 // @program p_asteroids, asteroids.vs, asteroids.fs
 // @program p_particles, particles.vs, particles.fs
 
@@ -8,9 +9,12 @@ varying float v_index;
 
 uniform float u_time;
 uniform float u_npoints;
+uniform float u_deltasqr;
 uniform sampler2D u_image;
+uniform sampler2D u_positions;
+uniform sampler2D u_properties;
 
-const vec2 ATLAS_SIZE = vec2(160, 128);
+const vec2 ATLAS_SIZE = vec2(256, 128);
 const float SPRITE_SIZE = 32.0;
 const float NSPRITES = 19.0;
 const float NCOLS = 5.0;
@@ -49,6 +53,29 @@ void main()
     gl_FragColor.rgb *= DARKEN;
 }
 
+-- physics.fs
+
+void main()
+{
+    vec4 postexel = texture2D(u_positions, v_texcoord);
+    vec4 proptexel = texture2D(u_properties, v_texcoord);
+
+    vec2 asteroid_position = proptexel.rg;
+    vec2 current_position = postexel.rg;
+    vec2 previous_position = postexel.ba;
+
+    float d = distance(asteroid_position, current_position);
+    d = max(d, 0.2); // stability!
+    vec2 force_direction = (asteroid_position - current_position) / d;
+    float Gm = 0.1;
+    vec2 acceleration = Gm * force_direction / (d * d);
+
+    vec2 velocity = current_position - previous_position;
+    vec2 new_position = current_position + velocity + acceleration * u_deltasqr;
+    gl_FragColor.rg = new_position;
+    gl_FragColor.ba = current_position;
+}
+
 -- asteroids.vs
 
 attribute vec4 a_position;
@@ -69,7 +96,7 @@ void main()
     float sprite_index = floor(mod(time, NSPRITES));
     vec2 sprite = vec2(mod(sprite_index, NCOLS), floor(sprite_index / NCOLS));
     vec2 uv = sprite * SPRITE_SIZE + gl_PointCoord * SPRITE_SIZE;
-    uv.y = ATLAS_SIZE.y - 1 - uv.y;
+    uv.y = ATLAS_SIZE.y - 1.0 - uv.y;
     gl_FragColor = texture2D(u_image, uv / ATLAS_SIZE);
     gl_FragColor.rgb *= select_color(v_index) * BRIGHTEN;
 }
@@ -82,14 +109,17 @@ void main()
 {
     float u = mod(a_position, BUFSIZE);
     float v = floor(a_position / BUFSIZE);
-    vec4 texel = texture2D(u_image, vec2(u, v) / BUFSIZE);
+    vec4 texel = texture2D(u_positions, vec2(u, v) / BUFSIZE);
     gl_Position = vec4(texel.xy, 0, 1);
-    gl_PointSize = 2.0;
+    gl_PointSize = 4.0;
 }
 
 -- particles.fs
 
 void main()
 {
-    gl_FragColor = vec4(1);
+    // vec2 pc = 2.0 * (gl_PointCoord - 0.5);
+    // float r = dot(pc, pc);
+    gl_FragColor = vec4(1, 1, 1, 0.1);
+    // gl_FragColor.a *= smoothstep(1.0, 0.9, r);
 }

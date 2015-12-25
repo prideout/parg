@@ -49,7 +49,7 @@ void parg_window_oninput(parg_window_fn_input fn) { _input = fn; }
 
 void parg_window_onmessage(parg_window_fn_message fn) { _message = fn; }
 
-int parg_window_exec(float winwidth, float winheight, int vsync)
+int parg_window_exec(float winwidth, float winheight, int vsync, int aa)
 {
     _winwidth = winwidth;
     _winheight = winheight;
@@ -76,10 +76,12 @@ static void init(emscripten::val args)
 static void draw()
 {
     _draw();
+    #if 0
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         puts("OpenGL Error\n");
     }
+    #endif
 }
 
 static int tick(float seconds, float pixscale)

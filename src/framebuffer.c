@@ -18,6 +18,9 @@ struct parg_framebuffer_s {
     GLuint depth;
 };
 
+static GLint pushed_fbo = 0;
+static GLint pushed_viewport[4];
+
 parg_framebuffer* parg_framebuffer_create_empty(
     int width, int height, int flags)
 {
@@ -112,3 +115,17 @@ void parg_framebuffer_swap(parg_framebuffer* a, parg_framebuffer* b)
     PARG_SWAP(GLuint, a->depth, b->depth);
 }
 
+void parg_framebuffer_pushfbo(parg_framebuffer* fbo, int mrt_index)
+{
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &pushed_fbo);
+    glGetIntegerv(GL_VIEWPORT, pushed_viewport);
+    glViewport(0, 0, fbo->width, fbo->height);
+    parg_framebuffer_bindfbo(fbo, mrt_index);
+}
+
+void parg_framebuffer_popfbo()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, pushed_fbo);
+    glViewport(pushed_viewport[0], pushed_viewport[1], pushed_viewport[2],
+        pushed_viewport[3]);
+}

@@ -21,6 +21,10 @@ void parg_state_depthtest(int enabled)
 
 void parg_state_blending(int enabled)
 {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (enabled == 1) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else if (enabled == 2) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    }
     (enabled ? glEnable : glDisable)(GL_BLEND);
 }
