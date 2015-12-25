@@ -1,12 +1,17 @@
 'using strict';
 
-var PargApp = function(canvas, args, baseurl) {
+var PargApp = function(canvas, args, baseurl, block_interaction, attribs) {
+    this.attribs = attribs || {
+        alpha: true,
+        antialias: true
+    };
     this.canvas = canvas;
     this.args = args;
     this.baseurl = baseurl || 'parg/';
     this.nrequests = 0;
     this.requests = [];
     this.linked_module = null;
+    this.block_interaction = block_interaction;
 
     // First, execute the user-defined main() function in its entirety:
     this.module = CreateParg({parg: this});
@@ -93,12 +98,12 @@ PargApp.prototype.onimage = function(id, img) {
 PargApp.prototype.start = function() {
 
     var cevents = {
-        PARG_EVENT_DOWN: 0,
-        PARG_EVENT_UP: 1,
-        PARG_EVENT_MOVE: 2
+        PAR_EVENT_DOWN: 0,
+        PAR_EVENT_UP: 1,
+        PAR_EVENT_MOVE: 2
     };
 
-    var dims = this.module.parg_window_dims;
+    var dims = this.module.par_window_dims || this.module.parg_window_dims;
     var $canvas = $(this.canvas);
     var canvas = $canvas[0];
     $canvas.css({
@@ -108,10 +113,7 @@ PargApp.prototype.start = function() {
     canvas.width = dims[0] * window.devicePixelRatio;
     canvas.height = dims[1] * window.devicePixelRatio;
 
-    var GLctx = this.module.createContext(canvas, 1, 1, {
-        alpha: true,
-        antialias: true
-    });
+    var GLctx = this.module.createContext(canvas, 1, 1, this.attribs);
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
     $canvas.show();
@@ -121,31 +123,35 @@ PargApp.prototype.start = function() {
     var clientWidth = canvas.clientWidth;
     var clientHeight = canvas.clientHeight;
     var clientMaxY = clientHeight - 1;
+    var app = this;
 
     var onmousecore = function(event) {
+        if (app.block_interaction) {
+            return;
+        }
         var box = canvas.getBoundingClientRect();
         var x = (event.clientX - box.left) / clientWidth;
         var y = (clientMaxY - event.clientY + box.top) / clientHeight;
         var etype = event.type;
         var delta;
         if (etype == "mousedown") {
-            this.Window.input(cevents.PARG_EVENT_DOWN, x, y, 0);
+            this.Window.input(cevents.PAR_EVENT_DOWN, x, y, 0);
         } else if (etype == "mouseup") {
-            this.Window.input(cevents.PARG_EVENT_UP, x, y, 0);
+            this.Window.input(cevents.PAR_EVENT_UP, x, y, 0);
         } else if (etype == "mousemove") {
-            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, 0);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, 0);
         } else if (etype == "mousewheel") {
             event.preventDefault();
             delta = event.wheelDelta / 10.0;
-            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "DOMMouseScroll") {
             event.preventDefault();
             delta = -event.detail * 2.0;
-            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         } else if (etype == "wheel") {
             event.preventDefault();
             delta = -event.deltaY / 2.0;
-            this.Window.input(cevents.PARG_EVENT_MOVE, x, y, delta);
+            this.Window.input(cevents.PAR_EVENT_MOVE, x, y, delta);
         }
     };
 

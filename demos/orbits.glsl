@@ -111,15 +111,15 @@ void main()
     float v = floor(a_position / BUFSIZE);
     vec4 texel = texture2D(u_positions, vec2(u, v) / BUFSIZE);
     gl_Position = vec4(texel.xy, 0, 1);
-    gl_PointSize = 4.0;
+    gl_PointSize = 8.0;
 }
 
 -- particles.fs
 
 void main()
 {
-    // vec2 pc = 2.0 * (gl_PointCoord - 0.5);
-    // float r = dot(pc, pc);
+    vec2 pc = 2.0 * (gl_PointCoord - 0.5);
+    float r = dot(pc, pc);
     gl_FragColor = vec4(1, 1, 1, 0.1);
-    // gl_FragColor.a *= smoothstep(1.0, 0.9, r);
+    gl_FragColor.a *= smoothstep(1.0, 0.9, r);
 }

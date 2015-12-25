@@ -59,7 +59,7 @@ parg_framebuffer* parg_framebuffer_create_empty(
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        printf("Failed to create FBO.");
+        printf("Failed to create FBO.\n");
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, previous);
