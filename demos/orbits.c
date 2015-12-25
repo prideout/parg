@@ -153,6 +153,7 @@ static void draw()
     parg_draw_points(NASTEROIDS);
 
     parg_shader_bind(P_PARTICLES);
+    parg_state_blending(2);
     parg_uniform1f(U_TIME, app.current_time);
     parg_uniform1f(U_NPOINTS, app.nparticles);
     parg_varray_enable(app.particle_indices, A_POSITION, 1, PARG_USHORT, 0, 0);

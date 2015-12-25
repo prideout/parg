@@ -120,6 +120,7 @@ void main()
 {
     vec2 pc = 2.0 * (gl_PointCoord - 0.5);
     float r = dot(pc, pc);
-    gl_FragColor = vec4(1, 1, 1, 0.01);
-    gl_FragColor.a *= smoothstep(1.0, 0.9, r);
+    gl_FragColor = vec4(1);
+    r = max(1.0 - r, 0.0);
+    gl_FragColor = vec4(r * 0.005);
 }
