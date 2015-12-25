@@ -72,11 +72,12 @@ static void create_particles()
     float *src = malloc(nbytes), *psrc = src;
     float y = 1;
     float d = 2.0 / app.nparticles;
+    float vx = 0.0025;
     for (int i = 0; i < app.nparticles; i++) {
         float x = -1.0 + i * d;
-        *psrc++ = x + d * rand() / RAND_MAX;
+        *psrc++ = x;
         *psrc++ = y;
-        *psrc++ = x + 0.0025;
+        *psrc++ = x + vx;
         *psrc++ = y;
     }
     int res = app.bufsize;
