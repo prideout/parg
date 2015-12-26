@@ -116,6 +116,7 @@ PargApp.prototype.start = function() {
     var GLctx = this.module.createContext(canvas, 1, 1, this.attribs);
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
+    GLctx.getExtension('OES_element_index_uint');
     $canvas.show();
 
     this.module.Window.init(this.args);

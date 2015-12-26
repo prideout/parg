@@ -60,8 +60,8 @@ static void create_particles()
 
     // Initialize a trivial "1 2 3" vertex buffer since OpenGL ES / WebGL
     // do not allow zero-vertex rendering, nor access to gl_Vertex.
-    int nbytes = sizeof(uint32_t) * app.nparticles;
-    uint32_t *inds = malloc(nbytes), *pinds = inds;
+    int nbytes = sizeof(float) * app.nparticles;
+    float *inds = malloc(nbytes), *pinds = inds;
     for (int i = 0; i < app.nparticles; i++) {
         *pinds++ = i;
     }
@@ -157,7 +157,7 @@ static void draw()
     parg_state_blending(2);
     parg_uniform1f(U_TIME, app.current_time);
     parg_uniform1f(U_NPOINTS, app.nparticles);
-    parg_varray_enable(app.particle_indices, A_POSITION, 1, PARG_UINT, 0, 0);
+    parg_varray_enable(app.particle_indices, A_POSITION, 1, PARG_FLOAT, 0, 0);
     parg_framebuffer_bindtex(app.particle_positionsa, 0);
     parg_uniform1i(U_POSITIONS, 0);
     parg_uniform1f(U_BUFSIZE, app.bufsize);
