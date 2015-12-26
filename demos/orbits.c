@@ -19,6 +19,7 @@ static const int NASTEROIDS = 3;
     F(U_POSITIONS, "u_positions")   \
     F(U_PROPERTIES, "u_properties") \
     F(U_DELTASQR, "u_deltasqr")     \
+    F(U_BUFSIZE, "u_bufsize")       \
     F(U_TIME, "u_time")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
@@ -59,8 +60,8 @@ static void create_particles()
 
     // Initialize a trivial "1 2 3" vertex buffer since OpenGL ES / WebGL
     // do not allow zero-vertex rendering, nor access to gl_Vertex.
-    int nbytes = sizeof(uint16_t) * app.nparticles;
-    uint16_t *inds = malloc(nbytes), *pinds = inds;
+    int nbytes = sizeof(uint32_t) * app.nparticles;
+    uint32_t *inds = malloc(nbytes), *pinds = inds;
     for (int i = 0; i < app.nparticles; i++) {
         *pinds++ = i;
     }
@@ -71,7 +72,7 @@ static void create_particles()
     nbytes = sizeof(float) * 4 * app.nparticles;
     float *src = malloc(nbytes), *psrc = src;
     float y = 1;
-    float d = 2.0 / app.nparticles;
+    float d = 2.0 / (app.nparticles - 1);
     float vx = 0.0025;
     for (int i = 0; i < app.nparticles; i++) {
         float x = -1.0 + i * d;
@@ -90,7 +91,7 @@ static void create_particles()
     psrc = src;
     float birth = 0;
     for (int i = 0; i < app.nparticles; i++) {
-        int gravindex = rand() % NASTEROIDS;
+        int gravindex = i % NASTEROIDS;
         *psrc++ = app.asteroids[gravindex * 3 + 0];
         *psrc++ = app.asteroids[gravindex * 3 + 1];
         *psrc++ = app.asteroids[gravindex * 3 + 2];
@@ -156,9 +157,10 @@ static void draw()
     parg_state_blending(2);
     parg_uniform1f(U_TIME, app.current_time);
     parg_uniform1f(U_NPOINTS, app.nparticles);
-    parg_varray_enable(app.particle_indices, A_POSITION, 1, PARG_USHORT, 0, 0);
+    parg_varray_enable(app.particle_indices, A_POSITION, 1, PARG_UINT, 0, 0);
     parg_framebuffer_bindtex(app.particle_positionsa, 0);
     parg_uniform1i(U_POSITIONS, 0);
+    parg_uniform1f(U_BUFSIZE, app.bufsize);
     parg_draw_points(app.nparticles);
     parg_state_blending(0);
 }

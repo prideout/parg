@@ -10,6 +10,7 @@ varying float v_index;
 uniform float u_time;
 uniform float u_npoints;
 uniform float u_deltasqr;
+uniform float u_bufsize;
 uniform sampler2D u_image;
 uniform sampler2D u_positions;
 uniform sampler2D u_properties;
@@ -21,7 +22,6 @@ const float NCOLS = 5.0;
 const float ROTSPEED = 40.0;
 const float BRIGHTEN = 1.75;
 const float DARKEN = 1.0;
-const float BUFSIZE = 256.0;
 
 // http://www.iquilezles.org/www/articles/palettes/palettes.htm
 vec3 select_color(float t)
@@ -107,9 +107,9 @@ attribute float a_position;
 
 void main()
 {
-    float u = mod(a_position, BUFSIZE);
-    float v = floor(a_position / BUFSIZE);
-    vec4 texel = texture2D(u_positions, vec2(u, v) / BUFSIZE);
+    float u = mod(a_position, u_bufsize);
+    float v = floor(a_position / u_bufsize);
+    vec4 texel = texture2D(u_positions, vec2(u, v) / u_bufsize);
     gl_Position = vec4(texel.xy, 0, 1);
     gl_PointSize = 8.0;
 }
