@@ -59,21 +59,24 @@ void main()
 {
     vec4 postexel = texture2D(u_positions, v_texcoord);
     vec4 proptexel = texture2D(u_properties, v_texcoord);
-
     vec2 asteroid_position = proptexel.rg;
     vec2 current_position = postexel.rg;
     vec2 previous_position = postexel.ba;
 
-    float d = distance(asteroid_position, current_position);
-    d = max(d, 0.2); // stability!
-    vec2 force_direction = (asteroid_position - current_position) / d;
-    float Gm = 0.1;
-    vec2 acceleration = Gm * force_direction / (d * d);
+    for (int i = 0; i < 5; i++) {
+        float d = distance(asteroid_position, current_position);
+        d = max(d, 0.2); // stability!
+        vec2 force_direction = (asteroid_position - current_position) / d;
+        float Gm = 0.1;
+        vec2 acceleration = Gm * force_direction / (d * d);
+        vec2 velocity = current_position - previous_position;
+        vec2 new_position = current_position + velocity + acceleration * u_deltasqr;
+        previous_position = current_position;
+        current_position = new_position;
+    }
 
-    vec2 velocity = current_position - previous_position;
-    vec2 new_position = current_position + velocity + acceleration * u_deltasqr;
-    gl_FragColor.rg = new_position;
-    gl_FragColor.ba = current_position;
+    gl_FragColor.rg = current_position;
+    gl_FragColor.ba = previous_position;
 }
 
 -- asteroids.vs
