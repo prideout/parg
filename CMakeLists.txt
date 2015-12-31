@@ -35,9 +35,9 @@ include_directories(
     ${CURL_INCLUDE_DIRS})
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-gnu99")
     find_package (X11 REQUIRED)
-        add_definitions(
-        -std=gnu99
+    add_definitions(
         -O3
         -Wall
         -I../include
