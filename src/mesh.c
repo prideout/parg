@@ -323,6 +323,7 @@ parg_mesh* parg_mesh_from_asset(parg_token id)
     parg_mesh* surf = calloc(sizeof(struct parg_mesh_s), 1);
     int* rawdata;
     parg_buffer* objbuf = parg_buffer_slurp_asset(id, (void*) &rawdata);
-
+    parg_load_obj(surf, objbuf);
+    parg_buffer_free(objbuf);
     return surf;
 }
