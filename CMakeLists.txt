@@ -5,7 +5,7 @@ option(EMSCRIPTEN "enable JavaScript output via emcc")
 
 set(DEMOS
     clipping
-    gamma
+    klein
     marina
     trefoil
     sierpinski
@@ -22,7 +22,7 @@ pkg_search_module(GLFW REQUIRED glfw3)
 pkg_search_module(CURL REQUIRED libcurl)
 find_library(OPENGL_LIB OpenGL)
 
-file(GLOB COREC src/*.c)
+file(GLOB COREC src/*.c  src/objloader.cpp)
 file(GLOB VENDORC extern/*.c)
 file(GLOB SRCFILES ${COREC} ${VENDORC})
 file(GLOB JSEXCLUSIONS src/window.c src/easycurl.c src/filecache.c)

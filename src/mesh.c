@@ -2,14 +2,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <assert.h>
-
-struct parg_mesh_s {
-    parg_buffer* coords;
-    parg_buffer* uvs;
-    parg_buffer* normals;
-    parg_buffer* indices;
-    int ntriangles;
-};
+#include "internal.h"
 
 parg_mesh* parg_mesh_create(float* pts, int npts, uint16_t* tris, int ntris)
 {
@@ -324,3 +317,12 @@ parg_buffer* parg_mesh_norml(parg_mesh* m) { return m->normals; }
 parg_buffer* parg_mesh_index(parg_mesh* m) { return m->indices; }
 
 int parg_mesh_ntriangles(parg_mesh* m) { return m->ntriangles; }
+
+parg_mesh* parg_mesh_from_asset(parg_token id)
+{
+    parg_mesh* surf = calloc(sizeof(struct parg_mesh_s), 1);
+    int* rawdata;
+    parg_buffer* objbuf = parg_buffer_slurp_asset(id, (void*) &rawdata);
+
+    return surf;
+}

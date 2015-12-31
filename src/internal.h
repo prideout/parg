@@ -4,6 +4,19 @@
 #include <assert.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct parg_mesh_s {
+    parg_buffer* coords;
+    parg_buffer* uvs;
+    parg_buffer* normals;
+    parg_buffer* indices;
+    int ntriangles;
+};
+
+void parg_load_obj(parg_mesh* mesh, parg_buffer* buffer);
 sds parg_token_to_sds(parg_token token);
 parg_buffer* parg_buffer_from_path(const char* filepath);
 sds parg_asset_whereami();
@@ -28,3 +41,7 @@ parg_buffer* parg_asset_to_buffer(parg_token id);
       printf("%s: %s\n", exception_key, (char*) exception_metadata);	\
     }                                                                      \
     assert(expr);
+
+#ifdef __cplusplus
+}
+#endif
