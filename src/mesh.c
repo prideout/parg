@@ -1,3 +1,4 @@
+#include <par/par_shapes.h>
 #include <parg.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -326,4 +327,31 @@ parg_mesh* parg_mesh_from_asset(parg_token id)
     parg_load_obj(surf, objbuf);
     parg_buffer_free(objbuf);
     return surf;
+}
+
+parg_mesh* parg_mesh_from_shape(par_shapes_mesh const* src)
+{
+    parg_mesh* dst = calloc(sizeof(struct parg_mesh_s), 1);
+    dst->coords = parg_buffer_alloc(4 * 3 * src->npoints, PARG_GPU_ARRAY);
+    float* pcoords = (float*) parg_buffer_lock(dst->coords, PARG_WRITE);
+    memcpy(pcoords, src->points, 4 * 3 * src->npoints);
+    parg_buffer_unlock(dst->coords);
+    if (src->tcoords) {
+        dst->uvs = parg_buffer_alloc(4 * 2 * src->npoints, PARG_GPU_ARRAY);
+        float* puvs = (float*) parg_buffer_lock(dst->uvs, PARG_WRITE);
+        memcpy(puvs, src->tcoords, 4 * 2 * src->npoints);
+        parg_buffer_unlock(dst->uvs);
+    }
+    if (src->normals) {
+        dst->normals = parg_buffer_alloc(4 * 3 * src->npoints, PARG_GPU_ARRAY);
+        float* pnorms = (float*) parg_buffer_lock(dst->uvs, PARG_WRITE);
+        memcpy(pnorms, src->normals, 4 * 3 * src->npoints);
+        parg_buffer_unlock(dst->normals);
+    }
+    dst->indices = parg_buffer_alloc(2 * 3 * src->ntriangles, PARG_GPU_ELEMENTS);
+    uint16_t* ptris = (uint16_t*) parg_buffer_lock(dst->indices, PARG_WRITE);
+    memcpy(ptris, src->triangles, 2 * 3 * src->ntriangles);
+    parg_buffer_unlock(dst->indices);
+    dst->ntriangles = src->ntriangles;
+    return dst;
 }

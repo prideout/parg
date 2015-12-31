@@ -31,19 +31,19 @@ void parg_load_obj(parg_mesh* dst, parg_buffer* buffer)
     const tinyobj::mesh_t& src = shapes[0].mesh;
 
     // Positions
-    dst->coords = parg_buffer_alloc(4 * src.positions.size(), PARG_CPU);
+    dst->coords = parg_buffer_alloc(4 * src.positions.size(), PARG_GPU_ARRAY);
     float* pcoords = (float*) parg_buffer_lock(dst->coords, PARG_WRITE);
-    memcpy(pcoords, src.texcoords.data(), 4 * src.positions.size());
+    memcpy(pcoords, src.positions.data(), 4 * src.positions.size());
     parg_buffer_unlock(dst->coords);
 
     // Texture coordinates
-    dst->uvs = parg_buffer_alloc(4 * src.texcoords.size(), PARG_CPU);
+    dst->uvs = parg_buffer_alloc(4 * src.texcoords.size(), PARG_GPU_ARRAY);
     float* puvs = (float*) parg_buffer_lock(dst->uvs, PARG_WRITE);
     memcpy(puvs, src.texcoords.data(), 4 * src.texcoords.size());
     parg_buffer_unlock(dst->uvs);
 
     // Triangles
-    dst->indices = parg_buffer_alloc(2 * src.indices.size(), PARG_CPU);
+    dst->indices = parg_buffer_alloc(2 * src.indices.size(), PARG_GPU_ELEMENTS);
     uint16_t* ptris = (uint16_t*) parg_buffer_lock(dst->indices, PARG_WRITE);
     for (size_t i = 0; i < src.indices.size(); i++) {
         *ptris++ = src.indices[i];
