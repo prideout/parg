@@ -348,7 +348,8 @@ parg_mesh* parg_mesh_from_shape(par_shapes_mesh const* src)
         memcpy(pnorms, src->normals, 4 * 3 * src->npoints);
         parg_buffer_unlock(dst->normals);
     }
-    dst->indices = parg_buffer_alloc(2 * 3 * src->ntriangles, PARG_GPU_ELEMENTS);
+    dst->indices =
+        parg_buffer_alloc(2 * 3 * src->ntriangles, PARG_GPU_ELEMENTS);
     uint16_t* ptris = (uint16_t*) parg_buffer_lock(dst->indices, PARG_WRITE);
     memcpy(ptris, src->triangles, 2 * 3 * src->ntriangles);
     parg_buffer_unlock(dst->indices);
