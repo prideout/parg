@@ -17,6 +17,14 @@ void parg_uniform1f(parg_token tok, float val)
     }
 }
 
+void parg_uniform2f(parg_token tok, float x, float y)
+{
+    GLint loc = parg_shader_uniform_get(tok);
+    if (loc > -1) {
+        glUniform2f(loc, x, y);
+    }
+}
+
 void parg_uniform3f(parg_token tok, const Vector3* val)
 {
     GLint loc = parg_shader_uniform_get(tok);

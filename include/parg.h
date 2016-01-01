@@ -154,6 +154,7 @@ void parg_texture_fliprows(void* data, int rowsize, int nrows);
 
 void parg_uniform1i(parg_token tok, int val);
 void parg_uniform1f(parg_token tok, float val);
+void parg_uniform2f(parg_token tok, float x, float y);
 void parg_uniform3f(parg_token, const Vector3* val);
 void parg_uniform4f(parg_token, const Vector4* val);
 void parg_uniform_point(parg_token, const Point3* val);
