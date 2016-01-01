@@ -111,11 +111,10 @@ float parg_aar_width(parg_aar rect);
 // MESHES
 
 typedef struct parg_mesh_s parg_mesh;
-typedef struct parg_mesh_s parg_mesh;
-typedef struct par_shapes_mesh_s par_shapes_mesh;
+struct par_shapes_mesh_s;
 
 parg_mesh* parg_mesh_create(float* pts, int npts, uint16_t* tris, int ntris);
-parg_mesh* parg_mesh_from_shape(par_shapes_mesh const* src);
+parg_mesh* parg_mesh_from_shape(struct par_shapes_mesh_s const* src);
 parg_mesh* parg_mesh_from_asset(parg_token id);
 parg_mesh* parg_mesh_knot(int cols, int rows, float major, float minor);
 parg_mesh* parg_mesh_torus(int cols, int rows, float major, float minor);

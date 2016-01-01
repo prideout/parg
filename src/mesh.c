@@ -329,7 +329,7 @@ parg_mesh* parg_mesh_from_asset(parg_token id)
     return surf;
 }
 
-parg_mesh* parg_mesh_from_shape(par_shapes_mesh const* src)
+parg_mesh* parg_mesh_from_shape(struct par_shapes_mesh_s const* src)
 {
     parg_mesh* dst = calloc(sizeof(struct parg_mesh_s), 1);
     dst->coords = parg_buffer_alloc(4 * 3 * src->npoints, PARG_GPU_ARRAY);
@@ -344,7 +344,7 @@ parg_mesh* parg_mesh_from_shape(par_shapes_mesh const* src)
     }
     if (src->normals) {
         dst->normals = parg_buffer_alloc(4 * 3 * src->npoints, PARG_GPU_ARRAY);
-        float* pnorms = (float*) parg_buffer_lock(dst->uvs, PARG_WRITE);
+        float* pnorms = (float*) parg_buffer_lock(dst->normals, PARG_WRITE);
         memcpy(pnorms, src->normals, 4 * 3 * src->npoints);
         parg_buffer_unlock(dst->normals);
     }

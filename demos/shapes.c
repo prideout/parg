@@ -1,0 +1,109 @@
+#include <parg.h>
+#include <parwin.h>
+
+#define PAR_SHAPES_IMPLEMENTATION
+#include <par/par_shapes.h>
+
+#define TOKEN_TABLE(F)            \
+    F(P_TEXTURE, "p_texture")     \
+    F(P_SIMPLE, "p_simple")       \
+    F(T_ABSTRACT, "Abstract.png") \
+    F(A_POSITION, "a_position")   \
+    F(A_TEXCOORD, "a_texcoord")   \
+    F(A_NORMAL, "a_normal")       \
+    F(U_MVP, "u_mvp")             \
+    F(U_IMV, "u_imv")             \
+    F(S_SIMPLE, "shapes.glsl")
+TOKEN_TABLE(PARG_TOKEN_DECLARE);
+
+Matrix4 projection;
+Matrix4 model;
+Matrix4 view;
+parg_mesh* mesh;
+parg_mesh* bckgd;
+parg_texture* abstract;
+
+void init(float winwidth, float winheight, float pixratio)
+{
+    par_shapes_mesh* shape;
+    shape =
+        par_shapes_create_parametric("sphere", 20, 20, PAR_SHAPES_SMOOTH_NORMALS);
+    mesh = parg_mesh_from_shape(shape);
+    par_shapes_free(shape);
+
+    shape =
+        par_shapes_create_parametric("plane", 3, 3, PAR_SHAPES_TEXTURE_COORDS);
+    par_shapes_scale(shape, 4, 4, 1);
+    par_shapes_translate(shape, -2, -2, -1);
+    bckgd = parg_mesh_from_shape(shape);
+    par_shapes_free(shape);
+
+    abstract = parg_texture_from_asset(T_ABSTRACT);
+    parg_state_cullfaces(1);
+    parg_shader_load_from_asset(S_SIMPLE);
+    const float h = 1.0f;
+    const float w = h * winwidth / winheight;
+    const float znear = 4;
+    const float zfar = 20;
+    projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
+    Point3 eye = {0, 0, 5};
+    Point3 target = {0, 0, 0};
+    Vector3 up = {0, 1, 0};
+    view = M4MakeLookAt(eye, target, up);
+    model = M4MakeIdentity();
+}
+
+void draw()
+{
+    Matrix4 vp = M4Mul(projection, view);
+    Matrix4 modelview = M4Mul(view, model);
+    Matrix3 invmodelview = M4GetUpper3x3(modelview);
+    Matrix4 mvp = M4Mul(projection, modelview);
+    parg_draw_clear();
+    parg_shader_bind(P_TEXTURE);
+    parg_texture_bind(abstract, 0);
+    parg_uniform_matrix4f(U_MVP, &vp);
+    parg_varray_enable(parg_mesh_coord(bckgd), A_POSITION, 3, PARG_FLOAT, 0, 0);
+    parg_varray_enable(parg_mesh_uv(bckgd), A_TEXCOORD, 2, PARG_FLOAT, 0, 0);
+    parg_varray_bind(parg_mesh_index(bckgd));
+    parg_draw_triangles_u16(0, parg_mesh_ntriangles(bckgd));
+    parg_varray_disable(A_TEXCOORD);
+    parg_shader_bind(P_SIMPLE);
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_uniform_matrix3f(U_IMV, &invmodelview);
+    parg_varray_enable(parg_mesh_coord(mesh), A_POSITION, 3, PARG_FLOAT, 0, 0);
+    parg_varray_enable(parg_mesh_norml(mesh), A_NORMAL, 3, PARG_FLOAT, 0, 0);
+    parg_varray_bind(parg_mesh_index(mesh));
+    parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_draw_triangles_u16(0, parg_mesh_ntriangles(mesh));
+}
+
+int tick(float winwidth, float winheight, float pixratio, float seconds)
+{
+    const float RADIANS_PER_SECOND = 3.14 * 0.5;
+    float theta = seconds * RADIANS_PER_SECOND;
+    model = M4MakeRotationY(theta);
+    return 1;
+}
+
+void dispose()
+{
+    parg_shader_free(P_TEXTURE);
+    parg_shader_free(P_SIMPLE);
+    parg_mesh_free(mesh);
+    parg_mesh_free(bckgd);
+    parg_texture_free(abstract);
+}
+
+int main(int argc, char* argv[])
+{
+    TOKEN_TABLE(PARG_TOKEN_DEFINE);
+    parg_asset_preload(S_SIMPLE);
+    parg_asset_preload(T_ABSTRACT);
+    parg_window_setargs(argc, argv);
+    parg_window_oninit(init);
+    parg_window_ontick(tick);
+    parg_window_ondraw(draw);
+    parg_window_onexit(dispose);
+    return parg_window_exec(250, 250, 1, 1);
+}
