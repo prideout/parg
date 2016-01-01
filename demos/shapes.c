@@ -16,7 +16,7 @@
     F(S_SIMPLE, "shapes.glsl")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
-const int NSTATES = 2;
+const int NSTATES = 3;
 
 Matrix4 projection;
 Matrix4 model;
@@ -36,6 +36,10 @@ static void create_mesh()
         par_shapes_unweld(shape, true);
         par_shapes_compute_facet_normals(shape);
     } else if (state == 1) {
+        shape = par_shapes_create_sphere(1);
+        par_shapes_unweld(shape, true);
+        par_shapes_compute_facet_normals(shape);
+    } else if (state == 2) {
         shape = par_shapes_create_parametric("sphere", 20, 20,
             PAR_SHAPES_SMOOTH_NORMALS);
     }
@@ -51,16 +55,16 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_translate(shape, -2, -2, -1);
     bckgd = parg_mesh_from_shape(shape);
     par_shapes_free(shape);
-
     abstract = parg_texture_from_asset(T_ABSTRACT);
-    parg_state_cullfaces(1);
+    parg_state_cullfaces(0);
+    parg_state_depthtest(1);
     parg_shader_load_from_asset(S_SIMPLE);
     const float h = 1.0f;
     const float w = h * winwidth / winheight;
     const float znear = 4;
     const float zfar = 20;
     projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
-    Point3 eye = {0, 0, 5};
+    Point3 eye = {0, 0, 6};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
