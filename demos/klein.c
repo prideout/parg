@@ -220,5 +220,5 @@ int main(int argc, char* argv[])
     parg_window_ontick(tick);
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);
-    return parg_window_exec(300, 300, 1, 1);
+    return parg_window_exec(250, 250, 1, 1);
 }
