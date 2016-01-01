@@ -42,7 +42,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_mesh* shape;
     shape = par_shapes_create_parametric("cylinder", 30, 3, 0);
     float axis[3] = {1, 0, 0};
-    par_shapes_rotate(shape, M_PI * 0.5, axis);
+    par_shapes_rotate(shape, PARG_PI * 0.5, axis);
     cylinder = parg_mesh_from_shape(shape);
     par_shapes_free(shape);
 
