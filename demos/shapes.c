@@ -16,22 +16,36 @@
     F(S_SIMPLE, "shapes.glsl")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
+const int NSTATES = 2;
+
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
-parg_mesh* mesh;
+parg_mesh* mesh = 0;
 parg_mesh* bckgd;
 parg_texture* abstract;
+int state = 0;
+int dirty = 1;
+
+static void create_mesh()
+{
+    parg_mesh_free(mesh);
+    par_shapes_mesh* shape;
+    if (state == 0) {
+        shape = par_shapes_create_icosahedron();
+        par_shapes_unweld(shape, true);
+        par_shapes_compute_facet_normals(shape);
+    } else if (state == 1) {
+        shape = par_shapes_create_parametric("sphere", 20, 20,
+            PAR_SHAPES_SMOOTH_NORMALS);
+    }
+    mesh = parg_mesh_from_shape(shape);
+    par_shapes_free(shape);
+}
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    par_shapes_mesh* shape;
-    shape =
-        par_shapes_create_parametric("sphere", 20, 20, PAR_SHAPES_SMOOTH_NORMALS);
-    mesh = parg_mesh_from_shape(shape);
-    par_shapes_free(shape);
-
-    shape =
+    par_shapes_mesh* shape =
         par_shapes_create_parametric("plane", 3, 3, PAR_SHAPES_TEXTURE_COORDS);
     par_shapes_scale(shape, 4, 4, 1);
     par_shapes_translate(shape, -2, -2, -1);
@@ -55,6 +69,11 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
+    if (dirty) {
+        create_mesh();
+        dirty = 0;
+    }
+
     Matrix4 vp = M4Mul(projection, view);
     Matrix4 modelview = M4Mul(view, model);
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
@@ -76,6 +95,7 @@ void draw()
     parg_varray_bind(parg_mesh_index(mesh));
     parg_uniform_matrix4f(U_MVP, &mvp);
     parg_draw_triangles_u16(0, parg_mesh_ntriangles(mesh));
+    parg_varray_disable(A_NORMAL);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
@@ -95,13 +115,24 @@ void dispose()
     parg_texture_free(abstract);
 }
 
+void input(parg_event evt, float code, float unused0, float unused1)
+{
+    int key = (char) code;
+    if ((evt == PARG_EVENT_KEYPRESS && key == ' ') || evt == PARG_EVENT_UP) {
+        state = (state + 1) % NSTATES;
+        dirty = 1;
+    }
+}
+
 int main(int argc, char* argv[])
 {
+    printf("Spacebar to cycle the shape.\n");
     TOKEN_TABLE(PARG_TOKEN_DEFINE);
     parg_asset_preload(S_SIMPLE);
     parg_asset_preload(T_ABSTRACT);
     parg_window_setargs(argc, argv);
     parg_window_oninit(init);
+    parg_window_oninput(input);
     parg_window_ontick(tick);
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);

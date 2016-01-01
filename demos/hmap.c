@@ -384,6 +384,7 @@ int tick(float seconds, float winwidth, float winheight, float pixratio)
 
 int main(int argc, char* argv[])
 {
+    printf("Spacebar to cycle the msquares test.\n");
     TOKEN_TABLE(PARG_TOKEN_DEFINE);
     ASSET_TABLE(PARG_ASSET_TABLE);
     parg_window_setargs(argc, argv);
