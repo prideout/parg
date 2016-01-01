@@ -32,6 +32,28 @@ parg_texture* parg_texture_from_asset(parg_token id)
     return tex;
 }
 
+parg_texture* parg_texture_from_asset_linear(parg_token id)
+{
+    parg_texture* tex = malloc(sizeof(struct parg_texture_s));
+    int* rawdata;
+    parg_buffer* pngbuf = parg_buffer_slurp_asset(id, (void*) &rawdata);
+    tex->width = *rawdata++;
+    tex->height = *rawdata++;
+    int ncomps = *rawdata++;
+    assert(ncomps == 4);
+    glGenTextures(1, &tex->handle);
+    glBindTexture(GL_TEXTURE_2D, tex->handle);
+    parg_texture_fliprows(rawdata, tex->width * ncomps, tex->height);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, rawdata);
+    parg_buffer_free(pngbuf);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    return tex;
+}
+
 void parg_texture_bind(parg_texture* tex, int stage)
 {
     glActiveTexture(GL_TEXTURE0 + stage);

@@ -59,7 +59,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_free(shape);
 
     kleingeo = parg_mesh_from_asset(M_KLEIN);
-    kleintex = parg_texture_from_asset(T_KLEIN);
+    kleintex = parg_texture_from_asset_linear(T_KLEIN);
     abstract = parg_texture_from_asset(T_ABSTRACT);
     logo = parg_texture_from_asset(T_LOGO);
     rust = parg_texture_from_asset(T_RUST);
@@ -185,6 +185,7 @@ void draw()
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
+    resolution = pixratio * winwidth;
     const float RADIANS_PER_SECOND = 3.14;
     float theta = seconds * RADIANS_PER_SECOND;
     model = M4MakeRotationY(theta);

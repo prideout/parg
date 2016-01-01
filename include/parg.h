@@ -141,6 +141,7 @@ void parg_shader_free(parg_token);
 typedef struct parg_texture_s parg_texture;
 parg_texture* parg_texture_from_buffer(parg_buffer* rgba);
 parg_texture* parg_texture_from_asset(parg_token id);
+parg_texture* parg_texture_from_asset_linear(parg_token id);
 parg_texture* parg_texture_from_fp32(
     parg_buffer* buf, int width, int height, int ncomps, int bytoffset);
 parg_texture* parg_texture_from_u8(
