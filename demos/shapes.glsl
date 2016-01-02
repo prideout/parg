@@ -24,10 +24,12 @@ void main()
 
 -- fragment
 
-vec3 LightPosition = vec3(0.25, 0.25, 1.0);
-vec3 AmbientMaterial = vec3(0.04, 0.04, 0.04);
-vec3 SpecularMaterial = vec3(0.5, 0.5, 0.5);
-vec3 FrontMaterial = vec3(0.75, 0.5, 0.25);
+#define GAMMA vec3(2.2)
+
+vec3 LightPosition = vec3(0.5, 0.25, 1.0);
+vec3 AmbientMaterial = pow(vec3(0.04, 0.04, 0.04), GAMMA);
+vec3 SpecularMaterial = pow(vec3(0.5, 0.5, 0.5), GAMMA);
+vec3 FrontMaterial = pow(vec3(0.75, 0.5, 0.25), GAMMA);
 float Shininess = 50.0;
 
 void main()
@@ -41,6 +43,7 @@ void main()
     sf = pow(sf, Shininess);
     vec3 lighting = AmbientMaterial + df * FrontMaterial;
     lighting += sf * SpecularMaterial;
+    lighting = pow(lighting, 1.0 / GAMMA);
     gl_FragColor = vec4(lighting, 1.0);
 }
 
