@@ -21,10 +21,10 @@ const int NSTATES = 5;
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
-parg_mesh* mesh = 0;
+parg_mesh* mesh = 2;
 parg_mesh* bckgd;
 parg_texture* abstract;
-int state = 4;
+int state = 0;
 int dirty = 1;
 
 static void create_mesh()
@@ -36,16 +36,17 @@ static void create_mesh()
         par_shapes_unweld(shape, true);
         par_shapes_compute_facet_normals(shape);
     } else if (state == 1) {
-        shape = par_shapes_create_sphere(3);
+        shape = par_shapes_create_subdivided_sphere(3);
         par_shapes_compute_facet_normals(shape);
     } else if (state == 2) {
-        shape = par_shapes_create_parametric("sphere", 20, 20,
-            PAR_SHAPES_SMOOTH_NORMALS);
+        shape = par_shapes_create_parametric_sphere(20, 20);
+        par_shapes_unweld(shape, 1);
+        par_shapes_compute_facet_normals(shape);
     } else if (state == 3) {
         shape = par_shapes_create_rock(1, 3);
         par_shapes_compute_facet_normals(shape);
     } else if (state == 4) {
-        shape = par_shapes_create_cloud(1, 3);
+        shape = par_shapes_create_rock(2, 3);
         par_shapes_compute_facet_normals(shape);
     }
     mesh = parg_mesh_from_shape(shape);
@@ -54,8 +55,7 @@ static void create_mesh()
 
 void init(float winwidth, float winheight, float pixratio)
 {
-    par_shapes_mesh* shape =
-        par_shapes_create_parametric("plane", 3, 3, PAR_SHAPES_TEXTURE_COORDS);
+    par_shapes_mesh* shape = par_shapes_create_plane(3, 3);
     par_shapes_scale(shape, 4, 4, 1);
     par_shapes_translate(shape, -2, -2, -1);
     bckgd = parg_mesh_from_shape(shape);
