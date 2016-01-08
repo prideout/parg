@@ -1,7 +1,5 @@
 #include <parg.h>
 #include <parwin.h>
-
-#define PAR_SHAPES_IMPLEMENTATION
 #include <par/par_shapes.h>
 
 #define TOKEN_TABLE(F)              \

@@ -36,11 +36,21 @@ void parg_load_obj(parg_mesh* dst, parg_buffer* buffer)
     memcpy(pcoords, src.positions.data(), 4 * src.positions.size());
     parg_buffer_unlock(dst->coords);
 
+    // Normals
+    if (src.normals.size() > 0) {
+        dst->normals = parg_buffer_alloc(4 * src.normals.size(), PARG_GPU_ARRAY);
+        float* pnorms = (float*) parg_buffer_lock(dst->normals, PARG_WRITE);
+        memcpy(pnorms, src.normals.data(), 4 * src.normals.size());
+        parg_buffer_unlock(dst->normals);
+    }
+
     // Texture coordinates
-    dst->uvs = parg_buffer_alloc(4 * src.texcoords.size(), PARG_GPU_ARRAY);
-    float* puvs = (float*) parg_buffer_lock(dst->uvs, PARG_WRITE);
-    memcpy(puvs, src.texcoords.data(), 4 * src.texcoords.size());
-    parg_buffer_unlock(dst->uvs);
+    if (src.texcoords.size() > 0) {
+        dst->uvs = parg_buffer_alloc(4 * src.texcoords.size(), PARG_GPU_ARRAY);
+        float* puvs = (float*) parg_buffer_lock(dst->uvs, PARG_WRITE);
+        memcpy(puvs, src.texcoords.data(), 4 * src.texcoords.size());
+        parg_buffer_unlock(dst->uvs);
+    }
 
     // Triangles
     dst->indices = parg_buffer_alloc(2 * src.indices.size(), PARG_GPU_ELEMENTS);
