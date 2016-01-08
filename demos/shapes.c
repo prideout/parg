@@ -16,15 +16,15 @@
     F(S_SIMPLE, "shapes.glsl")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
-const int NSTATES = 5;
+const int NSTATES = 6;
 
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
-parg_mesh* mesh = 2;
+parg_mesh* mesh;
 parg_mesh* bckgd;
 parg_texture* abstract;
-int state = 0;
+int state = 2;
 int dirty = 1;
 
 static void create_mesh()
@@ -39,15 +39,15 @@ static void create_mesh()
         shape = par_shapes_create_subdivided_sphere(3);
         par_shapes_compute_facet_normals(shape);
     } else if (state == 2) {
-        shape = par_shapes_create_parametric_sphere(20, 20);
-        par_shapes_unweld(shape, 1);
-        par_shapes_compute_facet_normals(shape);
+        shape = par_shapes_create_parametric_sphere(10, 10);
     } else if (state == 3) {
         shape = par_shapes_create_rock(1, 3);
         par_shapes_compute_facet_normals(shape);
     } else if (state == 4) {
         shape = par_shapes_create_rock(2, 3);
         par_shapes_compute_facet_normals(shape);
+    } else if (state == 5) {
+        shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
     }
     mesh = parg_mesh_from_shape(shape);
     par_shapes_free(shape);
