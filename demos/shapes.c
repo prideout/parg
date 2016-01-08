@@ -16,7 +16,7 @@
     F(S_SIMPLE, "shapes.glsl")
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
 
-const int NSTATES = 6;
+const int NSTATES = 7;
 
 Matrix4 projection;
 Matrix4 model;
@@ -24,7 +24,7 @@ Matrix4 view;
 parg_mesh* mesh;
 parg_mesh* bckgd;
 parg_texture* abstract;
-int state = 0;
+int state = 6;
 int dirty = 1;
 
 static void create_mesh()
@@ -47,6 +47,11 @@ static void create_mesh()
         par_shapes_compute_normals(shape);
     } else if (state == 5) {
         shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
+    } else if (state == 6) {
+        shape = par_shapes_create_klein_bottle(20, 30);
+        par_shapes_scale(shape, 0.1, 0.1, 0.1);
+        float axis[3] = {1, 0, 0};
+        par_shapes_rotate(shape, -PARG_PI * 0.5, axis);
     }
     mesh = parg_mesh_from_shape(shape);
     par_shapes_free_mesh(shape);
