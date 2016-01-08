@@ -38,22 +38,43 @@ static void create_platonic_scene(char const* name)
             "--outmesh %s "
             "--atlas %s "
             "--nsamples %d ",
-            objpath, objpath, pngpath, 1024);
+            objpath, objpath, pngpath, 32);
 
     // Generate the scene and export an OBJ.
     int slices = 32;
     float radius = 20;
     float normal[3] = {0, 1, 0};
     float center[3] = {0, 0, 0};
-    par_shapes_mesh *a, *b;
-    a = par_shapes_create_disk(radius, slices, center, normal);
-    b = par_shapes_create_dodecahedron();
-    par_shapes_unweld(b, true);
-    par_shapes_translate(b, 0, 0.934, 0);
-    par_shapes_merge(a, b);
-    par_shapes_free_mesh(b);
-    par_shapes_export(a, objpath);
-    par_shapes_free_mesh(a);
+    par_shapes_mesh *scene, *shape;
+    scene = par_shapes_create_disk(radius, slices, center, normal);
+
+    shape = par_shapes_create_dodecahedron();
+    par_shapes_translate(shape, 0, 0.934, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_tetrahedron();
+    par_shapes_translate(shape, 1.5, 0.8, 1.5);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_octohedron();
+    par_shapes_translate(shape, -1.5, 0.9, 1.5);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_icosahedron();
+    par_shapes_translate(shape, -1, 0.8, 3.5);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_cube();
+    par_shapes_translate(shape, 1, 0.8, 3.5);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    par_shapes_export(scene, objpath);
+    par_shapes_free_mesh(scene);
 
     // Bake ambient occlusion; generate a new OBJ and a PNG.
     system(cmd);
@@ -118,9 +139,9 @@ void init(float winwidth, float winheight, float pixratio)
     const float h = 1.0f;
     const float w = h * winwidth / winheight;
     const float znear = 4;
-    const float zfar = 20;
+    const float zfar = 30;
     projection = M4MakeFrustum(-w, w, -h, h, znear, zfar);
-    Point3 eye = {0, 2.2, 10};
+    Point3 eye = {0, 4, 13};
     Point3 target = {0, 0, 0};
     Vector3 up = {0, 1, 0};
     view = M4MakeLookAt(eye, target, up);
