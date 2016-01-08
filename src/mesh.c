@@ -371,12 +371,13 @@ parg_mesh* parg_mesh_from_shape(struct par_shapes_mesh_s const* src)
 void parg_mesh_compute_normals(parg_mesh* mesh)
 {
     par_shapes_mesh m = {0};
+    int nbytes = parg_buffer_length(mesh->coords);
     m.points = (float*) parg_buffer_lock(mesh->coords, PARG_READ);
     m.triangles = (uint16_t*) parg_buffer_lock(mesh->indices, PARG_READ);
-    m.npoints = parg_buffer_length(mesh->coords) / 12;
+    m.npoints = nbytes / 12;
     m.ntriangles = mesh->ntriangles;
     par_shapes_compute_normals(&m);
-    // TODO create a buffer in "mesh"
+    mesh->normals = parg_buffer_create(m.normals, nbytes, PARG_CPU);
     parg_buffer_unlock(mesh->coords);
     parg_buffer_unlock(mesh->indices);
     free(m.normals);

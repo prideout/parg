@@ -2,6 +2,8 @@
 #include <parwin.h>
 #include <sds.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <par/par_shapes.h>
 
 #define TOKEN_TABLE(F)          \
@@ -22,12 +24,23 @@ Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
 parg_mesh* mesh;
+parg_texture* aotex = 0;
 int state = 6;
 int dirty = 1;
 parg_token scene = 0;
 
-static void create_platonic_scene(char const* filepath)
+static void create_platonic_scene(char const* name)
 {
+    sds objpath = sdscatprintf(sdsempty(), "build/%s.obj", name);
+    sds pngpath = sdscatprintf(sdsempty(), "build/%s.png", name);
+    sds cmd = sdscatprintf(sdsempty(),
+            "../aobaker/build/aobaker %s "
+            "--outmesh %s "
+            "--atlas %s "
+            "--nsamples %d ",
+            objpath, objpath, pngpath, 1024);
+
+    // Generate the scene and export an OBJ.
     int slices = 32;
     float radius = 20;
     float normal[3] = {0, 1, 0};
@@ -39,36 +52,33 @@ static void create_platonic_scene(char const* filepath)
     par_shapes_translate(b, 0, 0.934, 0);
     par_shapes_merge(a, b);
     par_shapes_free_mesh(b);
-    par_shapes_compute_normals(a);
-    par_shapes_export(a, filepath);
+    par_shapes_export(a, objpath);
     par_shapes_free_mesh(a);
 
-#if AO
-    sds cmd = sdsempty();
-    cmd = sdscatprintf(cmd,
-            "../aobaker/build/aobaker %s "
-            "--outmesh %s "
-            "--nsamples %d ",
-            filepath, filepath, 4);
+    // Bake ambient occlusion; generate a new OBJ and a PNG.
     system(cmd);
-    sdsfree(cmd);
-#endif
 
-    mesh = parg_mesh_from_file(filepath);
-
-#if AO
+    // Load up the new OBJ.
+    mesh = parg_mesh_from_file(objpath);
     parg_mesh_compute_normals(mesh);
-#endif
-
     parg_mesh_send_to_gpu(mesh);
+
+    // Load up the new PNG.
+    parg_buffer* aobuf = parg_buffer_from_file(pngpath);
+    aotex = parg_texture_from_buffer(aobuf);
+    parg_buffer_free(aobuf);
+
+    // Cleanup.
+    sdsfree(objpath);
+    sdsfree(pngpath);
+    sdsfree(cmd);
 }
 
 static void create_mesh()
 {
     parg_mesh_free(mesh);
-
     if (scene == PLATONIC) {
-        create_platonic_scene("build/platonic.obj");
+        create_platonic_scene("platonic");
         return;
     }
 
@@ -129,15 +139,26 @@ void draw()
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
     parg_draw_clear();
-    parg_shader_bind(P_SIMPLE);
-    parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_uniform_matrix3f(U_IMV, &invmodelview);
+    parg_varray_bind(parg_mesh_index(mesh));
     parg_varray_enable(parg_mesh_coord(mesh), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_varray_enable(parg_mesh_norml(mesh), A_NORMAL, 3, PARG_FLOAT, 0, 0);
-    parg_varray_bind(parg_mesh_index(mesh));
+
+    if (aotex) {
+        assert(parg_mesh_uv(mesh));
+        parg_varray_enable(parg_mesh_uv(mesh), A_TEXCOORD, 2, PARG_FLOAT, 0, 0);
+        parg_texture_bind(aotex, 0);
+        parg_shader_bind(P_TEXTURE);
+    } else {
+        parg_shader_bind(P_SIMPLE);
+    }
+
     parg_uniform_matrix4f(U_MVP, &mvp);
+    parg_uniform_matrix3f(U_IMV, &invmodelview);
+    parg_uniform_matrix4f(U_MVP, &mvp);
+
     parg_draw_triangles_u16(0, parg_mesh_ntriangles(mesh));
     parg_varray_disable(A_NORMAL);
+    parg_varray_disable(A_TEXCOORD);
 }
 
 void dispose()
@@ -145,6 +166,7 @@ void dispose()
     parg_shader_free(P_TEXTURE);
     parg_shader_free(P_SIMPLE);
     parg_mesh_free(mesh);
+    parg_texture_free(aotex);
 }
 
 void input(parg_event evt, float code, float unused0, float unused1)
@@ -172,5 +194,5 @@ int main(int argc, char* argv[])
     parg_window_oninput(input);
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);
-    return parg_window_exec(256, 256, 1, 1);
+    return parg_window_exec(512, 512, 1, 1);
 }

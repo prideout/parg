@@ -3,6 +3,7 @@
 #include <string.h>
 #include "internal.h"
 #include "pargl.h"
+#include "lodepng.h"
 
 struct parg_texture_s {
     int width;
@@ -29,6 +30,30 @@ parg_texture* parg_texture_from_asset(parg_token id)
     glTexParameteri(
         GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
+    return tex;
+}
+
+parg_texture* parg_texture_from_buffer(parg_buffer* buf)
+{
+    unsigned char* decoded;
+    unsigned dims[3] = {0, 0, 4};
+    unsigned char* filedata = parg_buffer_lock(buf, PARG_READ);
+    unsigned err = lodepng_decode_memory(&decoded, &dims[0], &dims[1],
+            filedata, parg_buffer_length(buf), LCT_RGBA, 8);
+    parg_assert(err == 0, "PNG decoding error");
+    int nbytes = dims[0] * dims[1] * dims[2];
+    assert(dims[2] == 4);
+    parg_texture* tex = calloc(sizeof(struct parg_texture_s), 1);
+    tex->width = dims[0];
+    tex->height = dims[1];
+    glGenTextures(1, &tex->handle);
+    glBindTexture(GL_TEXTURE_2D, tex->handle);
+    parg_texture_fliprows(decoded, tex->width * 4, tex->height);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, decoded);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    parg_buffer_unlock(buf);
     return tex;
 }
 
@@ -68,8 +93,10 @@ void parg_texture_info(parg_texture* tex, int* width, int* height)
 
 void parg_texture_free(parg_texture* tex)
 {
-    glDeleteTextures(1, &tex->handle);
-    free(tex);
+    if (tex) {
+        glDeleteTextures(1, &tex->handle);
+        free(tex);
+    }
 }
 
 void parg_texture_fliprows(void* data, int rowsize, int nrows)
