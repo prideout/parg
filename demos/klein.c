@@ -49,13 +49,13 @@ void init(float winwidth, float winheight, float pixratio)
     float axis[3] = {1, 0, 0};
     par_shapes_rotate(shape, PARG_PI * 0.5, axis);
     cylinder = parg_mesh_from_shape(shape);
-    par_shapes_free(shape);
+    par_shapes_free_mesh(shape);
 
     shape = par_shapes_create_plane(3, 3);
     par_shapes_scale(shape, 4, 4, 1);
     par_shapes_translate(shape, -2, -2, -1);
     backdrop = parg_mesh_from_shape(shape);
-    par_shapes_free(shape);
+    par_shapes_free_mesh(shape);
 
     kleingeo = parg_mesh_from_asset(M_KLEIN);
     kleintex = parg_texture_from_asset_linear(T_KLEIN);

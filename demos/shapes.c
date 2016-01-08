@@ -24,7 +24,7 @@ Matrix4 view;
 parg_mesh* mesh;
 parg_mesh* bckgd;
 parg_texture* abstract;
-int state = 2;
+int state = 0;
 int dirty = 1;
 
 static void create_mesh()
@@ -34,23 +34,22 @@ static void create_mesh()
     if (state == 0) {
         shape = par_shapes_create_icosahedron();
         par_shapes_unweld(shape, true);
-        par_shapes_compute_facet_normals(shape);
+        par_shapes_compute_normals(shape);
     } else if (state == 1) {
         shape = par_shapes_create_subdivided_sphere(3);
-        par_shapes_compute_facet_normals(shape);
     } else if (state == 2) {
         shape = par_shapes_create_parametric_sphere(10, 10);
     } else if (state == 3) {
         shape = par_shapes_create_rock(1, 3);
-        par_shapes_compute_facet_normals(shape);
+        par_shapes_compute_normals(shape);
     } else if (state == 4) {
         shape = par_shapes_create_rock(2, 3);
-        par_shapes_compute_facet_normals(shape);
+        par_shapes_compute_normals(shape);
     } else if (state == 5) {
         shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
     }
     mesh = parg_mesh_from_shape(shape);
-    par_shapes_free(shape);
+    par_shapes_free_mesh(shape);
 }
 
 void init(float winwidth, float winheight, float pixratio)
@@ -59,7 +58,7 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_scale(shape, 4, 4, 1);
     par_shapes_translate(shape, -2, -2, -1);
     bckgd = parg_mesh_from_shape(shape);
-    par_shapes_free(shape);
+    par_shapes_free_mesh(shape);
     abstract = parg_texture_from_asset(T_ABSTRACT);
     parg_state_cullfaces(0);
     parg_state_depthtest(1);
