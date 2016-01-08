@@ -7,7 +7,13 @@
 #include <par/par_shapes.h>
 
 #define TOKEN_TABLE(F)          \
+                                \
     F(PLATONIC, "platonic")     \
+    F(MISC, "misc")             \
+    F(SPHERES, "spheres")       \
+    F(PARAMETRIC, "parametric") \
+    F(CORNELL, "cornell")       \
+                                \
     F(P_TEXTURE, "p_texture")   \
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
@@ -16,37 +22,56 @@
     F(U_MVP, "u_mvp")           \
     F(U_IMV, "u_imv")           \
     F(S_SIMPLE, "shapes.glsl")
+
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
-
-const int NSTATES = 7;
-
 Matrix4 projection;
 Matrix4 model;
 Matrix4 view;
 parg_mesh* mesh;
 parg_texture* aotex = 0;
-int state = 6;
 int dirty = 1;
 parg_token scene = 0;
+const int NSTATES = 7;
+int state = 6;
+
+#define START_SCENE                                               \
+    sds objpath = sdscatprintf(sdsempty(), "build/%s.obj", name); \
+    sds pngpath = sdscatprintf(sdsempty(), "build/%s.png", name); \
+    sds cmd = sdscatprintf(sdsempty(),                            \
+            "../aobaker/build/aobaker %s "                            \
+            "--outmesh %s "                                           \
+            "--atlas %s "                                             \
+            "--sizehint %d "                                          \
+            "--nsamples %d ",                                         \
+            objpath, objpath, pngpath, 32, 32);                       \
+    par_shapes_mesh *scene = create_scene_base(), *shape;
+
+#define END_SCENE                                        \
+    par_shapes_export(scene, objpath);                   \
+    par_shapes_free_mesh(scene);                         \
+    system(cmd);                                         \
+    mesh = parg_mesh_from_file(objpath);                 \
+    parg_mesh_compute_normals(mesh);                     \
+    parg_mesh_send_to_gpu(mesh);                         \
+    parg_buffer* aobuf = parg_buffer_from_file(pngpath); \
+    aotex = parg_texture_from_buffer(aobuf);             \
+    parg_buffer_free(aobuf);                             \
+    sdsfree(objpath);                                    \
+    sdsfree(pngpath);                                    \
+    sdsfree(cmd);
+
+par_shapes_mesh* create_scene_base()
+{
+    int slices = 32;
+    float radius = 10;
+    float normal[3] = {0, 1, 0};
+    float center[3] = {0, 0, 0};
+    return par_shapes_create_disk(radius, slices, center, normal);
+}
 
 static void create_platonic_scene(char const* name)
 {
-    sds objpath = sdscatprintf(sdsempty(), "build/%s.obj", name);
-    sds pngpath = sdscatprintf(sdsempty(), "build/%s.png", name);
-    sds cmd = sdscatprintf(sdsempty(),
-            "../aobaker/build/aobaker %s "
-            "--outmesh %s "
-            "--atlas %s "
-            "--nsamples %d ",
-            objpath, objpath, pngpath, 32);
-
-    // Generate the scene and export an OBJ.
-    int slices = 32;
-    float radius = 20;
-    float normal[3] = {0, 1, 0};
-    float center[3] = {0, 0, 0};
-    par_shapes_mesh *scene, *shape;
-    scene = par_shapes_create_disk(radius, slices, center, normal);
+    START_SCENE;
 
     shape = par_shapes_create_dodecahedron();
     par_shapes_translate(shape, 0, 0.934, 0);
@@ -73,26 +98,73 @@ static void create_platonic_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    par_shapes_export(scene, objpath);
-    par_shapes_free_mesh(scene);
+    END_SCENE;
+}
 
-    // Bake ambient occlusion; generate a new OBJ and a PNG.
-    system(cmd);
+static void create_misc_scene(char const* name)
+{
+    START_SCENE;
 
-    // Load up the new OBJ.
-    mesh = parg_mesh_from_file(objpath);
-    parg_mesh_compute_normals(mesh);
-    parg_mesh_send_to_gpu(mesh);
+    shape = par_shapes_create_rock(1, 3);
+    par_shapes_translate(shape, 0, 0, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
 
-    // Load up the new PNG.
-    parg_buffer* aobuf = parg_buffer_from_file(pngpath);
-    aotex = parg_texture_from_buffer(aobuf);
-    parg_buffer_free(aobuf);
+    shape = par_shapes_create_rock(2, 3);
+    par_shapes_translate(shape, 1, 0, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
 
-    // Cleanup.
-    sdsfree(objpath);
-    sdsfree(pngpath);
-    sdsfree(cmd);
+    shape = par_shapes_create_klein_bottle(20, 30);
+    par_shapes_scale(shape, 0.1, 0.1, 0.1);
+    float axis[3] = {1, 0, 0};
+    par_shapes_rotate(shape, -PARG_PI * 0.5, axis);
+    par_shapes_translate(shape, -1, 1, 3);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
+    par_shapes_translate(shape, 1, 1, 5);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    END_SCENE;
+}
+
+static void create_spheres_scene(char const* name)
+{
+    START_SCENE;
+
+    shape = par_shapes_create_rock(1, 3);
+    par_shapes_translate(shape, 0, 0, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    END_SCENE;
+}
+
+static void create_parametric_scene(char const* name)
+{
+    START_SCENE;
+
+    shape = par_shapes_create_rock(1, 3);
+    par_shapes_translate(shape, 0, 0, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    END_SCENE;
+}
+
+static void create_cornell_scene(char const* name)
+{
+    START_SCENE;
+
+    shape = par_shapes_create_rock(1, 3);
+    par_shapes_translate(shape, 0, 0, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    END_SCENE;
 }
 
 static void create_mesh()
@@ -100,6 +172,22 @@ static void create_mesh()
     parg_mesh_free(mesh);
     if (scene == PLATONIC) {
         create_platonic_scene("platonic");
+        return;
+    }
+    if (scene == MISC) {
+        create_misc_scene("misc");
+        return;
+    }
+    if (scene == SPHERES) {
+        create_spheres_scene("spheres");
+        return;
+    }
+    if (scene == PARAMETRIC) {
+        create_parametric_scene("parametric");
+        return;
+    }
+    if (scene == CORNELL) {
+        create_cornell_scene("cornell");
         return;
     }
 
