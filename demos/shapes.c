@@ -59,6 +59,8 @@ static void create_platonic_scene(char const* filepath)
 #if AO
     parg_mesh_compute_normals(mesh);
 #endif
+
+    parg_mesh_send_to_gpu(mesh);
 }
 
 static void create_mesh()

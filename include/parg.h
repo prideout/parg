@@ -84,6 +84,7 @@ int parg_buffer_gpu_check(parg_buffer*);
 parg_buffer* parg_buffer_from_asset(parg_token id);
 parg_buffer* parg_buffer_slurp_asset(parg_token id, void** ptr);
 void parg_buffer_to_file(parg_buffer*, const char* filepath);
+parg_buffer* parg_buffer_to_gpu(parg_buffer* buf, parg_buffer_type memtype);
 parg_buffer* parg_buffer_from_file(const char* filepath);
 
 // AXIS-ALIGNED RECTANGLE
@@ -130,6 +131,7 @@ parg_buffer* parg_mesh_norml(parg_mesh* m);
 parg_buffer* parg_mesh_index(parg_mesh* m);
 int parg_mesh_ntriangles(parg_mesh* m);
 void parg_mesh_compute_normals(parg_mesh* m);
+void parg_mesh_send_to_gpu(parg_mesh* m);
 
 // SHADERS
 

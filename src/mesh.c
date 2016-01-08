@@ -381,3 +381,33 @@ void parg_mesh_compute_normals(parg_mesh* mesh)
     parg_buffer_unlock(mesh->indices);
     free(m.normals);
 }
+
+parg_buffer* parg_buffer_to_gpu(parg_buffer* cpubuf, parg_buffer_type memtype)
+{
+    int nbytes = parg_buffer_length(cpubuf);
+    void* bytes = parg_buffer_lock(cpubuf, PARG_READ);
+    parg_buffer* gpubuf = parg_buffer_create(bytes, nbytes, memtype);
+    parg_buffer_unlock(cpubuf);
+    return gpubuf;
+}
+
+void parg_mesh_send_to_gpu(parg_mesh* mesh)
+{
+    parg_buffer* coords = parg_buffer_to_gpu(mesh->coords, PARG_GPU_ARRAY);
+    parg_buffer_free(mesh->coords);
+    mesh->coords = coords;
+    parg_buffer* indices = parg_buffer_to_gpu(mesh->indices, PARG_GPU_ELEMENTS);
+    parg_buffer_free(mesh->indices);
+    mesh->indices = indices;
+    if (mesh->uvs) {
+        parg_buffer* uvs = parg_buffer_to_gpu(mesh->uvs, PARG_GPU_ARRAY);
+        parg_buffer_free(mesh->uvs);
+        mesh->uvs = uvs;
+    }
+    if (mesh->normals) {
+        parg_buffer* normals =
+            parg_buffer_to_gpu(mesh->normals, PARG_GPU_ARRAY);
+        parg_buffer_free(mesh->normals);
+        mesh->normals = normals;
+    }
+}
