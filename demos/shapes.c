@@ -79,12 +79,12 @@ static void create_platonic_scene(char const* name)
     par_shapes_free_mesh(shape);
 
     shape = par_shapes_create_tetrahedron();
-    par_shapes_translate(shape, 1.5, 0.8, 1.5);
+    par_shapes_translate(shape, 1, 0, 3.5);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
     shape = par_shapes_create_octohedron();
-    par_shapes_translate(shape, -1.5, 0.9, 1.5);
+    par_shapes_translate(shape, -2.25, 0.9, -.5);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
@@ -93,8 +93,11 @@ static void create_platonic_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
+    float yaxis[] = {0, 1, 0};
     shape = par_shapes_create_cube();
-    par_shapes_translate(shape, 1, 0.8, 3.5);
+    par_shapes_rotate(shape, PARG_PI / 5.0, yaxis);
+    par_shapes_translate(shape, 1, 0, 0.5);
+    par_shapes_scale(shape, 1.2, 1.2, 1.2);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
