@@ -138,8 +138,19 @@ static void create_spheres_scene(char const* name)
 {
     START_SCENE;
 
-    shape = par_shapes_create_rock(1, 3);
-    par_shapes_translate(shape, 0, 0, 0);
+    shape = par_shapes_create_parametric_sphere(9, 10);
+    par_shapes_remove_degenerate(shape, 0.01);
+    par_shapes_translate(shape, 0, 1, 0);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_subdivided_sphere(1);
+    par_shapes_translate(shape, 1.5, 1, 2);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_subdivided_sphere(1);
+    par_shapes_translate(shape, -1.5, 1, 2);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
