@@ -43,7 +43,7 @@ int state = 6;
             "--atlas %s "                                             \
             "--sizehint %d "                                          \
             "--nsamples %d ",                                         \
-            objpath, objpath, pngpath, 32, 32);                       \
+            objpath, objpath, pngpath, 32, 512);                      \
     par_shapes_mesh *scene = create_scene_base(), *shape;
 
 #define END_SCENE                                        \
@@ -143,12 +143,14 @@ static void create_spheres_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_subdivided_sphere(3);
+    shape = par_shapes_create_subdivided_sphere(4);
+    par_shapes_weld(shape, 0.01, 0);
     par_shapes_translate(shape, 0, 1, 4);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_subdivided_sphere(1);
+    shape = par_shapes_create_subdivided_sphere(2);
+    par_shapes_weld(shape, 0.01, 0);
     par_shapes_translate(shape, -1.5, 1, 2);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
@@ -164,7 +166,7 @@ static void create_parametric_scene(char const* name)
     float center[] = {0, 1, 3};
     float normal[] = {0, 1, 0};
 
-    shape = par_shapes_create_cylinder(20, 3);
+    shape = par_shapes_create_cylinder(30, 3);
     par_shapes_rotate(shape, -PARG_PI / 2.0, xaxis);
     par_shapes_translate(shape, 0, 0, 3);
     par_shapes_merge(scene, shape);
@@ -186,7 +188,7 @@ static void create_parametric_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_torus(20, 40, 0.1);
+    shape = par_shapes_create_torus(30, 40, 0.1);
     par_shapes_scale(shape, 2, 2, 2);
     par_shapes_translate(shape, 0, 0, 3);
     par_shapes_merge(scene, shape);
