@@ -139,13 +139,12 @@ static void create_spheres_scene(char const* name)
     START_SCENE;
 
     shape = par_shapes_create_parametric_sphere(9, 10);
-    par_shapes_remove_degenerate(shape, 0.01);
-    par_shapes_translate(shape, 0, 1, 0);
+    par_shapes_translate(shape, 1.5, 1, 2);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_subdivided_sphere(1);
-    par_shapes_translate(shape, 1.5, 1, 2);
+    shape = par_shapes_create_subdivided_sphere(3);
+    par_shapes_translate(shape, 0, 1, 4);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
@@ -161,8 +160,35 @@ static void create_parametric_scene(char const* name)
 {
     START_SCENE;
 
-    shape = par_shapes_create_rock(1, 3);
-    par_shapes_translate(shape, 0, 0, 0);
+    float xaxis[] = {1, 0, 0};
+    float center[] = {0, 1, 3};
+    float normal[] = {0, 1, 0};
+
+    shape = par_shapes_create_cylinder(20, 3);
+    par_shapes_rotate(shape, -PARG_PI / 2.0, xaxis);
+    par_shapes_translate(shape, 0, 0, 3);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_disk(1, 30, center, normal);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_hemisphere(10, 10);
+    par_shapes_scale(shape, 0.2, 0.2, 0.2);
+    par_shapes_translate(shape, 0, 1, 3);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_plane(3, 3);
+    par_shapes_translate(shape, -0.5, 0, 1);
+    par_shapes_scale(shape, 4, 1.5, 1);
+    par_shapes_merge(scene, shape);
+    par_shapes_free_mesh(shape);
+
+    shape = par_shapes_create_torus(20, 40, 0.1);
+    par_shapes_scale(shape, 2, 2, 2);
+    par_shapes_translate(shape, 0, 0, 3);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
