@@ -43,7 +43,7 @@ int state = 6;
             "--atlas %s "                                             \
             "--sizehint %d "                                          \
             "--nsamples %d ",                                         \
-            objpath, objpath, pngpath, 32, 512);                      \
+            objpath, objpath, pngpath, 32, 64);                       \
     par_shapes_mesh *scene = create_scene_base(), *shape;
 
 #define END_SCENE                                        \
@@ -93,9 +93,8 @@ static void create_platonic_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    float yaxis[] = {0, 1, 0};
     shape = par_shapes_create_cube();
-    par_shapes_rotate(shape, PARG_PI / 5.0, yaxis);
+    par_shapes_rotate(shape, PAR_PI / 5.0, (float[]) {0, 1, 0});
     par_shapes_translate(shape, 1, 0, 0.5);
     par_shapes_scale(shape, 1.2, 1.2, 1.2);
     par_shapes_merge(scene, shape);
@@ -162,17 +161,14 @@ static void create_parametric_scene(char const* name)
 {
     START_SCENE;
 
-    float xaxis[] = {1, 0, 0};
-    float center[] = {0, 1, 3};
-    float normal[] = {0, 1, 0};
-
     shape = par_shapes_create_cylinder(30, 3);
-    par_shapes_rotate(shape, -PARG_PI / 2.0, xaxis);
+    par_shapes_rotate(shape, -PARG_PI / 2.0, (float[]) {1, 0, 0});
     par_shapes_translate(shape, 0, 0, 3);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_disk(1, 30, center, normal);
+    shape = par_shapes_create_disk(1, 30, (float[]){0, 1, 3},
+        (float[]){0, 1, 0});
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
