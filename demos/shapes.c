@@ -43,7 +43,7 @@ int state = 6;
             "--atlas %s "                                             \
             "--sizehint %d "                                          \
             "--nsamples %d ",                                         \
-            objpath, objpath, pngpath, 32, 64);                       \
+            objpath, objpath, pngpath, 64, 512);                       \
     par_shapes_mesh *scene = create_scene_base(), *shape;
 
 #define END_SCENE                                        \
@@ -103,6 +103,8 @@ static void create_platonic_scene(char const* name)
     END_SCENE;
 }
 
+#define STRINGIFY(A) #A
+
 static void create_misc_scene(char const* name)
 {
     START_SCENE;
@@ -117,16 +119,43 @@ static void create_misc_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_klein_bottle(20, 30);
-    par_shapes_scale(shape, 0.1, 0.1, 0.1);
-    float axis[3] = {1, 0, 0};
-    par_shapes_rotate(shape, -PARG_PI * 0.5, axis);
-    par_shapes_translate(shape, -1, 1, 3);
+    shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
+    par_shapes_translate(shape, 1, 1, 5);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
-    par_shapes_translate(shape, 1, 1, 5);
+    char const* program = STRINGIFY(
+    sx 2 sy 2
+    ry 90 rx 90
+    shape tube rx 15  call rlimb rx -15
+    shape tube rx -15 call llimb rx 15
+    shape tube ry 15 call rlimb ry -15
+    shape tube ry 15 call llimb ry -15
+    rule rlimb
+        sx 0.925 sy 0.925
+        tz 1
+        rx 1.2
+        call rlimb2
+    rule rlimb2.1
+        shape connect
+        call rlimb
+    rule rlimb2.1
+        rx 15  shape tube call rlimb rx -15
+        rx -15 shape tube call llimb rx 15
+    rule rlimb.1
+        call llimb
+    rule llimb.1
+        call rlimb
+    rule llimb.10
+        sx 0.925 sy 0.925
+        tz 1
+        rx -1.2
+        shape connect
+        call llimb
+    );
+    shape = par_shapes_create_lsystem(program, 5, 60);
+    par_shapes_scale(shape, 0.06, 0.06, 0.06);
+    par_shapes_translate(shape, -0.6, 0, 6);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
