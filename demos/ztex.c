@@ -66,14 +66,12 @@ void init(float winwidth, float winheight, float pixratio)
     int ncomps = *rawdata++;
     parg_texture_fliprows(rawdata, width * ncomps, height);
 
-    // Sample the ocean color and swizzle R with B to appease msquares.
+    // Sample the ocean color from one corner of the image.
     int ocean_color = rawdata[0];
-    ocean_color = ((ocean_color >> 16) & 0xff) |
-        ((ocean_color << 16) & 0xff0000) | (ocean_color & 0xff00ff00);
 
     // Perform marching squares and generate a mesh.
     par_msquares_meshlist* mlist = par_msquares_color((parg_byte*) rawdata,
-            width, height, 16, ocean_color, 4,
+            width, height, 16, ocean_color, 4, PAR_MSQUARES_SWIZZLE |
             PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SIMPLIFY);
     par_msquares_mesh const* mesh;
     mesh = par_msquares_get_mesh(mlist, 0);
