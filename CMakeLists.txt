@@ -4,6 +4,7 @@ project(parg)
 option(EMSCRIPTEN "enable JavaScript output via emcc")
 
 set(DEMOS
+    bubbles
     shapes
     clipping
     klein

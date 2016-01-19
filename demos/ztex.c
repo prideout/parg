@@ -70,9 +70,10 @@ void init(float winwidth, float winheight, float pixratio)
     int ocean_color = rawdata[0];
 
     // Perform marching squares and generate a mesh.
-    par_msquares_meshlist* mlist = par_msquares_color((parg_byte*) rawdata,
-            width, height, 16, ocean_color, 4, PAR_MSQUARES_SWIZZLE |
-            PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS | PAR_MSQUARES_SIMPLIFY);
+    par_msquares_meshlist* mlist =
+        par_msquares_color((parg_byte*) rawdata, width, height, 16, ocean_color,
+            4, PAR_MSQUARES_SWIZZLE | PAR_MSQUARES_DUAL | PAR_MSQUARES_HEIGHTS |
+            PAR_MSQUARES_SIMPLIFY);
     par_msquares_mesh const* mesh;
     mesh = par_msquares_get_mesh(mlist, 0);
     landmass_mesh = parg_mesh_create(
