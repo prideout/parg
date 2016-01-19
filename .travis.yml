@@ -4,5 +4,5 @@ script:
     - brew install curl cmake
     - brew install uncrustify glfw3 emscripten
     - python emsetup.py
-    - cmake -DEMSCRIPTEN=ON -H. -Bbuild
+    - cmake -DEMSCRIPTEN=ON . -Bbuild
     - cmake --build build

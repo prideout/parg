@@ -333,7 +333,6 @@ parg_mesh* parg_mesh_from_asset(parg_token id)
 parg_mesh* parg_mesh_from_file(const char* filepath)
 {
     parg_mesh* surf = calloc(sizeof(struct parg_mesh_s), 1);
-    int* rawdata;
     parg_buffer* objbuf = parg_buffer_from_file(filepath);
     parg_load_obj(surf, objbuf);
     parg_buffer_free(objbuf);

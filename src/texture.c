@@ -41,7 +41,6 @@ parg_texture* parg_texture_from_buffer(parg_buffer* buf)
     unsigned err = lodepng_decode_memory(&decoded, &dims[0], &dims[1], filedata,
             parg_buffer_length(buf), LCT_RGBA, 8);
     parg_assert(err == 0, "PNG decoding error");
-    int nbytes = dims[0] * dims[1] * dims[2];
     assert(dims[2] == 4);
     parg_texture* tex = calloc(sizeof(struct parg_texture_s), 1);
     tex->width = dims[0];

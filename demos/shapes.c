@@ -263,7 +263,7 @@ static void create_mesh()
         return;
     }
 
-    par_shapes_mesh* shape;
+    par_shapes_mesh* shape = 0;
     if (state == 0) {
         shape = par_shapes_create_icosahedron();
         par_shapes_unweld(shape, true);
@@ -315,7 +315,6 @@ void draw()
         dirty = 0;
     }
 
-    Matrix4 vp = M4Mul(projection, view);
     Matrix4 modelview = M4Mul(view, model);
     Matrix3 invmodelview = M4GetUpper3x3(modelview);
     Matrix4 mvp = M4Mul(projection, modelview);
