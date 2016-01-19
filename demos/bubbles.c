@@ -1,8 +1,6 @@
 #include <parg.h>
 #include <parwin.h>
 #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
 
 #define PAR_BUBBLES_IMPLEMENTATION
 #include <par/par_bubbles.h>

@@ -124,6 +124,8 @@ static void create_misc_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
+    // clang-format off
+    /* *INDENT-OFF* */
     char const* program = STRINGIFY(
     sx 2 sy 2
     ry 90 rx 90
@@ -153,6 +155,9 @@ static void create_misc_scene(char const* name)
         shape connect
         call llimb
     );
+    /* *INDENT-ON* */
+    // clang-format on
+
     shape = par_shapes_create_lsystem(program, 5, 60);
     par_shapes_scale(shape, 0.06, 0.06, 0.06);
     par_shapes_translate(shape, -0.6, 0, 6);
