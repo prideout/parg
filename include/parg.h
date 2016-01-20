@@ -194,6 +194,7 @@ void parg_draw_points(int npoints);
 
 void parg_zcam_init(float world_width, float world_height, float fovy);
 void parg_zcam_tick(float window_aspect, float seconds);
+DPoint3 parg_zcam_to_world(float winx, float winy);
 float parg_zcam_get_magnification();
 void parg_zcam_get_viewport(float* lbrt);
 parg_aar parg_zcam_get_rectangle();

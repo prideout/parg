@@ -24,7 +24,12 @@ extern "C" {
 #define pa___maybegrow(a, n) (pa___needgrow(a, (n)) ? pa___grow(a, n) : 0)
 #define pa___grow(a, n) ((a) = pa___growf((a), (n), sizeof(*(a))))
 
+#define pa_count2(a) (pa_count(a) / 2)
 #define pa_count3(a) (pa_count(a) / 3)
+
+#define pa_push2(a, x, y) \
+    pa_push(a, x);           \
+    pa_push(a, y);           \
 
 #define pa_push3(a, x, y, z) \
     pa_push(a, x);           \

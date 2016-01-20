@@ -16,7 +16,7 @@ static int _dirty = 1;
 #define MAX(a, b) (a > b ? a : b)
 #define CLAMP(v, lo, hi) MAX(lo, MIN(hi, v))
 
-static DPoint3 window_to_world(float winx, float winy)
+DPoint3 parg_zcam_to_world(float winx, float winy)
 {
     DPoint3 worldspace;
     double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
@@ -78,7 +78,7 @@ float parg_zcam_get_magnification()
 void parg_zcam_grab_begin(float winx, float winy)
 {
     _grabbing = 1;
-    _grabpt = window_to_world(winx, winy);
+    _grabpt = parg_zcam_to_world(winx, winy);
 }
 
 void parg_zcam_grab_update(float winx, float winy, float scrolldelta)
@@ -89,7 +89,7 @@ void parg_zcam_grab_update(float winx, float winy, float scrolldelta)
         _camerapos.y = -vpheight * (winy - 0.5) + _grabpt.y;
         _camerapos.x = -vpwidth * (winx - 0.5) + _grabpt.x;
     } else if (scrolldelta) {
-        DPoint3 focalpt = window_to_world(winx, winy);
+        DPoint3 focalpt = parg_zcam_to_world(winx, winy);
         _camerapos.z -= scrolldelta * _camerapos.z * 0.01;
         _camerapos.z = CLAMP(_camerapos.z, _mincamz, _maxcamz);
         double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
