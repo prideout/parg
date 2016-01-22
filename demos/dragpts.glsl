@@ -5,9 +5,9 @@
 uniform mat4 u_mvp;
 uniform float u_pointsize;
 uniform vec3 u_color;
+uniform float u_alpha;
 varying float v_rim;
 varying vec3 v_fill;
-const float ALPHA = 0.2;
 const float STROKEW = 0.99;
 const vec3 STROKEC = vec3(0);
 
@@ -31,7 +31,7 @@ void main()
     float fw = fwidth(v_rim);
     float e = smoothstep(STROKEW - fw, STROKEW + fw, v_rim);
     vec3 v = mix(v_fill, STROKEC, e);
-    float a = mix(ALPHA, 1.0, e);
+    float a = mix(u_alpha, 1.0, e);
     gl_FragColor = vec4(v, a);
 }
 
