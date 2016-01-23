@@ -78,6 +78,7 @@ parg_buffer* parg_buffer_dup(parg_buffer*, parg_buffer_type);
 void parg_buffer_free(parg_buffer*);
 int parg_buffer_length(parg_buffer*);
 void* parg_buffer_lock(parg_buffer*, parg_buffer_mode);
+void* parg_buffer_lock_grow(parg_buffer*, int nbytes);
 void parg_buffer_unlock(parg_buffer*);
 void parg_buffer_gpu_bind(parg_buffer*);
 int parg_buffer_gpu_check(parg_buffer*);

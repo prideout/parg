@@ -69,9 +69,10 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_mesh* template = par_shapes_create_disk(1.0, 64, center, normal);
     template->points[2] = 0;
 
-    // Create the VBO that will vary on a per-instance basis.
-    // We re-populate it on every frame.
-    app.centers = parg_buffer_alloc(NNODES * 4 * sizeof(float), PARG_GPU_ARRAY);
+    // Create the VBO that will vary on a per-instance basis. We re-populate it
+    // on every frame, growing it if necessary.  The starting size doesn't
+    // matter much.
+     app.centers = parg_buffer_alloc(512 * 4 * sizeof(float), PARG_GPU_ARRAY);
 
     // Create the vertex buffer.
     app.disk = parg_mesh_from_shape(template);
@@ -101,7 +102,8 @@ void draw()
     parg_zcam_get_viewportd(aabb);
     double minradius = 4.0 * (aabb[2] - aabb[0]) / app.bbwidth;
     app.culled = par_bubbles_cull(app.bubbles, aabb, minradius, app.culled);
-    float* fdisk = parg_buffer_lock(app.centers, PARG_WRITE);
+    int nbytes = app.culled->count * 4 * sizeof(float);
+    float* fdisk = parg_buffer_lock_grow(app.centers, nbytes);
     double const* ddisk = app.culled->xyr;
     for (int i = 0; i < app.culled->count; i++, fdisk += 4, ddisk += 3) {
         fdisk[0] = ddisk[0];
@@ -182,9 +184,9 @@ void input(parg_event evt, float x, float y, float z)
         break;
     }
     if (app.hover != previous && app.hover > 0) {
-        printf("%6d ", app.hover);
+        printf("%7d ", app.hover);
         if (app.culled) {
-            printf("%d / %d", app.culled->count, app.bubbles->count);
+            printf("%4d / %d", app.culled->count, app.bubbles->count);
         }
         puts("");
     }

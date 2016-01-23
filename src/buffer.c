@@ -93,6 +93,16 @@ void* parg_buffer_lock(parg_buffer* buf, parg_buffer_mode access)
     return buf->data;
 }
 
+void* parg_buffer_lock_grow(parg_buffer* buf, int nbytes)
+{
+    buf->nbytes = nbytes;
+    if (parg_buffer_gpu_check(buf)) {
+        buf->gpumapped = malloc(nbytes);
+        return buf->gpumapped;
+    }
+    return buf->data = realloc(buf->data, nbytes);
+}
+
 void parg_buffer_unlock(parg_buffer* buf)
 {
     if (buf->gpumapped) {
