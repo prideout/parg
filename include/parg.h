@@ -201,6 +201,7 @@ void parg_zcam_tick(float window_aspect, float seconds);
 DPoint3 parg_zcam_to_world(float winx, float winy);
 float parg_zcam_get_magnification();
 void parg_zcam_get_viewport(float* lbrt);
+void parg_zcam_get_viewportd(double* lbrt);
 parg_aar parg_zcam_get_rectangle();
 void parg_zcam_grab_begin(float winx, float winy);
 void parg_zcam_grab_update(float winx, float winy, float scrolldelta);

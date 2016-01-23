@@ -21,9 +21,10 @@ ASSET_TABLE(PARG_TOKEN_DECLARE);
 const float FOVY = 32 * PARG_TWOPI / 180;
 const float WORLDWIDTH = 3;
 const double DURATION = 0.5;
+const int NNODES = 2e6;
 
 struct {
-    parg_mesh* disks;
+    parg_mesh* disk;
     par_bubbles_t* bubbles;
     par_bubbles_t* culled;
     parg_buffer* centers;
@@ -31,6 +32,8 @@ struct {
     int potentially_clicking;
     double current_time;
     parg_zcam_animation camera_animation;
+    float bbwidth;
+    int* tree;
 } app = {0};
 
 void init(float winwidth, float winheight, float pixratio)
@@ -42,17 +45,23 @@ void init(float winwidth, float winheight, float pixratio)
     parg_shader_load_from_asset(SHADER_SIMPLE);
     parg_zcam_init(WORLDWIDTH, WORLDWIDTH, FOVY);
 
-    // Perform circle packing.
-    int nnodes = 1e4;
-    int* tree = malloc(sizeof(int) * nnodes);
+    // Generate a random tree.  Note that we're squaring the random parent
+    // pointers, which makes the graph distribute a bit more interesting, and
+    // easies to find deep portions of the tree to dive into.
+    puts("Generating tree...");
+    app.tree = malloc(sizeof(int) * NNODES);
     srand(1);
-    tree[0] = 0;
-    for (int i = 1; i < nnodes; i++) {
-        tree[i] = i * (float) rand() / RAND_MAX;
+    app.tree[0] = 0;
+    for (int i = 1; i < NNODES; i++) {
+        float a = (float) rand() / RAND_MAX;
+        float b = (float) rand() / RAND_MAX;
+        app.tree[i] = i * a * b;
     }
-    app.bubbles = par_bubbles_hpack_circle(tree, nnodes, 1.0);
+
+    // Perform circle packing.
+    puts("Packing circles...");
+    app.bubbles = par_bubbles_hpack_circle(app.tree, NNODES, 1.0);
     app.hover = -1;
-    printf("%d nodes have been arranged.\n", nnodes);
 
     // Create template shape.
     float normal[3] = {0, 0, 1};
@@ -62,11 +71,12 @@ void init(float winwidth, float winheight, float pixratio)
 
     // Create the VBO that will vary on a per-instance basis.
     // We re-populate it on every frame.
-    app.centers = parg_buffer_alloc(nnodes * 4 * sizeof(float), PARG_GPU_ARRAY);
+    app.centers = parg_buffer_alloc(NNODES * 4 * sizeof(float), PARG_GPU_ARRAY);
 
     // Create the vertex buffer.
-    app.disks = parg_mesh_from_shape(template);
+    app.disk = parg_mesh_from_shape(template);
     par_shapes_free_mesh(template);
+    puts("Ready to draw.");
 }
 
 void draw()
@@ -81,27 +91,33 @@ void draw()
     parg_shader_bind(P_SIMPLE);
     parg_uniform_matrix4f(U_MVP, &mvp);
     parg_uniform1f(U_SEL, app.hover);
-    parg_varray_bind(parg_mesh_index(app.disks));
+    parg_varray_bind(parg_mesh_index(app.disk));
     parg_varray_enable(
-        parg_mesh_coord(app.disks), A_POSITION, 3, PARG_FLOAT, 0, 0);
+        parg_mesh_coord(app.disk), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_varray_instances(A_CENTER, 1);
     parg_varray_enable(app.centers, A_CENTER, 4, PARG_FLOAT, 0, 0);
+
+    double aabb[4];
+    parg_zcam_get_viewportd(aabb);
+    double minradius = 4.0 * (aabb[2] - aabb[0]) / app.bbwidth;
+    app.culled = par_bubbles_cull(app.bubbles, aabb, minradius, app.culled);
     float* fdisk = parg_buffer_lock(app.centers, PARG_WRITE);
-    double const* ddisk = app.bubbles->xyr;
-    for (int i = 0; i < app.bubbles->count; i++, fdisk += 4, ddisk += 3) {
+    double const* ddisk = app.culled->xyr;
+    for (int i = 0; i < app.culled->count; i++, fdisk += 4, ddisk += 3) {
         fdisk[0] = ddisk[0];
         fdisk[1] = ddisk[1];
         fdisk[2] = ddisk[2];
-        fdisk[3] = i;
+        fdisk[3] = app.culled->ids[i];
     }
     parg_buffer_unlock(app.centers);
     parg_draw_instanced_triangles_u16(
-        0, parg_mesh_ntriangles(app.disks), app.bubbles->count);
+        0, parg_mesh_ntriangles(app.disk), app.culled->count);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     app.current_time = seconds;
+    app.bbwidth = winwidth * pixratio;
     parg_zcam_animation anim = app.camera_animation;
     if (anim.start_time > 0) {
         double duration = anim.final_time - anim.start_time;
@@ -120,14 +136,17 @@ int tick(float winwidth, float winheight, float pixratio, float seconds)
 void dispose()
 {
     parg_shader_free(P_SIMPLE);
-    parg_mesh_free(app.disks);
+    parg_mesh_free(app.disk);
     par_bubbles_free_result(app.bubbles);
+    par_bubbles_free_result(app.culled);
     parg_buffer_free(app.centers);
+    free(app.tree);
 }
 
 void input(parg_event evt, float x, float y, float z)
 {
     DPoint3 p = parg_zcam_to_world(x, y);
+    int previous = app.hover;
     switch (evt) {
     case PARG_EVENT_DOWN:
         app.potentially_clicking = 1;
@@ -161,6 +180,13 @@ void input(parg_event evt, float x, float y, float z)
         break;
     default:
         break;
+    }
+    if (app.hover != previous && app.hover > 0) {
+        printf("%6d ", app.hover);
+        if (app.culled) {
+            printf("%d / %d", app.culled->count, app.bubbles->count);
+        }
+        puts("");
     }
 }
 

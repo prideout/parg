@@ -41,6 +41,20 @@ void parg_zcam_get_viewport(float* lbrt)
     *lbrt = top;
 }
 
+void parg_zcam_get_viewportd(double* lbrt)
+{
+    double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
+    double vpwidth = vpheight * _winaspect;
+    double left = _camerapos.x - vpwidth * 0.5;
+    double bottom = _camerapos.y - vpheight * 0.5;
+    double right = _camerapos.x + vpwidth * 0.5;
+    double top = _camerapos.y + vpheight * 0.5;
+    *lbrt++ = left;
+    *lbrt++ = bottom;
+    *lbrt++ = right;
+    *lbrt = top;
+}
+
 parg_aar parg_zcam_get_rectangle()
 {
     parg_aar rect;
