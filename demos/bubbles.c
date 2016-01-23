@@ -41,6 +41,8 @@ static int TREE[NNODES] = {
 
 struct {
     parg_mesh* disks;
+    par_bubbles_t* bubbles;
+    int hover;
 } app;
 
 void init(float winwidth, float winheight, float pixratio)
@@ -53,8 +55,8 @@ void init(float winwidth, float winheight, float pixratio)
     parg_zcam_init(WORLDWIDTH, WORLDWIDTH, FOVY);
 
     // Perform circle packing.
-    par_bubbles_t* bubbles;
-    bubbles = par_bubbles_hpack_circle(TREE, NNODES, 1.0);
+    app.bubbles = par_bubbles_hpack_circle(TREE, NNODES, 1.0);
+    app.hover = -1;
 
     // Create template shape.
     float normal[3] = {0, 0, 1};
@@ -64,16 +66,13 @@ void init(float winwidth, float winheight, float pixratio)
 
     // Merge each circle into the scene.
     par_shapes_mesh* scene = par_shapes_create_empty();
-    double const* xyr = bubbles->xyr;
-    for (int i = 0; i < bubbles->count; i++, xyr += 3) {
+    double const* xyr = app.bubbles->xyr;
+    for (int i = 0; i < app.bubbles->count; i++, xyr += 3) {
         par_shapes_mesh* shape = par_shapes_clone(template);
         par_shapes_scale(shape, xyr[2], xyr[2], 1.0);
         par_shapes_translate(shape, xyr[0], xyr[1], i);
         par_shapes_merge_and_free(scene, shape);
     }
-
-    // Free the circle packer.
-    par_bubbles_free_result(bubbles);
 
     // Create the vertex buffer.
     app.disks = parg_mesh_from_shape(scene);
@@ -91,7 +90,7 @@ void draw()
     parg_draw_clear();
     parg_shader_bind(P_SIMPLE);
     parg_uniform_matrix4f(U_MVP, &mvp);
-    parg_uniform1f(U_SEL, 0);
+    parg_uniform1f(U_SEL, app.hover);
     parg_varray_bind(parg_mesh_index(app.disks));
     parg_varray_enable(
         parg_mesh_coord(app.disks), A_POSITION, 3, PARG_FLOAT, 0, 0);
@@ -108,10 +107,12 @@ void dispose()
 {
     parg_shader_free(P_SIMPLE);
     parg_mesh_free(app.disks);
+    par_bubbles_free_result(app.bubbles);
 }
 
 void input(parg_event evt, float x, float y, float z)
 {
+    DPoint3 p = parg_zcam_to_world(x, y);
     switch (evt) {
     case PARG_EVENT_DOWN:
         parg_zcam_grab_begin(x, y);
@@ -121,6 +122,7 @@ void input(parg_event evt, float x, float y, float z)
         parg_zcam_grab_end();
         break;
     case PARG_EVENT_MOVE:
+        app.hover = par_bubbles_pick(app.bubbles, p.x, p.y);
         parg_zcam_grab_update(x, y, z);
         break;
     default:
