@@ -31,6 +31,33 @@ static parg_window_fn_input _input = null_input;
 static parg_window_fn_message _message = null_message;
 static parg_buffer* g_buffer;
 
+static emscripten::val* get_glext()
+{
+    static emscripten::val* glext = 0;
+    if (glext) {
+        return glext;
+    }
+    auto parg = emscripten::val::module_property("parg");
+    emscripten::val GLctx = parg["GLctx"];
+    assert(GLctx.as<bool>() && "Can't find GLctx");
+    emscripten::val v = GLctx.call<emscripten::val>("getExtension",
+        std::string("ANGLE_instanced_arrays"));
+    assert(v.as<bool>() && "Instancing extension not available.");
+    return glext = new emscripten::val(v);
+}
+
+void pargVertexAttribDivisor(GLuint a, GLuint b)
+{
+    get_glext()->call<void>("vertexAttribDivisorANGLE", a, b);
+}
+
+void pargDrawElementsInstanced(GLenum a, GLsizei b, GLenum c, const void * d,
+    GLsizei e)
+{
+    get_glext()->call<void>(
+        "drawElementsInstancedANGLE", a, b, c, (int) d, (int) e);
+}
+
 void parg_window_setargs(int argc, char* argv[])
 {
     _argc = argc;

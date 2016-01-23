@@ -184,11 +184,13 @@ void input(parg_event evt, float x, float y, float z)
         break;
     }
     if (app.hover != previous && app.hover > 0) {
+        #ifndef EMSCRIPTEN
         printf("%7d ", app.hover);
         if (app.culled) {
             printf("%4d / %d", app.culled->count, app.bubbles->count);
         }
         puts("");
+        #endif
     }
 }
 

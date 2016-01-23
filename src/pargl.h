@@ -7,25 +7,13 @@
 #define PARG_HALF_FLOAT GL_HALF_FLOAT_OES
 #define PARGL_STRING const GLchar* *
 
+void pargVertexAttribDivisor(GLuint index, GLuint divisor);
 
-/*
-    emscripten::val GLctx = emscripten::val::global("GLctx");
-    assert(GLctx.as<bool>() && "Can't find GLctx");
-    emscripten::val glext = GLctx.call<emscripten::val>("getExtension",
-        string("ANGLE_instanced_arrays"));
-    if (glext.as<bool>()) {
-        this->instancing_extension = new emscripten::val(glext);
-    }
-*/
-
-    #define pargVertexAttribDivisor(a, b) \
-        glext->call<void>("vertexAttribDivisorANGLE", a, b)
-
-    #define pargDrawElementsInstanced(a, b, c, d, e) \
-        glext->call<void>("drawElementsInstancedANGLE", a, b, c, (int) d, (int) e)
-
-    #define pargDrawArraysInstanced(a, b, c, d) \
-        glext->call<void>("drawArraysInstancedANGLE", a, b, c, d)
+void pargDrawElementsInstanced(GLenum mode,
+ 	GLsizei count,
+ 	GLenum type,
+ 	const void * indices,
+ 	GLsizei primcount);
 
 #else
 
@@ -41,9 +29,6 @@
 
 #define pargDrawElementsInstanced(a, b, c, d, e) \
     glDrawElementsInstanced(a, b, c, d, e)
-
-#define pargDrawArraysInstanced(a, b, c, d) \
-    glDrawArraysInstanced(a, b, c, d)
 
 #endif
 
