@@ -181,14 +181,16 @@ void parg_varray_disable(parg_token attr);
 void parg_varray_bind(parg_buffer*);
 void parg_varray_enable(parg_buffer*, parg_token attr, int ncomps,
     parg_data_type type, int stride, int offset);
+void parg_varray_instances(parg_token attr, int divisor);
 
 // DRAW CALLS
 
 void parg_draw_clear();
 void parg_draw_one_quad();
-void parg_draw_triangles(int start, int count);
-void parg_draw_triangles_u16(int start, int count);
-void parg_draw_wireframe_triangles_u16(int start, int count);
+void parg_draw_triangles(int start, int ntriangles);
+void parg_draw_triangles_u16(int start, int ntriangles);
+void parg_draw_wireframe_triangles_u16(int start, int ntriangles);
+void parg_draw_instanced_triangles_u16(int start, int ntris, int ninstances);
 void parg_draw_lines(int nsegments);
 void parg_draw_points(int npoints);
 

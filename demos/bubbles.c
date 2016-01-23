@@ -9,6 +9,7 @@
 #define TOKEN_TABLE(F)          \
     F(P_SIMPLE, "p_simple")     \
     F(A_POSITION, "a_position") \
+    F(A_CENTER, "a_center")     \
     F(U_MVP, "u_mvp")           \
     F(U_SEL, "u_sel")
 
@@ -24,6 +25,8 @@ const double DURATION = 0.5;
 struct {
     parg_mesh* disks;
     par_bubbles_t* bubbles;
+    par_bubbles_t* culled;
+    parg_buffer* centers;
     int hover;
     int potentially_clicking;
     double current_time;
@@ -40,7 +43,7 @@ void init(float winwidth, float winheight, float pixratio)
     parg_zcam_init(WORLDWIDTH, WORLDWIDTH, FOVY);
 
     // Perform circle packing.
-    int nnodes = 1000;
+    int nnodes = 1e4;
     int* tree = malloc(sizeof(int) * nnodes);
     srand(1);
     tree[0] = 0;
@@ -49,26 +52,28 @@ void init(float winwidth, float winheight, float pixratio)
     }
     app.bubbles = par_bubbles_hpack_circle(tree, nnodes, 1.0);
     app.hover = -1;
+    printf("%d nodes have been arranged.\n", nnodes);
 
     // Create template shape.
     float normal[3] = {0, 0, 1};
-    float center[3] = {0, 0, 0};
+    float center[3] = {0, 0, 1};
     par_shapes_mesh* template = par_shapes_create_disk(1.0, 64, center, normal);
-    template->points[2] = 0.5;
+    template->points[2] = 0;
 
-    // Merge each circle into the scene.
-    par_shapes_mesh* scene = par_shapes_create_empty();
-    double const* xyr = app.bubbles->xyr;
-    for (int i = 0; i < app.bubbles->count; i++, xyr += 3) {
-        par_shapes_mesh* shape = par_shapes_clone(template);
-        par_shapes_scale(shape, xyr[2], xyr[2], 1.0);
-        par_shapes_translate(shape, xyr[0], xyr[1], i);
-        par_shapes_merge_and_free(scene, shape);
+    // Create the VBO that will vary on a per-instance basis.
+    app.centers = parg_buffer_alloc(nnodes * 4 * sizeof(float), PARG_GPU_ARRAY);
+    float* fdisk = parg_buffer_lock(app.centers, PARG_WRITE);
+    double const* ddisk = app.bubbles->xyr;
+    for (int i = 0; i < nnodes; i++, fdisk += 4, ddisk += 3) {
+        fdisk[0] = ddisk[0];
+        fdisk[1] = ddisk[1];
+        fdisk[2] = ddisk[2];
+        fdisk[3] = i;
     }
-    printf("%d verts\n", scene->npoints);
+    parg_buffer_unlock(app.centers);
 
     // Create the vertex buffer.
-    app.disks = parg_mesh_from_shape(scene);
+    app.disks = parg_mesh_from_shape(template);
     par_shapes_free_mesh(template);
 }
 
@@ -87,7 +92,12 @@ void draw()
     parg_varray_bind(parg_mesh_index(app.disks));
     parg_varray_enable(
         parg_mesh_coord(app.disks), A_POSITION, 3, PARG_FLOAT, 0, 0);
-    parg_draw_triangles_u16(0, parg_mesh_ntriangles(app.disks));
+    parg_varray_instances(A_CENTER, 1);
+    parg_varray_enable(app.centers, A_CENTER, 4, PARG_FLOAT, 0, 0);
+    parg_draw_instanced_triangles_u16(
+        0, parg_mesh_ntriangles(app.disks), app.bubbles->count);
+    parg_varray_disable(A_CENTER);
+    parg_varray_instances(A_CENTER, 0);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
@@ -113,6 +123,7 @@ void dispose()
     parg_shader_free(P_SIMPLE);
     parg_mesh_free(app.disks);
     par_bubbles_free_result(app.bubbles);
+    parg_buffer_free(app.centers);
 }
 
 void input(parg_event evt, float x, float y, float z)
@@ -164,5 +175,5 @@ int main(int argc, char* argv[])
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);
     parg_window_oninput(input);
-    return parg_window_exec(600, 600, 1, 1);
+    return parg_window_exec(400, 400, 1, 1);
 }

@@ -20,3 +20,9 @@ void parg_varray_disable(parg_token attr)
     GLint slot = parg_shader_attrib_get(attr);
     glDisableVertexAttribArray(slot);
 }
+
+void parg_varray_instances(parg_token attr, int divisor)
+{
+    GLint slot = parg_shader_attrib_get(attr);
+    pargVertexAttribDivisor(slot, divisor);
+}
