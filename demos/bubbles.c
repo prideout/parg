@@ -19,6 +19,7 @@ ASSET_TABLE(PARG_TOKEN_DECLARE);
 
 const float FOVY = 32 * PARG_TWOPI / 180;
 const float WORLDWIDTH = 3;
+const double DURATION = 0.5;
 
 #define NNODES 252
 static int TREE[NNODES] = {
@@ -43,7 +44,10 @@ struct {
     parg_mesh* disks;
     par_bubbles_t* bubbles;
     int hover;
-} app;
+    int potentially_clicking;
+    double current_time;
+    parg_zcam_animation camera_animation;
+} app = {0};
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -99,6 +103,18 @@ void draw()
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
+    app.current_time = seconds;
+    parg_zcam_animation anim = app.camera_animation;
+    if (anim.start_time > 0) {
+        double duration = anim.final_time - anim.start_time;
+        double t = (app.current_time - anim.start_time) / duration;
+        t = PARG_CLAMP(t, 0, 1);
+        parg_zcam_blend(anim.start_view, anim.final_view, anim.blend_view, t);
+        parg_zcam_frame_position(anim.blend_view);
+        if (t == 1.0) {
+            app.camera_animation.start_time = 0;
+        }
+    }
     parg_zcam_tick(winwidth / winheight, seconds);
     return parg_zcam_has_moved();
 }
@@ -115,13 +131,32 @@ void input(parg_event evt, float x, float y, float z)
     DPoint3 p = parg_zcam_to_world(x, y);
     switch (evt) {
     case PARG_EVENT_DOWN:
+        app.potentially_clicking = 1;
         parg_zcam_grab_begin(x, y);
         break;
     case PARG_EVENT_UP:
         parg_zcam_grab_update(x, y, z);
         parg_zcam_grab_end();
+        if (app.potentially_clicking == 1) {
+            int i = par_bubbles_pick(app.bubbles, p.x, p.y);
+            if (i > -1) {
+                parg_aar view = parg_zcam_get_rectangle();
+                double const* xyr = app.bubbles->xyr + i * 3;
+                app.camera_animation.start_time = app.current_time;
+                app.camera_animation.final_time =
+                    app.current_time + DURATION;
+                app.camera_animation.start_view[0] = parg_aar_centerx(view);
+                app.camera_animation.start_view[1] = parg_aar_centery(view);
+                app.camera_animation.start_view[2] = parg_aar_width(view);
+                app.camera_animation.final_view[0] = xyr[0];
+                app.camera_animation.final_view[1] = xyr[1];
+                app.camera_animation.final_view[2] = xyr[2] * 3;
+            }
+        }
+        app.potentially_clicking = 0;
         break;
     case PARG_EVENT_MOVE:
+        app.potentially_clicking = 0;
         app.hover = par_bubbles_pick(app.bubbles, p.x, p.y);
         parg_zcam_grab_update(x, y, z);
         break;

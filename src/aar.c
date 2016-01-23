@@ -73,3 +73,7 @@ parg_aar parg_aar_stretch_to_square(parg_aar rect)
 float parg_aar_height(parg_aar rect) { return rect.top - rect.bottom; }
 
 float parg_aar_width(parg_aar rect) { return rect.right - rect.left; }
+
+float parg_aar_centerx(parg_aar rect) { return 0.5 * (rect.left + rect.right); }
+
+float parg_aar_centery(parg_aar rect) { return 0.5 * (rect.top + rect.bottom); }

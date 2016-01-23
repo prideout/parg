@@ -109,6 +109,16 @@ void parg_zcam_set_position(double x, double y, double z)
     _grabbing = 0;
 }
 
+void parg_zcam_frame_position(double const* xyw)
+{
+    double vpheight = xyw[2] / _winaspect;
+    _camerapos.x = xyw[0];
+    _camerapos.y = xyw[1];
+    _camerapos.z = 0.5 * vpheight / tan(_fovy / 2);
+    _dirty = 1;
+    _grabbing = 0;
+}
+
 void parg_zcam_grab_end() { _grabbing = 0; }
 
 DPoint3 parg_zcam_dmatrices(DMatrix4* proj, DMatrix4* view)
@@ -155,3 +165,39 @@ int parg_zcam_has_moved()
 }
 
 void parg_zcam_touch() { _dirty = 1; }
+
+// Van Wijk Interpolation: consumes two 3-tuples and produces one 3-tuple.
+// cameraA... XY starting center point and viewport size
+// cameraB... XY ending center point and viewport size
+// result...  XY computed center and viewport size
+// t......... if -1, returns a recommended duration
+void parg_zcam_blend(
+    double const* cameraA, double const* cameraB, double* result, double t)
+{
+    double rho = sqrt(2.0), rho2 = 2, rho4 = 4, ux0 = cameraA[0],
+        uy0 = cameraA[1], w0 = cameraA[2], ux1 = cameraB[0],
+        uy1 = cameraB[1], w1 = cameraB[2], dx = ux1 - ux0, dy = uy1 - uy0,
+        d2 = dx * dx + dy * dy, d1 = sqrt(d2),
+        b0 = (w1 * w1 - w0 * w0 + rho4 * d2) / (2.0 * w0 * rho2 * d1),
+        b1 = (w1 * w1 - w0 * w0 - rho4 * d2) / (2.0 * w1 * rho2 * d1),
+        r0 = log(sqrt(b0 * b0 + 1.0) - b0), r1 = log(sqrt(b1 * b1 + 1) - b1),
+        dr = r1 - r0;
+    int validdr = (dr == dr) && dr != 0;
+    double S = (validdr ? dr : log(w1 / w0)) / rho;
+    if (t == -1) {
+        result[0] = fabs(S * 1000.0);
+        return;
+    }
+    double s = t * S;
+    if (validdr) {
+        double coshr0 = cosh(r0),
+            u = w0 / (rho2 * d1) * (coshr0 * tanh(rho * s + r0) - sinh(r0));
+        result[0] = ux0 + u * dx;
+        result[1] = uy0 + u * dy;
+        result[2] = w0 * coshr0 / cosh(rho * s + r0);
+        return;
+    }
+    result[0] = ux0 + t * dx;
+    result[1] = uy0 + t * dy;
+    result[2] = w0 * exp(rho * s);
+}

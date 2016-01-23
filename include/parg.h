@@ -109,6 +109,8 @@ parg_aar parg_aar_encompass(parg_aar a, parg_aar b);
 parg_aar parg_aar_stretch_to_square(parg_aar rect);
 float parg_aar_height(parg_aar rect);
 float parg_aar_width(parg_aar rect);
+float parg_aar_centerx(parg_aar rect);
+float parg_aar_centery(parg_aar rect);
 
 // MESHES
 
@@ -207,6 +209,17 @@ void parg_zcam_highprec(Matrix4* vp, Point3* eyepos_lo, Point3* eyepos_hi);
 int parg_zcam_has_moved();
 void parg_zcam_touch();
 void parg_zcam_set_position(double x, double y, double z);
+void parg_zcam_frame_position(double const* xyw);
+void parg_zcam_blend(
+    double const* cameraA, double const* cameraB, double* result, double t);
+
+typedef struct {
+    double start_view[3];
+    double final_view[3];
+    double blend_view[3];
+    double start_time;
+    double final_time;
+} parg_zcam_animation;
 
 // OFFSCREEN FRAMEBUFFER
 
