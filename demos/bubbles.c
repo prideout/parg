@@ -61,16 +61,8 @@ void init(float winwidth, float winheight, float pixratio)
     template->points[2] = 0;
 
     // Create the VBO that will vary on a per-instance basis.
+    // We re-populate it on every frame.
     app.centers = parg_buffer_alloc(nnodes * 4 * sizeof(float), PARG_GPU_ARRAY);
-    float* fdisk = parg_buffer_lock(app.centers, PARG_WRITE);
-    double const* ddisk = app.bubbles->xyr;
-    for (int i = 0; i < nnodes; i++, fdisk += 4, ddisk += 3) {
-        fdisk[0] = ddisk[0];
-        fdisk[1] = ddisk[1];
-        fdisk[2] = ddisk[2];
-        fdisk[3] = i;
-    }
-    parg_buffer_unlock(app.centers);
 
     // Create the vertex buffer.
     app.disks = parg_mesh_from_shape(template);
@@ -94,10 +86,17 @@ void draw()
         parg_mesh_coord(app.disks), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_varray_instances(A_CENTER, 1);
     parg_varray_enable(app.centers, A_CENTER, 4, PARG_FLOAT, 0, 0);
+    float* fdisk = parg_buffer_lock(app.centers, PARG_WRITE);
+    double const* ddisk = app.bubbles->xyr;
+    for (int i = 0; i < app.bubbles->count; i++, fdisk += 4, ddisk += 3) {
+        fdisk[0] = ddisk[0];
+        fdisk[1] = ddisk[1];
+        fdisk[2] = ddisk[2];
+        fdisk[3] = i;
+    }
+    parg_buffer_unlock(app.centers);
     parg_draw_instanced_triangles_u16(
         0, parg_mesh_ntriangles(app.disks), app.bubbles->count);
-    parg_varray_disable(A_CENTER);
-    parg_varray_instances(A_CENTER, 0);
 }
 
 int tick(float winwidth, float winheight, float pixratio, float seconds)
