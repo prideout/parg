@@ -137,7 +137,7 @@ void draw()
     parg_uniform1f(U_POINTSIZE, 5.0f * app.pointscale);
     for (double const* xyr = app.inner_disks; xyr != pa_end(app.inner_disks);
         xyr += 3) {
-        float x = xyr[0], y = xyr[1], r = xyr[2];
+        float x = xyr[0], y = xyr[1];
         Matrix4 mvp = M4Mul(
             projection, M4Mul(view, M4MakeTranslation((Vector3){x, y, 0})));
         parg_uniform_matrix4f(U_MVP, &mvp);

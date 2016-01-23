@@ -1,6 +1,8 @@
 
 // @program p_simple, vertex, fragment
 
+#extension GL_OES_standard_derivatives : enable
+
 uniform mat4 u_mvp;
 uniform float u_sel;
 varying float v_rim;

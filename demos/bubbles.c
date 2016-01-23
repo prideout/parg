@@ -21,25 +21,6 @@ const float FOVY = 32 * PARG_TWOPI / 180;
 const float WORLDWIDTH = 3;
 const double DURATION = 0.5;
 
-#define NNODES 252
-static int TREE[NNODES] = {
-    0, 0, 1, 2, 2, 2, 2, 1, 7, 7, 7, 7, 7, 1, 13, 0, 15, 15, 15, 18, 18, 18, 18,
-    18, 18, 18, 18, 18, 15, 15, 15, 15, 15, 15, 15, 15, 15, 0, 37, 38, 38, 38,
-    38, 38, 37, 37, 37, 37, 37, 37, 0, 50, 50, 50, 50, 0, 55, 0, 57, 57, 57, 57,
-    57, 57, 57, 57, 0, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
-    66, 66, 66, 66, 66, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85,
-    85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 66,
-    66, 66, 66, 66, 66, 66, 66, 66, 66, 0, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 0, 139, 139, 139, 139, 139, 139, 139, 146, 146, 139, 139,
-    139, 139, 152, 152, 152, 139, 139, 139, 158, 158, 158, 158, 139, 139, 139,
-    139, 139, 0, 168, 169, 169, 169, 169, 169, 168, 175, 175, 175, 175, 175,
-    175, 175, 175, 175, 175, 175, 168, 187, 187, 187, 187, 187, 187, 193, 193,
-    193, 193, 187, 187, 187, 168, 201, 201, 201, 201, 168, 206, 206, 206, 168,
-    210, 211, 211, 211, 210, 215, 215, 215, 215, 215, 210, 221, 221, 221, 210,
-    210, 226, 226, 226, 210, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230,
-    230, 230, 230, 230, 230, 210, 210, 210, 210, 210, 168,
-};
-
 struct {
     parg_mesh* disks;
     par_bubbles_t* bubbles;
@@ -59,7 +40,14 @@ void init(float winwidth, float winheight, float pixratio)
     parg_zcam_init(WORLDWIDTH, WORLDWIDTH, FOVY);
 
     // Perform circle packing.
-    app.bubbles = par_bubbles_hpack_circle(TREE, NNODES, 1.0);
+    int nnodes = 1000;
+    int* tree = malloc(sizeof(int) * nnodes);
+    srand(1);
+    tree[0] = 0;
+    for (int i = 1; i < nnodes; i++) {
+        tree[i] = i * (float) rand() / RAND_MAX;
+    }
+    app.bubbles = par_bubbles_hpack_circle(tree, nnodes, 1.0);
     app.hover = -1;
 
     // Create template shape.
@@ -77,6 +65,7 @@ void init(float winwidth, float winheight, float pixratio)
         par_shapes_translate(shape, xyr[0], xyr[1], i);
         par_shapes_merge_and_free(scene, shape);
     }
+    printf("%d verts\n", scene->npoints);
 
     // Create the vertex buffer.
     app.disks = parg_mesh_from_shape(scene);
