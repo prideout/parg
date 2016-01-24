@@ -11,6 +11,7 @@
     F(A_POSITION, "a_position") \
     F(A_CENTER, "a_center")     \
     F(U_MVP, "u_mvp")           \
+    F(U_CAMZ, "u_camz")         \
     F(U_SEL, "u_sel")
 
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
@@ -84,10 +85,9 @@ void draw()
 {
     Matrix4 view;
     Matrix4 projection;
-    parg_zcam_matrices(&projection, &view);
+    Point3 camera = parg_zcam_matrices(&projection, &view);
     Matrix4 model = M4MakeIdentity();
-    Matrix4 modelview = M4Mul(view, model);
-    Matrix4 mvp = M4Mul(projection, modelview);
+    Matrix4 mvp = M4Mul(projection, model);
     parg_draw_clear();
     parg_shader_bind(P_SIMPLE);
     parg_uniform_matrix4f(U_MVP, &mvp);
@@ -97,7 +97,7 @@ void draw()
         parg_mesh_coord(app.disk), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_varray_instances(A_CENTER, 1);
     parg_varray_enable(app.centers, A_CENTER, 4, PARG_FLOAT, 0, 0);
-
+    parg_uniform1f(U_CAMZ, -camera.z);
     double aabb[4];
     parg_zcam_get_viewportd(aabb);
     double minradius = 4.0 * (aabb[2] - aabb[0]) / app.bbwidth;
@@ -106,8 +106,8 @@ void draw()
     float* fdisk = parg_buffer_lock_grow(app.centers, nbytes);
     double const* ddisk = app.culled->xyr;
     for (int i = 0; i < app.culled->count; i++, fdisk += 4, ddisk += 3) {
-        fdisk[0] = ddisk[0];
-        fdisk[1] = ddisk[1];
+        fdisk[0] = ddisk[0] - camera.x;
+        fdisk[1] = ddisk[1] - camera.y;
         fdisk[2] = ddisk[2];
         fdisk[3] = app.culled->ids[i];
     }

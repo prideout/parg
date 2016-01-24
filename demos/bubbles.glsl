@@ -5,6 +5,7 @@
 
 uniform mat4 u_mvp;
 uniform float u_sel;
+uniform float u_camz;
 varying float v_rim;
 varying vec3 v_fill;
 varying float v_alpha;
@@ -27,7 +28,7 @@ void main()
     v_fill = selected ? SELC : FILLC;
     v_alpha = selected ? 0.4 : 0.2;
     v_rim = p.z;
-    p.z = 0.0;
+    p.z = u_camz;
     gl_Position = u_mvp * p;
 }
 

@@ -8936,6 +8936,28 @@ static inline Matrix4 M4MakeFromDM4(DMatrix4 dmat)
     return m;
 }
 
+static inline DMatrix4 DM4MakeFromM4(Matrix4 fmat)
+{
+    DMatrix4 m;
+    m.col0.x = fmat.col0.x;
+    m.col0.y = fmat.col0.y;
+    m.col0.z = fmat.col0.z;
+    m.col0.w = fmat.col0.w;
+    m.col1.x = fmat.col1.x;
+    m.col1.y = fmat.col1.y;
+    m.col1.z = fmat.col1.z;
+    m.col1.w = fmat.col1.w;
+    m.col2.x = fmat.col2.x;
+    m.col2.y = fmat.col2.y;
+    m.col2.z = fmat.col2.z;
+    m.col2.w = fmat.col2.w;
+    m.col3.x = fmat.col3.x;
+    m.col3.y = fmat.col3.y;
+    m.col3.z = fmat.col3.z;
+    m.col3.w = fmat.col3.w;
+    return m;
+}
+
 static inline Point3 P3MakeFromDP3(DPoint3 dv)
 {
     Point3 v;
