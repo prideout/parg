@@ -3,6 +3,7 @@
 #include <parg.h>
 #include <parwin.h>
 #include <stdio.h>
+#include <string.h>
 #include <par/par_bubbles.h>
 #include <par/par_shapes.h>
 
@@ -22,9 +23,9 @@ ASSET_TABLE(PARG_TOKEN_DECLARE);
 const float FOVY = 32 * PARG_TWOPI / 180;
 const float WORLDWIDTH = 3;
 const double DURATION = 0.5;
-const int NNODES = 2e6;
 
 struct {
+    int nnodes;
     parg_mesh* disk;
     par_bubbles_t* bubbles;
     par_bubbles_t* culled;
@@ -37,6 +38,37 @@ struct {
     int* tree;
 } app = {0};
 
+void cleanup()
+{
+    par_bubbles_free_result(app.bubbles);
+    par_bubbles_free_result(app.culled);
+    free(app.tree);
+}
+
+void generate(int nnodes)
+{
+    app.nnodes = nnodes;
+
+    // First, generate a random tree.  Square the random parent pointers to make
+    // the graph distribution a bit more interesting, and to make it easier for
+    // humans to find deep portions of the tree.
+    printf("Generating tree with %d nodes...\n", nnodes);
+    app.tree = malloc(sizeof(int) * nnodes);
+    app.tree[0] = 0;
+    for (int i = 1; i < app.nnodes; i++) {
+        float a = (float) rand() / RAND_MAX;
+        float b = (float) rand() / RAND_MAX;
+        app.tree[i] = i * a * b;
+    }
+
+    // Perform circle packing.
+    puts("Packing circles...");
+    app.bubbles = par_bubbles_hpack_circle(app.tree, nnodes, 1.0);
+    app.hover = -1;
+    puts("Ready to draw.");
+    parg_zcam_touch();
+}
+
 void init(float winwidth, float winheight, float pixratio)
 {
     parg_state_clearcolor((Vector4){0.5, 0.6, 0.7, 1.0});
@@ -45,24 +77,7 @@ void init(float winwidth, float winheight, float pixratio)
     parg_state_blending(1);
     parg_shader_load_from_asset(SHADER_SIMPLE);
     parg_zcam_init(WORLDWIDTH, WORLDWIDTH, FOVY);
-
-    // Generate a random tree.  Note that we're squaring the random parent
-    // pointers, which makes the graph distribute a bit more interesting, and
-    // easies to find deep portions of the tree to dive into.
-    puts("Generating tree...");
-    app.tree = malloc(sizeof(int) * NNODES);
-    srand(1);
-    app.tree[0] = 0;
-    for (int i = 1; i < NNODES; i++) {
-        float a = (float) rand() / RAND_MAX;
-        float b = (float) rand() / RAND_MAX;
-        app.tree[i] = i * a * b;
-    }
-
-    // Perform circle packing.
-    puts("Packing circles...");
-    app.bubbles = par_bubbles_hpack_circle(app.tree, NNODES, 1.0);
-    app.hover = -1;
+    generate(2e4);
 
     // Create template shape.
     float normal[3] = {0, 0, 1};
@@ -78,7 +93,6 @@ void init(float winwidth, float winheight, float pixratio)
     // Create the vertex buffer.
     app.disk = parg_mesh_from_shape(template);
     par_shapes_free_mesh(template);
-    puts("Ready to draw.");
 }
 
 void draw()
@@ -139,17 +153,35 @@ void dispose()
 {
     parg_shader_free(P_SIMPLE);
     parg_mesh_free(app.disk);
-    par_bubbles_free_result(app.bubbles);
-    par_bubbles_free_result(app.culled);
     parg_buffer_free(app.centers);
-    free(app.tree);
+    cleanup();
+}
+
+void message(const char* msg)
+{
+    if (!strcmp(msg, "20K")) {
+        generate(2e4);
+    } else if (!strcmp(msg, "200K")) {
+        generate(2e5);
+    } else if (!strcmp(msg, "2M")) {
+        generate(2e6);
+    }
 }
 
 void input(parg_event evt, float x, float y, float z)
 {
     DPoint3 p = parg_zcam_to_world(x, y);
-    int previous = app.hover;
+    int key = (char) x;
     switch (evt) {
+    case PARG_EVENT_KEYPRESS:
+        if (key == '1') {
+            message("20K");
+        } else if (key == '2') {
+            message("200K");
+        } else if (key == '3') {
+            message("2M");
+        }
+        break;
     case PARG_EVENT_DOWN:
         app.potentially_clicking = 1;
         parg_zcam_grab_begin(x, y);
@@ -183,19 +215,12 @@ void input(parg_event evt, float x, float y, float z)
     default:
         break;
     }
-    if (app.hover != previous && app.hover > 0) {
-        #ifndef EMSCRIPTEN
-        printf("%7d ", app.hover);
-        if (app.culled) {
-            printf("%4d / %d", app.culled->count, app.bubbles->count);
-        }
-        puts("");
-        #endif
-    }
 }
 
 int main(int argc, char* argv[])
 {
+    puts("Press 1,2,3 to regenerate 20K, 200K or 2M nodes.");
+    srand(1);
     TOKEN_TABLE(PARG_TOKEN_DEFINE);
     ASSET_TABLE(PARG_ASSET_TABLE);
     parg_window_setargs(argc, argv);
@@ -204,5 +229,6 @@ int main(int argc, char* argv[])
     parg_window_ondraw(draw);
     parg_window_onexit(dispose);
     parg_window_oninput(input);
+    parg_window_onmessage(message);
     return parg_window_exec(400, 400, 1, 1);
 }
