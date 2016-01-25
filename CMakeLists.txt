@@ -4,21 +4,7 @@ project(parg)
 option(EMSCRIPTEN "enable JavaScript output via emcc")
 
 set(DEMOS
-    dragpts
-    bubbles
-    shapes
-    clipping
-    klein
-    marina
-    trefoil
-    sierpinski
-    simple
-    zooming
-    trillium
-    terrainpts
-    hmap
-    ztex
-    orbits)
+    dragpts)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
@@ -64,18 +50,18 @@ add_library(parg STATIC ${SRCFILES} src/objloader.cpp)
 set(EMCCARGS
     -c
     -std=c99
-    -O3
+    -O1
     -Wall
     -I../include
     -I../extern)
 set(EMCXXARGS
-    -O3
+    -O1
     -std=c++11
     -Wall
     -I../include
     -I../extern)
 set(EMLINKARGS
-    -O3 --memory-init-file 0 --bind
+    -O1 --profiling --memory-init-file 0 --bind
     -s 'MODULARIZE=1'
     -s 'EXPORT_NAME="CreateParg"'
     -s 'NO_FILESYSTEM=1'
