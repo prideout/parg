@@ -145,6 +145,14 @@ void parg_asset_preload(parg_token id)
     parg.call<void>("asset_preload", name);
 }
 
+void parg_window_send(const char* msg, double* values, int nvalues)
+{
+    using namespace emscripten;
+    auto parg = val::module_property("parg");
+    uint32_t ptr = ((uint32_t) values) / sizeof(double);
+    parg.call<void>("onpod", std::string(msg), ptr, nvalues);
+}
+
 EMSCRIPTEN_BINDINGS(par)
 {
     using namespace emscripten;

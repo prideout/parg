@@ -26,11 +26,29 @@ const float WORLDWIDTH = 3;
 const double INNERRAD = 0.1;
 const double OUTERRAD = 0.15;
 
+typedef struct {
+    double x;
+    double y;
+    double id;
+    double minz;
+    double maxz;
+} label_pod;
+
+typedef struct {
+    double minx;
+    double miny;
+    double maxx;
+    double maxy;
+    double zoom;
+} viewport_pod;
+
 struct {
     parg_mesh* disk;
     double* inner_disks;
     double* outer_disks;
     double* enclosing_disk;
+    label_pod* labels;
+    viewport_pod viewport;
     float pointscale;
     int inner_drag;
     int inner_hover;
@@ -73,6 +91,13 @@ void init(float winwidth, float winheight, float pixratio)
     pa_push3(app.outer_disks, 1, 0, OUTERRAD);
     app.inner_drag = app.inner_hover = -1;
     app.outer_drag = app.outer_hover = -1;
+
+    // Create labels that get sent up to JavaScript.
+    pa_add(app.labels, 2);
+    label_pod* labels = app.labels;
+    labels[0] = ((label_pod){.x = 0, .y = 0, .id = 10, .minz = 0, .maxz = 100});
+    labels[1] = ((label_pod){.x = 1, .y = 0, .id = 10, .minz = 0, .maxz = 100});
+    parg_window_send("labels", (double*) labels, pa_count(labels) * 5);
 
     // Create space for the enclosing disk.
     pa_push3(app.enclosing_disk, 0, 0, 1);
@@ -149,7 +174,13 @@ int tick(float winwidth, float winheight, float pixratio, float seconds)
 {
     app.pointscale = pixratio;
     parg_zcam_tick(winwidth / winheight, seconds);
-    return parg_zcam_has_moved();
+    if (parg_zcam_has_moved()) {
+        parg_zcam_get_viewportd(&app.viewport.minx);
+        app.viewport.zoom = 0;
+        parg_window_send("viewport", (double*) &app.viewport, 5);
+        return 1;
+    }
+    return 0;
 }
 
 void dispose()
@@ -158,6 +189,7 @@ void dispose()
     parg_mesh_free(app.disk);
     pa_free(app.inner_disks);
     pa_free(app.outer_disks);
+    pa_free(app.labels);
 }
 
 int pick_inner_disk(DPoint3 p)
@@ -202,6 +234,7 @@ void click(DPoint3 p, int disk)
 
 void update_enclosing_disk()
 {
+    parg_zcam_touch();
     if (pa_count3(app.inner_disks) < 2) {
         if (pa_count3(app.enclosing_disk)) {
             pa_remove3(app.enclosing_disk, 0);
@@ -272,8 +305,11 @@ void input(parg_event evt, float x, float y, float z)
     case PARG_EVENT_MOVE:
         app.potentially_clicking = 0;
         if (app.inner_drag == -1 && app.outer_drag == -1) {
-            app.inner_hover = inner;
-            app.outer_hover = outer;
+            if (inner != app.inner_hover || outer != app.outer_hover) {
+                app.inner_hover = inner;
+                app.outer_hover = outer;
+                parg_zcam_touch();
+            }
         } else if (app.outer_drag > -1) {
             outer = app.outer_drag;
             float dx = p.x - app.outer_disks[outer * 3 + 0];

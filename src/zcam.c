@@ -97,6 +97,7 @@ void parg_zcam_grab_begin(float winx, float winy)
 
 void parg_zcam_grab_update(float winx, float winy, float scrolldelta)
 {
+    DPoint3 prev = _camerapos;
     if (_grabbing) {
         double vpheight = 2 * tan(_fovy / 2) * _camerapos.z;
         double vpwidth = vpheight * _winaspect;
@@ -111,7 +112,8 @@ void parg_zcam_grab_update(float winx, float winy, float scrolldelta)
         _camerapos.y = -vpheight * (winy - 0.5) + focalpt.y;
         _camerapos.x = -vpwidth * (winx - 0.5) + focalpt.x;
     }
-    _dirty = 1;
+    _dirty |= prev.x != _camerapos.x || prev.y != _camerapos.y ||
+        prev.z != _camerapos.z;
 }
 
 void parg_zcam_set_position(double x, double y, double z)
