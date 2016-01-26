@@ -169,6 +169,25 @@ article {
     justify-content: center;
     background: #303030;
     color: white;
+    position: relative;
+}
+
+canvas,svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+svg {
+    pointer-events:none;
+}
+
+svg text {
+    paint-order: stroke;
+    stroke: #444;
+    stroke-width: 0.01px;
+    fill: #eee;
+    font-family: 'Roboto Condensed', sans-serif;
 }
 
 nav a {

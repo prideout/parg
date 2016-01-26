@@ -58,10 +58,17 @@ struct {
     float dragy;
     float dragr;
     int potentially_clicking;
+    int uid;
     enum { ENCLOSE_PTS, ENCLOSE_DISKS } mode;
 } app = {0};
 
-void update_enclosing_disk();
+static void update_enclosing_disk();
+
+static void send_labels()
+{
+    label_pod* labels = app.labels;
+    parg_window_send("labels", (double*) labels, pa_count(labels) * 5);
+}
 
 void init(float winwidth, float winheight, float pixratio)
 {
@@ -95,9 +102,9 @@ void init(float winwidth, float winheight, float pixratio)
     // Create labels that get sent up to JavaScript.
     pa_add(app.labels, 2);
     label_pod* labels = app.labels;
-    labels[0] = ((label_pod){.x = 0, .y = 0, .id = 10, .minz = 0, .maxz = 100});
-    labels[1] = ((label_pod){.x = 1, .y = 0, .id = 10, .minz = 0, .maxz = 100});
-    parg_window_send("labels", (double*) labels, pa_count(labels) * 5);
+    labels[0] = ((label_pod){.x = 0, .y = 0, .id = app.uid++});
+    labels[1] = ((label_pod){.x = 1, .y = 0, .id = app.uid++});
+    send_labels();
 
     // Create space for the enclosing disk.
     pa_push3(app.enclosing_disk, 0, 0, 1);
@@ -221,18 +228,23 @@ int pick_outer_disk(DPoint3 p)
 void click(DPoint3 p, int disk)
 {
     if (disk == -1) {
+        int index = pa_count3(app.inner_disks);
         pa_push3(app.inner_disks, p.x, p.y, INNERRAD);
         pa_push3(app.outer_disks, p.x, p.y, OUTERRAD);
-        app.inner_hover = pa_count3(app.inner_disks) - 1;
+        pa_push(app.labels, ((label_pod){.x = p.x, .y = p.y, .id = app.uid++}));
+        app.inner_hover = index;
+        send_labels();
     } else {
         pa_remove3(app.inner_disks, disk);
         pa_remove3(app.outer_disks, disk);
+        pa_remove(app.labels, disk);
         app.inner_hover = -1;
+        send_labels();
     }
     parg_zcam_touch();
 }
 
-void update_enclosing_disk()
+static void update_enclosing_disk()
 {
     parg_zcam_touch();
     if (pa_count3(app.inner_disks) < 2) {
@@ -323,6 +335,9 @@ void input(parg_event evt, float x, float y, float z)
                     p.x + app.dragx;
             app.outer_disks[inner * 3 + 1] =
                 app.inner_disks[inner * 3 + 1] = p.y + app.dragy;
+            app.labels[inner].x = p.x + app.dragx;
+            app.labels[inner].y = p.y + app.dragy;
+            send_labels();
             update_enclosing_disk();
         }
         parg_zcam_grab_update(x, y, z);

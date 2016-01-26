@@ -53,6 +53,10 @@ static void* pa___growf(void* arr, int increment, int itemsize)
     pa_push(a, y);           \
     pa_push(a, z)
 
+#define pa_remove(a, i) \
+    memmove(a + i, a + i + 1, sizeof(*(a)) * (pa_count(a) - i - 1)); \
+    pa___n(a) -= 1
+
 #define pa_remove3(a, i) \
     memmove(a + i * 3, a + i * 3 + 3, \
         sizeof(*(a)) * (pa_count(a) - i * 3 - 3)); \
