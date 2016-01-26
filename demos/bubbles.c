@@ -88,7 +88,7 @@ void init(float winwidth, float winheight, float pixratio)
     // Create the VBO that will vary on a per-instance basis. We re-populate it
     // on every frame, growing it if necessary.  The starting size doesn't
     // matter much.
-     app.centers = parg_buffer_alloc(512 * 4 * sizeof(float), PARG_GPU_ARRAY);
+    app.centers = parg_buffer_alloc(512 * 4 * sizeof(float), PARG_GPU_ARRAY);
 
     // Create the vertex buffer.
     app.disk = parg_mesh_from_shape(template);
