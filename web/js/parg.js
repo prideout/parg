@@ -22,6 +22,37 @@ var PargApp = function(canvas, args, baseurl, block_interaction, attribs) {
 
     // After receiving responses from all HTTP requests, parg will
     // automatically call the user-defined init() function.
+
+    this.paper = Snap('#hud').attr({'viewBox': [-1.5, 1.5, 3, 3]});
+
+    this.rect = this.paper.rect(-0.2, -0.2, 0.4, 0.4).attr({
+        fill: 'white',
+        strokeWidth: 0,
+        opacity: 0.01
+    });
+
+    this.text = this.paper.text(0.5, 0.1, "0 1 2").attr({
+        'text-anchor':'middle',
+        'font-size':'0.1',
+    });
+};
+
+PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
+    var pod;
+    if (msg == "labels") {
+        pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
+        console.log('LABELS', pod);
+    } else if (msg == "viewport") {
+        pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
+        var left = pod[0], bottom = pod[1], right = pod[2], top = pod[3];
+        this.paper.attr({'viewBox': [left, -top, right - left, top - bottom]});
+        this.rect.attr({
+            'x': left, 'y': -top,
+            'width': right - left,
+            'height': top - bottom});
+    } else {
+        console.error('Unrecognized message: ' + msg);
+    }
 };
 
 PargApp.prototype.image_preload = function(id) {
@@ -96,19 +127,6 @@ PargApp.prototype.onimage = function(id, img) {
     this.onasset(id, annotated);
 };
 
-PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
-    var pod;
-    if (msg == "labels") {
-        pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
-        console.log('LABELS', pod);
-    } else if (msg == "viewport") {
-        pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
-        console.log('VIEWPORT', pod);
-    } else {
-        console.error('Unrecognized message: ' + msg);
-    }
-};
-
 PargApp.prototype.start = function() {
 
     var cevents = {
@@ -120,7 +138,7 @@ PargApp.prototype.start = function() {
     var dims = this.module.par_window_dims || this.module.parg_window_dims;
     var $canvas = $(this.canvas);
     var canvas = $canvas[0];
-    $canvas.css({
+    $('canvas,svg').css({
         width: dims[0] + 'px',
         height: dims[1] + 'px'
     });
@@ -132,7 +150,6 @@ PargApp.prototype.start = function() {
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
     GLctx.getExtension('OES_element_index_uint');
-    $canvas.show();
 
     this.module.Window.init(this.args);
 
@@ -190,7 +207,8 @@ PargApp.prototype.start = function() {
 
     var raf = function() {
         var milliseconds = window.performance.now();
-        var needs_draw = this.module.Window.tick(milliseconds / 1000.0, window.devicePixelRatio);
+        var needs_draw = this.module.Window.tick(milliseconds / 1000.0,
+            window.devicePixelRatio);
         if (needs_draw) {
             this.module.Window.draw();
         }
