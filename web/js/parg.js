@@ -96,6 +96,19 @@ PargApp.prototype.onimage = function(id, img) {
     this.onasset(id, annotated);
 };
 
+PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
+    var pod;
+    if (msg == "labels") {
+        pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
+        console.log('LABELS', pod);
+    } else if (msg == "viewport") {
+        pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
+        console.log('VIEWPORT', pod);
+    } else {
+        console.error('Unrecognized message: ' + msg);
+    }
+};
+
 PargApp.prototype.start = function() {
 
     var cevents = {
