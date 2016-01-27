@@ -22,7 +22,8 @@ ASSET_TABLE(PARG_TOKEN_DECLARE);
 
 const float FOVY = 32 * PARG_TWOPI / 180;
 const float WORLDWIDTH = 3;
-const double DURATION = 0.5;
+const double NEAR_DURATION = 0.5;
+const double FAR_DURATION = 3.0;
 
 struct {
     int nnodes;
@@ -36,6 +37,7 @@ struct {
     parg_zcam_animation camera_animation;
     float bbwidth;
     int* tree;
+    int leaf;
 } app = {0};
 
 void cleanup()
@@ -65,7 +67,10 @@ void generate(int nnodes)
     puts("Packing circles...");
     app.bubbles = par_bubbles_hpack_circle(app.tree, nnodes, 1.0);
     app.hover = -1;
-    puts("Ready to draw.");
+
+    int maxdepth;
+    par_bubbles_get_maxdepth(app.bubbles, &maxdepth, &app.leaf);
+    printf("Node %d has depth %d\n", app.leaf, maxdepth);
     parg_zcam_touch();
 }
 
@@ -157,6 +162,20 @@ void dispose()
     cleanup();
 }
 
+static void zoom_to_node(int i, float duration)
+{
+    parg_aar view = parg_zcam_get_rectangle();
+    double const* xyr = app.bubbles->xyr + i * 3;
+    app.camera_animation.start_time = app.current_time;
+    app.camera_animation.final_time = app.current_time + duration;
+    app.camera_animation.start_view[0] = parg_aar_centerx(view);
+    app.camera_animation.start_view[1] = parg_aar_centery(view);
+    app.camera_animation.start_view[2] = parg_aar_width(view);
+    app.camera_animation.final_view[0] = xyr[0];
+    app.camera_animation.final_view[1] = xyr[1];
+    app.camera_animation.final_view[2] = xyr[2] * 2.25;
+}
+
 void message(const char* msg)
 {
     if (!strcmp(msg, "20K")) {
@@ -165,6 +184,10 @@ void message(const char* msg)
         generate(2e5);
     } else if (!strcmp(msg, "2M")) {
         generate(2e6);
+    } else if (!strcmp(msg, "L")) {
+        zoom_to_node(app.leaf, FAR_DURATION);
+    } else if (!strcmp(msg, "H")) {
+        zoom_to_node(0, FAR_DURATION);
     }
 }
 
@@ -180,6 +203,10 @@ void input(parg_event evt, float x, float y, float z)
             message("200K");
         } else if (key == '3') {
             message("2M");
+        } else if (key == 'L') {
+            message("L");
+        } else if (key == 'H') {
+            message("H");
         }
         break;
     case PARG_EVENT_DOWN:
@@ -192,17 +219,7 @@ void input(parg_event evt, float x, float y, float z)
         if (app.potentially_clicking == 1) {
             int i = par_bubbles_pick(app.bubbles, p.x, p.y);
             if (i > -1) {
-                parg_aar view = parg_zcam_get_rectangle();
-                double const* xyr = app.bubbles->xyr + i * 3;
-                app.camera_animation.start_time = app.current_time;
-                app.camera_animation.final_time =
-                    app.current_time + DURATION;
-                app.camera_animation.start_view[0] = parg_aar_centerx(view);
-                app.camera_animation.start_view[1] = parg_aar_centery(view);
-                app.camera_animation.start_view[2] = parg_aar_width(view);
-                app.camera_animation.final_view[0] = xyr[0];
-                app.camera_animation.final_view[1] = xyr[1];
-                app.camera_animation.final_view[2] = xyr[2] * 3;
+                zoom_to_node(i, NEAR_DURATION);
             }
         }
         app.potentially_clicking = 0;
@@ -220,6 +237,8 @@ void input(parg_event evt, float x, float y, float z)
 int main(int argc, char* argv[])
 {
     puts("Press 1,2,3 to regenerate 20K, 200K or 2M nodes.");
+    puts("Press L to zoom to one of the deepest leaf nodes.");
+    puts("Press H to return to the home view.");
     srand(1);
     TOKEN_TABLE(PARG_TOKEN_DEFINE);
     ASSET_TABLE(PARG_ASSET_TABLE);
