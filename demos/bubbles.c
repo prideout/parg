@@ -12,7 +12,8 @@
     F(A_POSITION, "a_position") \
     F(A_CENTER, "a_center")     \
     F(U_MVP, "u_mvp")           \
-    F(U_CAMZ, "u_camz")         \
+    F(U_EYEPOS, "u_eyepos")     \
+    F(U_EYEPOS_LOWPART, "u_eyepos_lowpart") \
     F(U_SEL, "u_sel")
 
 TOKEN_TABLE(PARG_TOKEN_DECLARE);
@@ -106,9 +107,16 @@ void draw()
     Matrix4 projection;
     Point3 camera = parg_zcam_matrices(&projection, &view);
     Matrix4 model = M4MakeIdentity();
-    Matrix4 mvp = M4Mul(projection, model);
+    Matrix4 mvp = M4Mul(projection, view);
     parg_draw_clear();
     parg_shader_bind(P_SIMPLE);
+
+    Point3 eyepos, eyepos_lowpart;
+    parg_zcam_highprec(&mvp, &eyepos_lowpart, &eyepos);
+    eyepos.x = eyepos.y = 0.0;
+    parg_uniform_point(U_EYEPOS, &eyepos);
+    parg_uniform_point(U_EYEPOS_LOWPART, &eyepos_lowpart);
+
     parg_uniform_matrix4f(U_MVP, &mvp);
     parg_uniform1f(U_SEL, app.hover);
     parg_varray_bind(parg_mesh_index(app.disk));
@@ -116,7 +124,6 @@ void draw()
         parg_mesh_coord(app.disk), A_POSITION, 3, PARG_FLOAT, 0, 0);
     parg_varray_instances(A_CENTER, 1);
     parg_varray_enable(app.centers, A_CENTER, 4, PARG_FLOAT, 0, 0);
-    parg_uniform1f(U_CAMZ, -camera.z);
     double aabb[4];
     parg_zcam_get_viewportd(aabb);
     double minradius = 4.0 * (aabb[2] - aabb[0]) / app.bbwidth;

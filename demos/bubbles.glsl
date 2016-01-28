@@ -5,7 +5,8 @@
 
 uniform mat4 u_mvp;
 uniform float u_sel;
-uniform float u_camz;
+uniform vec3 u_eyepos;
+uniform vec3 u_eyepos_lowpart;
 varying float v_rim;
 varying vec3 v_fill;
 varying float v_alpha;
@@ -16,20 +17,27 @@ const vec3 SELC = vec3(1, 1, 0);
 
 -- vertex
 
-attribute vec4 a_position;
+attribute vec3 a_position;
 attribute vec4 a_center;
 
 void main()
 {
-    vec4 p = a_position;
-    p.xy *= a_center.z;
-    p.xy += a_center.xy;
+    vec3 cen = a_center.xyz;
+    vec3 pos = vec3(a_position.xy * cen.z + cen.xy, 0.0);
     bool selected = a_center.w == u_sel;
     v_fill = selected ? SELC : FILLC;
     v_alpha = selected ? 0.4 : 0.2;
-    v_rim = p.z;
-    p.z = u_camz;
-    gl_Position = u_mvp * p;
+    v_rim = a_position.z;
+
+    vec3 poslow = vec3(0);
+    vec3 t1 = poslow - u_eyepos_lowpart;
+    vec3 e = t1 - poslow;
+    vec3 t2 = ((-u_eyepos_lowpart - e) + (poslow - (t1 - e))) + pos - u_eyepos;
+    vec3 high_delta = t1 + t2;
+    vec3 low_delta = t2 - (high_delta - t1);
+    pos = high_delta + low_delta;
+
+    gl_Position = u_mvp * vec4(pos, 1.0);
 }
 
 -- fragment
