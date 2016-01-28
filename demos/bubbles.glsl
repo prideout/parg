@@ -29,13 +29,17 @@ void main()
     v_alpha = selected ? 0.4 : 0.2;
     v_rim = a_position.z;
 
-    vec3 poslow = vec3(0);
-    vec3 t1 = poslow - u_eyepos_lowpart;
-    vec3 e = t1 - poslow;
-    vec3 t2 = ((-u_eyepos_lowpart - e) + (poslow - (t1 - e))) + pos - u_eyepos;
-    vec3 high_delta = t1 + t2;
-    vec3 low_delta = t2 - (high_delta - t1);
-    pos = high_delta + low_delta;
+    #ifdef SINGLE_PRECISION
+        pos -= u_eyepos;
+    #else
+        vec3 poslow = vec3(0);
+        vec3 t1 = poslow - u_eyepos_lowpart;
+        vec3 e = t1 - poslow;
+        vec3 t2 = ((-u_eyepos_lowpart - e) + (poslow - (t1 - e))) + pos - u_eyepos;
+        vec3 high_delta = t1 + t2;
+        vec3 low_delta = t2 - (high_delta - t1);
+        pos = high_delta + low_delta;
+    #endif
 
     gl_Position = u_mvp * vec4(pos, 1.0);
 }

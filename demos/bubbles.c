@@ -103,18 +103,16 @@ void init(float winwidth, float winheight, float pixratio)
 
 void draw()
 {
-    Matrix4 view;
-    Matrix4 projection;
-    Point3 camera = parg_zcam_matrices(&projection, &view);
-    Matrix4 model = M4MakeIdentity();
-    Matrix4 mvp = M4Mul(projection, view);
+    Matrix4 mvp;
+    Point3 eyepos, eyepos_lowpart;
+    parg_zcam_highprec(&mvp, &eyepos_lowpart, &eyepos);
     parg_draw_clear();
     parg_shader_bind(P_SIMPLE);
 
-    Point3 eyepos, eyepos_lowpart;
-    parg_zcam_highprec(&mvp, &eyepos_lowpart, &eyepos);
-    eyepos.x = eyepos.y = 0.0;
-    parg_uniform_point(U_EYEPOS, &eyepos);
+    // For the best possible precision, we bake the pan offset into the
+    // geometry, so there's no need to transform X and Y in the shader.
+    Point3 eyez = {0, 0, eyepos.z};
+    parg_uniform_point(U_EYEPOS, &eyez);
     parg_uniform_point(U_EYEPOS_LOWPART, &eyepos_lowpart);
 
     parg_uniform_matrix4f(U_MVP, &mvp);
@@ -131,9 +129,12 @@ void draw()
     int nbytes = app.culled->count * 4 * sizeof(float);
     float* fdisk = parg_buffer_lock_grow(app.centers, nbytes);
     double const* ddisk = app.culled->xyr;
+
+    // This bakes the pan offset into the geometry because it allows
+    // us to add a double-precision number with a double-precision number.
     for (int i = 0; i < app.culled->count; i++, fdisk += 4, ddisk += 3) {
-        fdisk[0] = ddisk[0] - camera.x;
-        fdisk[1] = ddisk[1] - camera.y;
+        fdisk[0] = ddisk[0] - eyepos.x;
+        fdisk[1] = ddisk[1] - eyepos.y;
         fdisk[2] = ddisk[2];
         fdisk[3] = app.culled->ids[i];
     }
