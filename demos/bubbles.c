@@ -224,11 +224,16 @@ void input(parg_event evt, float x, float y, float z)
         }
         app.potentially_clicking = 0;
         break;
-    case PARG_EVENT_MOVE:
+    case PARG_EVENT_MOVE:{
         app.potentially_clicking = 0;
-        app.hover = par_bubbles_pick(app.bubbles, p.x, p.y);
+        int picked = par_bubbles_pick(app.bubbles, p.x, p.y);
+        if (picked != app.hover) {
+            parg_zcam_touch();
+            app.hover = picked;
+        }
         parg_zcam_grab_update(x, y, z);
         break;
+    }
     default:
         break;
     }
