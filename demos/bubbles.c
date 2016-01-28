@@ -91,14 +91,14 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_mesh* template = par_shapes_create_disk(1.0, 64, center, normal);
     template->points[2] = 0;
 
-    // Create the VBO that will vary on a per-instance basis. We re-populate it
+    // Create the vertex buffer for the template shape.
+    app.disk = parg_mesh_from_shape(template);
+    par_shapes_free_mesh(template);
+
+    // Create the vertex buffer with instance-varying data.  We re-populate it
     // on every frame, growing it if necessary.  The starting size doesn't
     // matter much.
     app.centers = parg_buffer_alloc(512 * 4 * sizeof(float), PARG_GPU_ARRAY);
-
-    // Create the vertex buffer.
-    app.disk = parg_mesh_from_shape(template);
-    par_shapes_free_mesh(template);
 }
 
 void draw()
