@@ -12,10 +12,10 @@ extern "C" {
 #define pa_free(a) ((a) ? free(pa___raw(a)), 0 : 0)
 #define pa_push(a, v) (pa___maybegrow(a, 1), (a)[pa___n(a)++] = (v))
 #define pa_count(a) ((a) ? pa___n(a) : 0)
-#define pa_add(a, n) \
-    (pa___maybegrow(a, n), pa___n(a) += (n), & (a)[pa___n(a) - (n)])
+#define pa_add(a, n) (pa___maybegrow(a, n), pa___n(a) += (n))
 #define pa_last(a) ((a)[pa___n(a) - 1])
 #define pa_end(a) (a + pa_count(a))
+#define pa_clear(arr) if (arr) pa___n(arr) = 0
 #define pa___raw(a) ((int*) (a) -2)
 #define pa___m(a) pa___raw(a)[0]
 #define pa___n(a) pa___raw(a)[1]
