@@ -2,8 +2,6 @@
 // @program p_simple, vertex, fragment
 // @program p_points, vpoints, fpoints
 
-#extension GL_OES_standard_derivatives : enable
-
 uniform mat4 u_mvp;
 uniform float u_pointsize;
 uniform vec3 u_color;

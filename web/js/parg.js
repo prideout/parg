@@ -40,7 +40,7 @@ var PargApp = function(canvas, args, baseurl, block_interaction, attribs) {
 
 PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
     var pod, x, y, id, miz, maxz, el, idx;
-    if (msg == "labels") {
+    if (msg == "labels" && this.labels) {
         pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
         var removals = Object.keys(this.labels).map(parseFloat);
         for (var i = 0; i < nvalues;) {
@@ -63,7 +63,7 @@ PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
             this.labels[id].remove();
             delete this.labels[id];
         }
-    } else if (msg == "viewport") {
+    } else if (msg == "viewport" && this.paper) {
         pod = this.module.HEAPF64.subarray(pvalues, pvalues + nvalues);
         var left = pod[0], bottom = pod[1], right = pod[2], top = pod[3];
         this.paper.attr({'viewBox': [left, -top, right - left, top - bottom]});
@@ -71,8 +71,6 @@ PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
             'x': left, 'y': -top,
             'width': right - left,
             'height': top - bottom});
-    } else {
-        console.error('Unrecognized message: ' + msg);
     }
 };
 
