@@ -132,10 +132,14 @@ void parg_shader_load_from_buffer(parg_buffer* buf)
         sds vshader_body = kv_A(chunk_bodies, vshader_index);
         sds fshader_body = kv_A(chunk_bodies, fshader_index);
         vshader_body = sdscat(sdsdup(prefix_body), vshader_body);
+
 #if EMSCRIPTEN
-        sds qualified_prefix =
-            sdscatsds(sdsnew("precision highp float;\n"), prefix_body);
-        fshader_body = sdscat(qualified_prefix, fshader_body);
+        sds fshader_prefix =
+            sdscatsds(sdsnew(
+                "#extension GL_OES_standard_derivatives : enable\n"
+                "precision highp float;\n"
+            ), prefix_body);
+        fshader_body = sdscat(fshader_prefix, fshader_body);
 #else
         fshader_body = sdscat(sdsdup(prefix_body), fshader_body);
 #if defined(__APPLE__) && defined(__MACH__)
