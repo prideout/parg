@@ -26,15 +26,16 @@ var PargApp = function(canvas, args, baseurl, block_interaction, attribs) {
     // automatically call the user-defined init() function.
 
     this.viewBox = [-1.5, 1.5, 3, 3];
-    this.paper = Snap('#hud').attr({'viewBox': this.viewBox});
 
-    this.rect = this.paper.rect(-0.2, -0.2, 0.4, 0.4).attr({
-        fill: 'white',
-        strokeWidth: 0,
-        opacity: 0.01
-    });
-
-    this.labels = {};
+    if (window.Snap) {
+        this.paper = window.Snap('#hud').attr({'viewBox': this.viewBox});
+        this.rect = this.paper.rect(-0.2, -0.2, 0.4, 0.4).attr({
+            fill: 'white',
+            strokeWidth: 0,
+            opacity: 0.01
+        });
+        this.labels = {};
+    }
 };
 
 PargApp.prototype.onpod = function(msg, pvalues, nvalues) {
@@ -170,6 +171,7 @@ PargApp.prototype.start = function() {
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
     GLctx.getExtension('OES_element_index_uint');
+    GLctx.getExtension('OES_standard_derivatives');
 
     this.module.Window.init(this.args);
 
