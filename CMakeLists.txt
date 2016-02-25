@@ -76,10 +76,10 @@ set(EMCXXARGS
     -I../extern)
 set(EMLINKARGS
     -O3 --memory-init-file 0 --bind
+    --post-js ../web/js/suffix.js
     -s 'MODULARIZE=1'
     -s 'EXPORT_NAME="CreateParg"'
     -s 'NO_FILESYSTEM=1'
-    -s 'ALLOW_MEMORY_GROWTH=1'
     -s 'PRECISE_F32=1')
 
 set(JSSRC ${SRCFILES})

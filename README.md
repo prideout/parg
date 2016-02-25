@@ -31,7 +31,7 @@ brew tap homebrew/versions
 brew install cmake uncrustify glfw3 clang-format pkg-config emscripten
 python emsetup.py
 source aliases.sh
-init && build
+initjs && build
 ```
 
 I'm currently using:
@@ -39,4 +39,4 @@ I'm currently using:
 - uncrustify 0.61
 - glfw3 3.0.4
 - clang-format 3.7.0
-- emscripten 1.34.6
+- emscripten 1.35.23

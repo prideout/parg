@@ -1,4 +1,4 @@
-alias init="cmake -H. -Bbuild"
+alias init="cmake . -Bbuild"
 alias initdbg="cmake -DCMAKE_BUILD_TYPE=Debug . -Bbuild"
 alias initjs="cmake -DEMSCRIPTEN=ON . -Bbuild"
 alias build="cmake --build build"

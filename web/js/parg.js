@@ -164,7 +164,9 @@ PargApp.prototype.start = function() {
     canvas.width = dims[0] * window.devicePixelRatio;
     canvas.height = dims[1] * window.devicePixelRatio;
 
-    var GLctx = this.module.createContext(canvas, 1, 1, this.attribs);
+    var contextHandle = this.module.GL.createContext(canvas, this.attribs);
+    this.module.GL.makeContextCurrent(contextHandle);
+    var GLctx = this.module.ctx;
     this.GLctx = GLctx;
     GLctx.clearColor(0.2, 0.4, 0.8, 1.0);
     GLctx.clear(GLctx.COLOR_BUFFER_BIT);
