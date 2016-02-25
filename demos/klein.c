@@ -56,6 +56,8 @@ void init(float winwidth, float winheight, float pixratio)
     par_shapes_free_mesh(shape);
 
     kleingeo = parg_mesh_from_asset(M_KLEIN);
+    parg_mesh_send_to_gpu(kleingeo);
+
     kleintex = parg_texture_from_asset_linear(T_KLEIN);
     abstract = parg_texture_from_asset(T_ABSTRACT);
     logo = parg_texture_from_asset(T_LOGO);
