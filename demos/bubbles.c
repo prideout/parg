@@ -7,12 +7,12 @@
 #include <par/par_bubbles.h>
 #include <par/par_shapes.h>
 
-#define TOKEN_TABLE(F)          \
-    F(P_SIMPLE, "p_simple")     \
-    F(A_POSITION, "a_position") \
-    F(A_CENTER, "a_center")     \
-    F(U_MVP, "u_mvp")           \
-    F(U_EYEPOS, "u_eyepos")     \
+#define TOKEN_TABLE(F)                      \
+    F(P_SIMPLE, "p_simple")                 \
+    F(A_POSITION, "a_position")             \
+    F(A_CENTER, "a_center")                 \
+    F(U_MVP, "u_mvp")                       \
+    F(U_EYEPOS, "u_eyepos")                 \
     F(U_EYEPOS_LOWPART, "u_eyepos_lowpart") \
     F(U_SEL, "u_sel")
 
@@ -232,7 +232,7 @@ void input(parg_event evt, float x, float y, float z)
         }
         app.potentially_clicking = 0;
         break;
-    case PARG_EVENT_MOVE:{
+    case PARG_EVENT_MOVE: {
         app.potentially_clicking = 0;
         int picked = par_bubbles_pick(app.bubbles, p.x, p.y);
         if (picked != app.hover) {

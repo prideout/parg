@@ -135,10 +135,9 @@ void parg_shader_load_from_buffer(parg_buffer* buf)
 
 #if EMSCRIPTEN
         sds fshader_prefix =
-            sdscatsds(sdsnew(
-                "#extension GL_OES_standard_derivatives : enable\n"
-                "precision highp float;\n"
-            ), prefix_body);
+            sdscatsds(sdsnew("#extension GL_OES_standard_derivatives : enable\n"
+                "precision highp float;\n"),
+                prefix_body);
         fshader_body = sdscat(fshader_prefix, fshader_body);
 #else
         fshader_body = sdscat(sdsdup(prefix_body), fshader_body);
