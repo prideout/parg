@@ -279,7 +279,7 @@ static void create_mesh()
         shape = par_shapes_create_rock(2, 3);
         par_shapes_compute_normals(shape);
     } else if (state == 5) {
-        shape = par_shapes_create_trefoil_knot(20, 100, 0.1);
+        shape = par_shapes_create_trefoil_knot(20, 100, 0.5);
     } else if (state == 6) {
         shape = par_shapes_create_klein_bottle(20, 30);
         par_shapes_scale(shape, 0.1, 0.1, 0.1);
