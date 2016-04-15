@@ -228,6 +228,7 @@ int pick_outer_disk(DPoint3 p)
 void click(DPoint3 p, int disk)
 {
     if (disk == -1) {
+        // Create a circle.
         int index = pa_count3(app.inner_disks);
         pa_push3(app.inner_disks, p.x, p.y, INNERRAD);
         pa_push3(app.outer_disks, p.x, p.y, OUTERRAD);
@@ -235,6 +236,7 @@ void click(DPoint3 p, int disk)
         app.inner_hover = index;
         send_labels();
     } else {
+        // Remove a circle.
         pa_remove3(app.inner_disks, disk);
         pa_remove3(app.outer_disks, disk);
         pa_remove(app.labels, disk);
@@ -318,18 +320,21 @@ void input(parg_event evt, float x, float y, float z)
         app.potentially_clicking = 0;
         if (app.inner_drag == -1 && app.outer_drag == -1) {
             if (inner != app.inner_hover || outer != app.outer_hover) {
+                // Chnage the mouse-over highlight state.
                 app.inner_hover = inner;
                 app.outer_hover = outer;
                 parg_zcam_touch();
             }
         } else if (app.outer_drag > -1) {
+            // Resize a circle.
             outer = app.outer_drag;
             float dx = p.x - app.outer_disks[outer * 3 + 0];
             float dy = p.y - app.outer_disks[outer * 3 + 1];
             float r = sqrt(dx * dx + dy * dy);
-            app.outer_disks[outer * 3 + 2] = r + app.dragr;
+            app.outer_disks[outer * 3 + 2] = PAR_MAX(r + app.dragr, OUTERRAD);
             update_enclosing_disk();
         } else {
+            // Translate a circle.
             inner = app.inner_drag;
             app.outer_disks[inner * 3] = app.inner_disks[inner * 3] =
                     p.x + app.dragx;
