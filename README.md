@@ -40,3 +40,31 @@ I'm currently using:
 - glfw3 3.0.4
 - clang-format 3.7.0
 - emscripten 1.35.23
+
+## How to Build for Windows (experimental)
+
+These are the magic ingredients that I use for Windows builds:
+- Visual Studio 2015 (it's free!)
+- [msys2](http://msys2.github.io/)
+- CMake
+
+Open the mingw64.exe prompt and do this:
+
+```bash
+pacman -Syu  # to update the system packages (errors are ignoreable)
+pacman -S mingw-w64-x86_64-pkg-config
+pacman -S mingw-w64-x86_64-cmake
+pacman -S mingw-w64-x86_64-glfw
+pacman -S git libcurl
+```
+
+Next, cd to the git repo and use the "init" alias to invoke CMake:
+
+```bash
+source aliases.sh
+init
+```
+
+At this point you can either use the "build" alias, or you can open the generated project at `build/parg.sln`.
+
+As an aside, take a look at [winpty](https://github.com/rprichard/winpty) if you'd like to use emacs in your msys console.

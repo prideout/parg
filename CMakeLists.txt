@@ -21,9 +21,9 @@ set(DEMOS
     orbits)
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(GLFW REQUIRED glfw3)
+pkg_search_module(GLFW REQUIRED glfw)
 pkg_search_module(CURL REQUIRED libcurl)
-find_library(OPENGL_LIB OpenGL)
+find_package(OpenGL REQUIRED)
 
 file(GLOB COREC src/*.c)
 file(GLOB VENDORC extern/*.c)
@@ -126,7 +126,7 @@ foreach(DEMONAME ${DEMOS})
     target_link_libraries(
         ${DEMONAME}
         parg
-        ${OPENGL_LIB}
+        ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARIES}
         ${CURL_LIBRARIES}
         ${PLATFORM_LIBS})
