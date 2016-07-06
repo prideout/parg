@@ -21,7 +21,7 @@ set(DEMOS
     orbits)
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(GLFW REQUIRED glfw)
+pkg_search_module(GLFW REQUIRED glfw3)
 pkg_search_module(CURL REQUIRED libcurl)
 find_package(OpenGL REQUIRED)
 

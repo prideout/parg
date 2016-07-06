@@ -34,12 +34,19 @@ source aliases.sh
 initjs && build
 ```
 
+You can then run a native demo like this:
+```bash
+build/trefoil
+[Push Esc to quit]
+cd web
+python -m SimpleHTTPServer
+[Open localhost:8000 in a web browser]
+```
+
+
 I'm currently using:
-- scons 2.3.5
-- uncrustify 0.61
-- glfw3 3.0.4
-- clang-format 3.7.0
-- emscripten 1.35.23
+- glfw3 3.1.2
+- emscripten 1.36.5
 
 ## How to Build for Windows (experimental)
 
