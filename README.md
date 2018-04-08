@@ -23,18 +23,31 @@ The [API](https://github.com/prideout/parg/blob/master/include/parg.h) is divide
 - **draw** thin wrapper around OpenGL draw calls.
 - **zcam** simple map-style camera with basic zoom & pan controls.
 
-## How to Build (OS X)
+## How to Build for OS X
 
 ```bash
 brew update
-brew tap homebrew/versions
+brew install cmake uncrustify glfw3 clang-format pkg-config
+mkdir build ; cmake .. ; make -j
+```
+
+You can then run a demo like this:
+```bash
+./trefoil
+```
+
+
+## How to Build for WebGL on OS X
+
+```bash
+brew update
 brew install cmake uncrustify glfw3 clang-format pkg-config emscripten
 python emsetup.py
 source aliases.sh
 initjs && build
 ```
 
-You can then run a native demo like this:
+You can then run a demo like this:
 ```bash
 build/trefoil
 [Push Esc to quit]
