@@ -23,12 +23,12 @@ The [API](https://github.com/prideout/parg/blob/master/include/parg.h) is divide
 - **draw** thin wrapper around OpenGL draw calls.
 - **zcam** simple map-style camera with basic zoom & pan controls.
 
-## How to Build for OS X
+## How to Build for macOS
 
 ```bash
 brew update
-brew install cmake uncrustify glfw3 clang-format pkg-config
-mkdir build ; cmake .. ; make -j
+brew install cmake uncrustify glfw clang-format pkg-config
+mkdir build ; cd build ; cmake .. ; make -j
 ```
 
 You can then run a demo like this:
@@ -37,11 +37,11 @@ You can then run a demo like this:
 ```
 
 
-## How to Build for WebGL on OS X
+## How to Build for WebGL on macOS
 
 ```bash
 brew update
-brew install cmake uncrustify glfw3 clang-format pkg-config emscripten
+brew install cmake uncrustify glfw clang-format pkg-config emscripten
 python emsetup.py
 source aliases.sh
 initjs && build
@@ -58,33 +58,5 @@ python -m SimpleHTTPServer
 
 
 I'm currently using:
-- glfw3 3.1.2
+- glfw 3.3
 - emscripten 1.36.5
-
-## How to Build for Windows (experimental)
-
-These are the magic ingredients that I use for Windows builds:
-- Visual Studio 2015 (it's free!)
-- [msys2](http://msys2.github.io/)
-- CMake
-
-Open the mingw64.exe prompt and do this:
-
-```bash
-pacman -Syu  # to update the system packages (errors are ignoreable)
-pacman -S mingw-w64-x86_64-pkg-config
-pacman -S mingw-w64-x86_64-cmake
-pacman -S mingw-w64-x86_64-glfw
-pacman -S git libcurl
-```
-
-Next, cd to the git repo and use the "init" alias to invoke CMake:
-
-```bash
-source aliases.sh
-init
-```
-
-At this point you can either use the "build" alias, or you can open the generated project at `build/parg.sln`.
-
-As an aside, take a look at [winpty](https://github.com/rprichard/winpty) if you'd like to use emacs in your msys console.

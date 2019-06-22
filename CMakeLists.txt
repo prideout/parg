@@ -20,9 +20,8 @@ set(DEMOS
     ztex
     orbits)
 
-find_package(PkgConfig REQUIRED)
-pkg_search_module(GLFW REQUIRED glfw3)
-pkg_search_module(CURL REQUIRED libcurl)
+find_package(glfw3 REQUIRED)
+find_package(curl REQUIRED)
 find_package(OpenGL REQUIRED)
 
 file(GLOB COREC src/*.c)
@@ -30,12 +29,6 @@ file(GLOB VENDORC extern/*.c)
 file(GLOB SRCFILES ${COREC} ${VENDORC})
 file(GLOB JSEXCLUSIONS src/window.c src/easycurl.c src/filecache.c)
 file(GLOB JSCPP src/bindings.cpp src/objloader.cpp)
-
-include_directories(
-    include
-    extern
-    ${GLFW_INCLUDE_DIRS}
-    ${CURL_INCLUDE_DIRS})
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-gnu99")
@@ -60,6 +53,20 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 endif()
 
 add_library(parg STATIC ${SRCFILES} src/objloader.cpp)
+
+target_link_libraries(parg glfw curl)
+
+target_include_directories(parg PUBLIC
+    include
+    extern)
+
+target_compile_definitions(
+    parg PUBLIC
+    GL_SILENCE_DEPRECATION)
+
+target_compile_options(
+    parg PUBLIC
+    -Wno-deprecated-declarations)
 
 set(EMCCARGS
     -c
@@ -127,8 +134,6 @@ foreach(DEMONAME ${DEMOS})
         ${DEMONAME}
         parg
         ${OPENGL_LIBRARIES}
-        ${GLFW_LIBRARIES}
-        ${CURL_LIBRARIES}
         ${PLATFORM_LIBS})
     add_custom_command(
         OUTPUT ${DEMONAME}.js.o

@@ -83,7 +83,7 @@ static void create_platonic_scene(char const* name)
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
 
-    shape = par_shapes_create_octohedron();
+    shape = par_shapes_create_octahedron();
     par_shapes_translate(shape, -2.25, 0.9, -.5);
     par_shapes_merge(scene, shape);
     par_shapes_free_mesh(shape);
